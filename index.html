@@ -102,9 +102,11 @@
     tbody td{padding:.78rem 1rem;font-size:.82rem;color:var(--txt);white-space:nowrap}
     .tdm{font-family:var(--ff-mono);font-size:.68rem;color:var(--txt2)}
     .pill{display:inline-block;font-family:var(--ff-mono);font-size:.57rem;padding:.17rem .52rem;border-radius:100px;letter-spacing:.05em}
-    .pill-won{background:rgba(31,222,158,.12);color:var(--grn);border:1px solid rgba(31,222,158,.25)}
-    .pill-lost{background:rgba(244,115,115,.10);color:var(--red);border:1px solid rgba(244,115,115,.2)}
-    .pill-open{background:rgba(176,110,243,.10);color:var(--pur);border:1px solid rgba(176,110,243,.2)}
+    .pill-won     {background:rgba(31,222,158,.12); color:var(--grn); border:1px solid rgba(31,222,158,.25)}
+    .pill-lost    {background:rgba(244,115,115,.10);color:var(--red); border:1px solid rgba(244,115,115,.2)}
+    .pill-open    {background:rgba(176,110,243,.10);color:var(--pur); border:1px solid rgba(176,110,243,.2)}
+    .pill-conv    {background:rgba(248,194,71,.12); color:var(--amb); border:1px solid rgba(248,194,71,.25)}
+    .pill-archived{background:rgba(86,73,122,.2);   color:var(--mute);border:1px solid rgba(86,73,122,.4)}
     .empty{text-align:center;padding:3rem;font-family:var(--ff-mono);font-size:.7rem;color:var(--mute)}
     .dbtn{background:var(--pur-soft);border:1px solid rgba(176,110,243,.22);color:var(--pur);font-family:var(--ff-mono);font-size:.57rem;padding:.2rem .58rem;border-radius:5px;cursor:pointer;letter-spacing:.06em;transition:background .15s,border-color .15s}
     .dbtn:hover{background:var(--pur-mid);border-color:rgba(176,110,243,.4)}
@@ -135,7 +137,7 @@
       <div class="chart-top">
         <h2>New <i>Opportunities</i> per Month</h2>
       </div>
-      <p class="chart-note">New deals in Main Pipeline (excl. those converted from leads) + new leads. Deals with a "Lead created date" set are counted in their lead month instead.</p>
+      <p class="chart-note">New deals in Main Pipeline (excl. those with a lead created date set) + all new leads (open, converted, and archived). One bar = total new opportunities that month.</p>
       <div class="chart-scrl"><div class="bars" id="bars"></div></div>
       <p class="chart-hint">&#x2191; Click any month bar to open a deep dive</p>
     </div>
@@ -153,9 +155,9 @@
       </div>
       <div class="dive-stats" id="dive-stats"></div>
       <div class="dive-tabs">
-        <button class="dtab on" id="t-deals" onclick="switchTab('deals')">Deals (new)</button>
-        <button class="dtab" id="t-leads" onclick="switchTab('leads')">Leads (new)</button>
-        <button class="dtab" id="t-conv" onclick="switchTab('conv')">From leads (excluded)</button>
+        <button class="dtab on" id="t-deals" onclick="switchTab('deals')">New Deals</button>
+        <button class="dtab" id="t-leads" onclick="switchTab('leads')">New Leads</button>
+        <button class="dtab" id="t-conv" onclick="switchTab('conv')">From Leads (excl.)</button>
       </div>
       <div class="tbl-wrap" id="dive-tbl"></div>
     </div>
@@ -166,8 +168,8 @@
 /* ═══════════════════════════════════════
    CONFIG
 ═══════════════════════════════════════ */
-const API_TOKEN      = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
-const MAIN_PIPELINE  = 11;       // "Main Pipeline"
+const API_TOKEN       = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
+const MAIN_PIPELINE   = 11;
 const LEAD_DATE_FIELD = '7dbac76a365841c9ab9c494fc52b8186849bb742'; // "Lead created date (for reporting)"
 
 /* ═══════════════════════════════════════
@@ -177,14 +179,8 @@ const S = { deals:[], leads:[], mo:{}, currency:'GBP', diveKey:null, diveTab:'de
 const $ = id => document.getElementById(id);
 
 function showErr(m){ const e=$('err'); e.textContent='Warning: '+m; e.style.display='block'; }
-
 function fmt(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M'; if(n>=1e3)return(n/1e3).toFixed(1)+'k'; return String(n); }
-
-function fmtC(n,c){
-  if(!n&&n!==0)return'--';
-  return new Intl.NumberFormat('en-GB',{style:'currency',currency:c||'GBP',maximumFractionDigits:0}).format(n);
-}
-
+function fmtC(n,c){ if(!n&&n!==0)return'--'; return new Intl.NumberFormat('en-GB',{style:'currency',currency:c||'GBP',maximumFractionDigits:0}).format(n); }
 function mKey(d){ const dt=new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); }
 function mShort(k){ const[y,m]=k.split('-'); return new Date(+y,+m-1).toLocaleString('en-GB',{month:'short',year:'2-digit'}); }
 function mLong(k){ const[y,m]=k.split('-'); return new Date(+y,+m-1).toLocaleString('en-GB',{month:'long',year:'numeric'}); }
@@ -203,9 +199,14 @@ function since12(){ const d=new Date(); d.setMonth(d.getMonth()-11); d.setDate(1
 function esc(s){ return String(s||'--').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtD(s){ return s?new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'--'; }
 
-/* A deal is "converted from a lead" if the Lead created date custom field has a value */
-function isConversion(deal){
-  return !!(deal[LEAD_DATE_FIELD]);
+/* Deal is a lead conversion if the "Lead created date" custom field is set */
+function isDealConversion(deal){ return !!(deal[LEAD_DATE_FIELD]); }
+
+/* Lead status: Pipedrive API doesn't expose a converted/open/archived
+   status field directly. is_archived is the only reliable signal.        */
+function leadStatus(lead){
+  if(lead.is_archived) return 'archived';
+  return 'open';
 }
 
 /* ═══════════════════════════════════════
@@ -218,7 +219,6 @@ async function pd(path){
   return r.json();
 }
 
-/* Fetch only deals from Main Pipeline, with the custom field included */
 async function fetchDeals(since){
   const ss=since.toISOString().slice(0,10);
   let all=[],start=0;
@@ -232,17 +232,22 @@ async function fetchDeals(since){
   return all;
 }
 
+/* Fetch ALL leads using archived_status=all — one call gets everything:
+   open, converted, and manually archived. The custom field is included
+   automatically as it's on the lead object. Deduplicate by id just in case. */
 async function fetchLeads(since){
   const ss=since.toISOString().slice(0,10);
   let all=[],start=0;
   while(true){
-    const d=await pd('/leads?limit=500&start='+start+'&created_after='+ss);
+    const d=await pd('/leads?limit=500&start='+start+'&archived_status=all&created_after='+ss);
     if(!d.success) throw new Error(d.error||'Leads fetch failed');
     all=all.concat(d.data||[]);
     if(!d.additional_data?.pagination?.more_items_in_collection) break;
     start+=500;
   }
-  return all;
+  // Deduplicate by id
+  const seen=new Set();
+  return all.filter(l=>{ if(seen.has(l.id)) return false; seen.add(l.id); return true; });
 }
 
 async function fetchCurrency(){
@@ -251,9 +256,9 @@ async function fetchCurrency(){
 
 /* ═══════════════════════════════════════
    BUILD MONTHLY ROLLUP
-   - deals:  Main Pipeline deals where "Lead created date" is EMPTY, bucketed by add_time
-   - leads:  all leads bucketed by add_time
-   - conv:   Main Pipeline deals where "Lead created date" IS SET (excluded from count)
+   deals  = Main Pipeline deals without a lead created date (organic new deals)
+   conv   = Main Pipeline deals WITH a lead created date (excluded from count)
+   leads  = all leads (open + converted + archived), bucketed by add_time
 ═══════════════════════════════════════ */
 function buildMonthly(){
   last12().forEach(k=>S.mo[k]={deals:[],leads:[],conv:[],won:0,val:0,opps:0});
@@ -261,7 +266,7 @@ function buildMonthly(){
   S.deals.forEach(d=>{
     const k=mKey(d.add_time);
     if(!S.mo[k]) return;
-    if(isConversion(d)){
+    if(isDealConversion(d)){
       S.mo[k].conv.push(d);
     } else {
       S.mo[k].deals.push(d);
@@ -288,12 +293,12 @@ function renderStats(){
   const totalConv  = last12().reduce((s,k)=>s+S.mo[k].conv.length,0);
   const totalWon   = last12().reduce((s,k)=>s+S.mo[k].won,0);
   const wr         = totalDeals?Math.round(totalWon/totalDeals*100):0;
-  const totalVal   = S.deals.filter(d=>!isConversion(d)&&(d.status==='won'||d.status==='open')).reduce((s,d)=>s+(d.value||0),0);
+  const totalVal   = S.deals.filter(d=>!isDealConversion(d)&&(d.status==='won'||d.status==='open')).reduce((s,d)=>s+(d.value||0),0);
 
   $('stats').innerHTML=[
-    {c:'p',ico:'&#x1F4CA;',n:fmt(totalOpps),  l:'New Opportunities',s:'deals + leads, last 12 mo'},
-    {c:'g',ico:'&#x1F4E5;',n:fmt(totalDeals), l:'New Deals (Main Pipeline)',s:totalConv+' lead conversions excluded'},
-    {c:'p',ico:'&#x1F331;',n:fmt(totalLeads), l:'New Leads',s:'last 12 months'},
+    {c:'p',ico:'&#x1F4CA;',n:fmt(totalOpps),  l:'New Opportunities',     s:'deals + leads, last 12 mo'},
+    {c:'g',ico:'&#x1F4E5;',n:fmt(totalDeals), l:'New Deals',             s:totalConv+' lead conversions excl.'},
+    {c:'p',ico:'&#x1F331;',n:fmt(totalLeads), l:'New Leads',             s:'open, converted & archived'},
     {c:'g',ico:'&#x1F4B0;',n:fmtC(totalVal,S.currency),l:'Pipeline Value',s:wr+'% win rate on deals'},
   ].map(x=>'<div class="sc '+x.c+'"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div><div class="sc-sub">'+x.s+'</div></div>').join('');
 }
@@ -309,8 +314,8 @@ function renderChart(){
     const m=S.mo[k];
     const h=Math.max(3,Math.round(m.opps/mx*mxH));
     const sel=S.diveKey===k?'sel':'';
-    const tipTxt=m.opps+' opp'+(m.opps!==1?'s':'')+' ('+m.deals.length+' deal'+(m.deals.length!==1?'s':'')+' + '+m.leads.length+' lead'+(m.leads.length!==1?'s':'')+')';
-    return '<div class="bg '+sel+'" onclick="openDive(\''+k+'\')"><div class="bw"><div class="b" style="height:'+h+'px"><div class="tip">'+tipTxt+'</div></div></div><div class="blbl">'+mShort(k)+'</div></div>';
+    const tip=m.opps+' opp'+(m.opps!==1?'s':'')+' ('+m.deals.length+' deal'+(m.deals.length!==1?'s':'')+' + '+m.leads.length+' lead'+(m.leads.length!==1?'s':'')+')';
+    return '<div class="bg '+sel+'" onclick="openDive(\''+k+'\')"><div class="bw"><div class="b" style="height:'+h+'px"><div class="tip">'+tip+'</div></div></div><div class="blbl">'+mShort(k)+'</div></div>';
   }).join('');
 }
 
@@ -337,8 +342,7 @@ function renderOvTable(){
         +'<td class="tdm">'+fmtC(m.val,S.currency)+'</td>'
         +'<td><button class="dbtn" onclick="openDive(\''+k+'\')">DIVE &rarr;</button></td>'
         +'</tr>';
-    }).join('')
-    +'</tbody>';
+    }).join('')+'</tbody>';
 }
 
 /* ═══════════════════════════════════════
@@ -391,23 +395,24 @@ function renderDiveTbl(){
         +'<td class="tdm">'+fmtC(d.value,d.currency||S.currency)+'</td>'
         +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
         +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
-        +'</tr>').join('')
-      +'</tbody></table>';
+        +'</tr>').join('')+'</tbody></table>';
 
   } else if(tab==='leads'){
     const items=[...m.leads].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
-    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No new leads this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Contact / Org</th><th>Value</th><th>Created</th></tr></thead><tbody>'
-      +items.map(l=>'<tr>'
-        +'<td>'+esc(l.title)+'</td>'
-        +'<td class="tdm">'+esc(l.person_name||l.organization_name||'--')+'</td>'
-        +'<td class="tdm">'+(l.value?fmtC(l.value.amount,l.value.currency||S.currency):'--')+'</td>'
-        +'<td class="tdm">'+fmtD(l.add_time)+'</td>'
-        +'</tr>').join('')
-      +'</tbody></table>';
+    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No leads this month.</div>';return;}
+    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Contact / Org</th><th>Value</th><th>Status</th><th>Created</th></tr></thead><tbody>'
+      +items.map(l=>{
+        const st=leadStatus(l);
+        return '<tr>'
+          +'<td>'+esc(l.title)+'</td>'
+          +'<td class="tdm">'+esc(l.person_name||l.organization_name||'--')+'</td>'
+          +'<td class="tdm">'+(l.value?fmtC(l.value.amount,l.value.currency||S.currency):'--')+'</td>'
+          +'<td><span class="pill pill-'+st+'">'+st+'</span></td>'
+          +'<td class="tdm">'+fmtD(l.add_time)+'</td>'
+          +'</tr>';
+      }).join('')+'</tbody></table>';
 
   } else {
-    // conv tab — show excluded deals with their lead created date
     const items=[...m.conv].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No lead-converted deals this month.</div>';return;}
     $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Contact / Org</th><th>Deal Created</th><th>Lead Created Date</th><th>Value</th><th>Status</th></tr></thead><tbody>'
@@ -418,8 +423,7 @@ function renderDiveTbl(){
         +'<td class="tdm" style="color:var(--amb)">'+fmtD(d[LEAD_DATE_FIELD])+'</td>'
         +'<td class="tdm">'+fmtC(d.value,d.currency||S.currency)+'</td>'
         +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
-        +'</tr>').join('')
-      +'</tbody></table>';
+        +'</tr>').join('')+'</tbody></table>';
   }
 }
 
