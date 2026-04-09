@@ -246,7 +246,9 @@ const AT_BASE         = 'appRsF7Zfa3iKjTFD';
 const AT_TABLE        = 'tblf16aeWs3w3yMcU';
 const REGIONS         = ['EMEA','AMER','APAC'];
 const SECTORS         = ['Education','Membership Associations','Charity','Company'];
-const COMBOS          = [];
+const REGION_ID = {EMEA:643, AMER:644, APAC:645};
+const SECTOR_ID = {Education:726, 'Membership Associations':728, Charity:727, Company:729};
+const COMBOS    = [];
 REGIONS.forEach(r => SECTORS.forEach(s => COMBOS.push({r, s, label: r + ' \u2014 ' + s})));
 const CHART_WINDOW    = 12;
 
@@ -519,7 +521,7 @@ function renderOvTable(){
       const allItems=[...m.deals,...m.conv];
       // Show each region x sector combo that has data
       COMBOS.forEach(({r,s,label})=>{
-        const count=allItems.filter(d=>(d[REGION_FIELD]||'').trim()===r&&(d[SECTOR_FIELD]||'').trim()===s).length;
+        const count=allItems.filter(d=>Number(d[REGION_FIELD])===REGION_ID[r]&&Number(d[SECTOR_FIELD])===SECTOR_ID[s]).length;
         if(count===0) return;
         html+='<tr class="sub-row">'
           +'<td></td>'
@@ -529,7 +531,7 @@ function renderOvTable(){
           +'</tr>';
       });
       // Unassigned
-      const assigned=allItems.filter(d=>(d[REGION_FIELD]||'').trim()&&(d[SECTOR_FIELD]||'').trim()).length;
+      const assigned=allItems.filter(d=>REGION_ID[Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))]&&SECTOR_ID[Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))]).length;
       const unassigned=allItems.length-assigned;
       if(unassigned>0){
         html+='<tr class="sub-row">'
@@ -578,8 +580,8 @@ function renderDiveTbl(){
         +'<td>'+esc(d.title)+'</td>'
         +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
         +'<td class="tdm">'+esc(d.stage_name||'--')+'</td>'
-        +'<td class="tdm">'+esc((d[REGION_FIELD]||'').trim()||'--')+'</td>'
-        +'<td class="tdm">'+esc((d[SECTOR_FIELD]||'').trim()||'--')+'</td>'
+        +'<td class="tdm">'+esc(Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--')+'</td>'
+        +'<td class="tdm">'+esc(Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--')+'</td>'
         +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
         +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
         +'</tr>').join('')+'</tbody></table>';
