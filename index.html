@@ -107,6 +107,10 @@
     .pill-group{display:flex;gap:.4rem}
     .f-pill{font-family:var(--ff-mono);font-size:.62rem;padding:.25rem .75rem;border-radius:100px;border:1px solid var(--bord2);color:var(--mute);background:none;cursor:pointer;transition:all .2s;letter-spacing:.06em}
     .f-pill.active{background:var(--pur-soft);border-color:rgba(176,110,243,.4);color:var(--pur)}
+    .pill-divider{width:1px;background:var(--bord2);align-self:stretch;margin:0 .25rem}
+    .pill-label{font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);white-space:nowrap}
+    .owner-select{font-family:var(--ff-mono);font-size:.65rem;background:var(--surf2);border:1px solid var(--bord2);color:var(--txt2);padding:.28rem .6rem;border-radius:8px;cursor:pointer;outline:none;transition:border-color .2s}
+    .owner-select:focus,.owner-select.active{border-color:var(--pur);color:var(--pur)}
     .f-pill:hover:not(.active){color:var(--txt2)}
     /* expand button */
     /* source logic pill */
@@ -211,7 +215,7 @@
       &bull; Other Source Channel value &rarr; Conference (value shown)<br>
       &bull; No Source Channel &rarr; Manually Added
     </div>
-  </div>
+    </div>
 
   <div class="upload-panel" id="upload-panel">
     <h3>Sync Archived Leads to Airtable</h3>
@@ -253,10 +257,22 @@
     <div class="ov-card">
       <div class="card-hd">
         <h2>Monthly <i>Breakdown</i></h2>
-        <div class="card-hd-controls">
-          <div class="pill-group" id="owner-pills"></div>
+        <div class="card-hd-controls" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+          <span class="pill-label">Owner:</span>
+          <select class="owner-select" id="owner-select" onchange="setOwner(this.value)">
+            <option value="">All</option>
+            <option value="Amy">Amy</option>
+            <option value="Fady">Fady</option>
+            <option value="Matt">Matt</option>
+            <option value="Merryn">Merryn</option>
+            <option value="Myron">Myron</option>
+            <option value="Other">Other</option>
+          </select>
+          <div class="pill-divider"></div>
           <div class="pill-group" id="region-pills"></div>
+          <div class="pill-divider"></div>
           <div class="pill-group" id="sector-pills"></div>
+          <div class="pill-divider"></div>
           <div class="pill-group" id="year-pills"></div>
         </div>
       </div>
@@ -606,22 +622,29 @@ function renderChart(){
 /* ── Filter pills: year, region, sector ── */
 function getYears(){ return [...new Set(S.allKeys.map(mYear))].sort(); }
 
+function setOwner(val){
+  S.filterOwner=val||null;
+  // Update select styling
+  const sel=document.getElementById('owner-select');
+  if(sel){ sel.className='owner-select'+(S.filterOwner?' active':''); }
+  renderOvTable();
+}
+
 function renderFilterPills(){
-  // Owner pills
-  document.getElementById('owner-pills').innerHTML =
-    '<span style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);margin-right:.2rem">Owner:</span>'
-    + SALESPEOPLE.map(n=>'<button class="f-pill'+(S.filterOwner===n?' active':'')+'" data-pill-owner="'+n+'">'+n+'</button>').join('');
   // Year pills
   document.getElementById('year-pills').innerHTML =
     getYears().map(y=>'<button class="f-pill'+(S.yearFilter===y?' active':'')+'" data-pill-year="'+y+'">'+y+'</button>').join('');
-  // Region pills
+  // Region pills — label in the middle
+  const rActive = REGIONS.findIndex(r=>r===S.filterRegion);
   document.getElementById('region-pills').innerHTML =
-    '<span style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);margin-right:.2rem">Region:</span>'
-    + REGIONS.map(r=>'<button class="f-pill'+(S.filterRegion===r?' active':'')+'" data-pill-region="'+r+'">'+r+'</button>').join('');
-  // Sector pills
+    REGIONS.slice(0, Math.ceil(REGIONS.length/2)).map(r=>'<button class="f-pill'+(S.filterRegion===r?' active':'')+'" data-pill-region="'+r+'">'+r+'</button>').join('')
+    + '<span class="pill-label" style="margin:0 .3rem">Region</span>'
+    + REGIONS.slice(Math.ceil(REGIONS.length/2)).map(r=>'<button class="f-pill'+(S.filterRegion===r?' active':'')+'" data-pill-region="'+r+'">'+r+'</button>').join('');
+  // Sector pills — label in the middle
   document.getElementById('sector-pills').innerHTML =
-    '<span style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);margin-right:.2rem">Sector:</span>'
-    + SECTORS.map(s=>'<button class="f-pill'+(S.filterSector===s?' active':'')+'" data-pill-sector="'+s+'">'+s+'</button>').join('');
+    SECTORS.slice(0, Math.ceil(SECTORS.length/2)).map(s=>'<button class="f-pill'+(S.filterSector===s?' active':'')+'" data-pill-sector="'+s+'">'+s+'</button>').join('')
+    + '<span class="pill-label" style="margin:0 .3rem">Sector</span>'
+    + SECTORS.slice(Math.ceil(SECTORS.length/2)).map(s=>'<button class="f-pill'+(S.filterSector===s?' active':'')+'" data-pill-sector="'+s+'">'+s+'</button>').join('');
 }
 
 // Delegated click handler for all filter pills
@@ -634,8 +657,6 @@ document.addEventListener('click', function(e){
     const r=btn.dataset.pillRegion; S.filterRegion=S.filterRegion===r?null:r;
   } else if(btn.dataset.pillSector){
     const s=btn.dataset.pillSector; S.filterSector=S.filterSector===s?null:s;
-  } else if(btn.dataset.pillOwner){
-    const o=btn.dataset.pillOwner; S.filterOwner=S.filterOwner===o?null:o;
   }
   renderFilterPills();
   renderOvTable();
@@ -904,6 +925,8 @@ async function init(){
   $('dive').style.display='none';
   $('upload-panel').style.display='none';
   S.diveKey=null; S.chartOffset=0; S.yearFilter=null; S.filterRegion=null; S.filterSector=null; S.filterOwner=null; S.statsOffset=0;
+  const ownerSel=document.getElementById('owner-select');
+  if(ownerSel) ownerSel.value='';
   expandedMonths.clear();
 
   try{
