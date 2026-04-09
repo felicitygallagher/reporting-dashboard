@@ -109,6 +109,12 @@
     .f-pill.active{background:var(--pur-soft);border-color:rgba(176,110,243,.4);color:var(--pur)}
     .f-pill:hover:not(.active){color:var(--txt2)}
     /* expand button */
+    /* source logic pill */
+    .logic-pill{font-family:var(--ff-mono);font-size:.6rem;color:var(--mute);background:none;border:1px solid var(--bord2);padding:.2rem .6rem;border-radius:100px;cursor:pointer;letter-spacing:.06em;transition:color .2s,border-color .2s;white-space:nowrap}
+    .logic-pill:hover{color:var(--txt2);border-color:var(--pur)}
+    .logic-box{display:none;background:var(--bg2);border:1px solid var(--bord2);border-radius:var(--r);padding:1rem 1.25rem;margin-top:.6rem;font-family:var(--ff-mono);font-size:.62rem;color:var(--txt2);line-height:1.9;letter-spacing:.02em}
+    .logic-box strong{color:var(--pur);font-weight:500}
+    .logic-box em{color:var(--grn);font-style:normal}
     .expand-btn{background:none;border:1px solid var(--bord2);color:var(--mute);font-family:var(--ff-mono);font-size:.55rem;width:22px;height:22px;border-radius:5px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:border-color .2s,color .2s,transform .15s;flex-shrink:0}
     .expand-btn:hover{border-color:var(--pur);color:var(--pur)}
     .expand-btn.open{transform:rotate(180deg);border-color:var(--pur);color:var(--pur)}
@@ -176,8 +182,35 @@
     <div class="warn-text"><strong>Known data limitation:</strong> The Pipedrive API does not return archived leads. Export archived leads from Pipedrive&rsquo;s reporting tool and use &ldquo;Update Archived Leads&rdquo; to sync them to Airtable. The dashboard combines these with live API data on every load.</div>
   </div>
 
-  <div class="info-bar" id="at-status" style="display:none">
-    <span>&#x1F4CA;</span><span id="at-status-text"></span>
+  <div id="at-status" style="display:none;margin-bottom:1rem">
+    <div class="info-bar" style="margin-bottom:0">
+      <span>&#x1F4CA;</span>
+      <span id="at-status-text" style="flex:1"></span>
+      <button class="logic-pill" onclick="toggleLogic()">&#x2139;&#xFE0F; Source logic &nbsp;&#x25BC;</button>
+    </div>
+    <div class="logic-box" id="logic-box">
+      <strong>Deals</strong><br>
+      &bull; <em>Marketplace</em> origin &rarr; Website / Call Booking<br>
+      &bull; <em>ManuallyCreated</em> origin + no Lead Created Date &rarr; Manually Added<br>
+      &bull; <em>ManuallyCreated</em> origin + Lead Created Date set &rarr; Converted from Lead<br>
+      &bull; <em>Chatbot</em> origin &rarr; Chatbot<br>
+      &bull; <em>WebForms</em> origin &rarr; Conference (channel ID = form name)<br>
+      &bull; <em>API</em> origin &rarr; API / Integration<br>
+      <br>
+      <strong>Leads (API)</strong><br>
+      &bull; channel_id = <em>Zapier</em> &rarr; Website / Call Booking<br>
+      &bull; channel_id contains <em>chatbot</em> &rarr; Chatbot<br>
+      &bull; channel_id contains <em>surfe</em> &rarr; Surfe / LinkedIn ⚠️<br>
+      &bull; channel_id = a web form name &rarr; Conference (form name shown)<br>
+      &bull; no channel_id &rarr; Manually Added<br>
+      <br>
+      <strong>Archived Leads (Airtable)</strong><br>
+      &bull; Source Channel = <em>Zapier</em> &rarr; Website / Call Booking<br>
+      &bull; Source Channel contains <em>chatbot</em> &rarr; Chatbot<br>
+      &bull; Source Channel contains <em>surfe</em> &rarr; Surfe / LinkedIn ⚠️<br>
+      &bull; Other Source Channel value &rarr; Conference (value shown)<br>
+      &bull; No Source Channel &rarr; Manually Added
+    </div>
   </div>
 
   <div class="upload-panel" id="upload-panel">
@@ -258,6 +291,41 @@ const OWNER_MAP = {
 };
 const NAMED_IDS = new Set(Object.values(OWNER_MAP).map(o=>o.id));
 const SALESPEOPLE = ['Amy','Fady','Matt','Merryn','Myron','Other'];
+
+/* Classify a deal or lead into a human-readable source */
+function classifyDeal(d){
+  if(isConvertedDeal(d)) return 'Converted from Lead';
+  const o = d.origin||'';
+  if(o==='Marketplace') return 'Website / Call Booking';
+  if(o==='ManuallyCreated') return 'Manually Added';
+  if(o==='Chatbot') return 'Chatbot';
+  if(o==='WebForms') return d.channel_id ? 'Conference: '+d.channel_id : 'Web Form';
+  if(o==='API') return 'API / Integration';
+  if(o==='Import') return 'Import';
+  return o||'Unknown';
+}
+
+function classifyLead(l){
+  // API leads: use channel_id (source_origin not available via API)
+  const ch = (l.channel_id||'').trim();
+  if(!ch) return 'Manually Added';
+  if(ch==='Zapier') return 'Website / Call Booking';
+  if(ch.toLowerCase().includes('chatbot')) return 'Chatbot';
+  if(ch.toLowerCase().includes('surfe')) return 'Surfe / LinkedIn';
+  // Web forms = conference
+  if(ch && ch!=='Zapier' && !ch.toLowerCase().includes('chatbot') && !ch.toLowerCase().includes('surfe')) return 'Conference: '+ch;
+  return 'Manually Added';
+}
+
+function classifyArchivedLead(l){
+  // Archived leads from Airtable have source channel stored
+  const src = (l.sourceChannel||'').trim();
+  if(!src) return 'Manually Added';
+  if(src==='Zapier') return 'Website / Call Booking';
+  if(src.toLowerCase().includes('chatbot')) return 'Chatbot';
+  if(src.toLowerCase().includes('surfe')) return 'Surfe / LinkedIn';
+  return 'Conference: '+src;
+}
 const LEAD_DATE_FIELD = '7dbac76a365841c9ab9c494fc52b8186849bb742';
 const REGION_FIELD    = '2f8f785f22d986dcf51775b73af98a140a34c5ae';
 const SECTOR_FIELD    = 'cd63d398be9a5c23147344f38f1ae37fb81fc60a';
@@ -310,7 +378,8 @@ async function fetchDeals(){
   while(true){
     const d=await pd('/deals?limit=500&start='+start+'&status=all'
       +'&since_timestamp=2024-01-01%2000:00:00'
-      +'&custom_fields='+LEAD_DATE_FIELD+','+REGION_FIELD+','+SECTOR_FIELD);
+      +'&custom_fields='+LEAD_DATE_FIELD+','+REGION_FIELD+','+SECTOR_FIELD
+      +'&include_fields=origin,channel_id');
     if(!d.success) throw new Error(d.error||'Deals fetch failed');
     all=all.concat((d.data||[]).filter(x=>
       new Date(x.add_time)>=new Date('2024-01-01') &&
@@ -358,7 +427,8 @@ async function fetchArchivedFromAirtable(){
     owner:r.fields['Owner']||'',createdOn:r.fields['Lead Created On']||'',
     region:r.fields['Sales Region']||'',
     sector:r.fields['Sector']||'',
-    createdTime:r.createdTime||''
+    createdTime:r.createdTime||'',
+    sourceChannel:r.fields['Source Channel']||''
   })).filter(l=>l.createdOn);
 }
 
@@ -413,7 +483,8 @@ async function doUpload(){
         'Owner':row['Lead - Owner']||'','Lead Status':row['Lead - Lead status']||'Archived',
         'Lead Created On':row['Lead - Lead created on']?row['Lead - Lead created on'].slice(0,10):'',
         'Sales Region':row['Lead - Sales-Region']||'',
-        'Sector':row['Lead - Sector']||''
+        'Sector':row['Lead - Sector']||'',
+        'Source Channel':row['Lead - Source channel']||row['Lead - Source Channel (Attribution)']||''
       }}));
       await atFetch('',{method:'POST',body:JSON.stringify({records:batch})});
     }
@@ -772,12 +843,13 @@ function renderDiveTbl(){
   if(S.diveTab==='deals'){
     const items=[...m.deals].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No new deals this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Region</th><th>Sector</th><th>Status</th><th>Created</th></tr></thead><tbody>'
+    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Region</th><th>Sector</th><th>Source</th><th>Status</th><th>Created</th></tr></thead><tbody>'
       +items.map(d=>'<tr>'
         +'<td>'+esc(d.title)+'</td>'
         +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
         +'<td class="tdm">'+esc(Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--')+'</td>'
         +'<td class="tdm">'+esc(Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--')+'</td>'
+        +'<td class="tdm">'+esc(classifyDeal(d))+'</td>'
         +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
         +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
         +'</tr>').join('')+'</tbody></table>';
@@ -788,27 +860,31 @@ function renderDiveTbl(){
         owner:Object.values(OWNER_MAP).find(o=>o.id===(l.owner_id?.id||l.owner_id))?.name||'--',
         region:Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(l[REGION_FIELD]))||'--',
         sector:Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(l[SECTOR_FIELD]))||'--',
+        source:classifyLead(l),
         date:l.add_time, status:'open'
       })),
       ...m.archivedL.map(l=>({
         title:l.title, owner:l.owner||'--',
         region:l.region||'--', sector:l.sector||'--',
+        source:classifyArchivedLead(l),
         date:l.createdOn, status:'archived'
       })),
       ...m.conv.map(d=>({
         title:d.title, owner:d.owner_name||'--',
         region:Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--',
         sector:Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--',
+        source:'Converted from Deal',
         date:d[LEAD_DATE_FIELD], status:'converted'
       })),
     ].sort((a,b)=>new Date(b.date)-new Date(a.date));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No leads this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Region</th><th>Sector</th><th>Status</th><th>Lead Created</th></tr></thead><tbody>'
+    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Region</th><th>Sector</th><th>Source</th><th>Status</th><th>Lead Created</th></tr></thead><tbody>'
       +items.map(l=>'<tr>'
         +'<td>'+esc(l.title)+'</td>'
         +'<td class="tdm">'+esc(l.owner)+'</td>'
         +'<td class="tdm">'+esc(l.region)+'</td>'
         +'<td class="tdm">'+esc(l.sector)+'</td>'
+        +'<td class="tdm">'+esc(l.source||'--')+'</td>'
         +'<td><span class="pill pill-'+l.status+'">'+l.status+'</span></td>'
         +'<td class="tdm">'+fmtD(l.date)+'</td>'
         +'</tr>').join('')+'</tbody></table>';
@@ -816,6 +892,11 @@ function renderDiveTbl(){
 }
 
 /* ── Init ── */
+function toggleLogic(){
+  const box=$('logic-box');
+  box.style.display=box.style.display==='block'?'none':'block';
+}
+
 async function init(){
   $('err').style.display='none';
   $('main').style.display='none';
@@ -839,7 +920,7 @@ async function init(){
     $('at-status-text').innerHTML=archived.length>0
       ?'<strong>'+archived.length+' archived leads</strong> loaded from Airtable and included in counts.'
       :'No archived leads in Airtable. Use <strong>Update Archived Leads</strong> to sync.';
-    $('at-status').style.display='flex';
+    $('at-status').style.display='block';
     // Show last sync date from most recently created Airtable record
     if(archived.length>0){
       const dates=archived.map(l=>l.createdTime).filter(Boolean).sort();
