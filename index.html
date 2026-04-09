@@ -192,7 +192,13 @@
   <div class="spinner-wrap" id="spin"><div class="spinner"></div><p>Pulling data from Pipedrive &amp; Airtable&hellip;</p></div>
 
   <div id="main" style="display:none">
-    <div class="sec-lbl">last month vs month before</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem">
+      <div class="sec-lbl" style="margin-bottom:0;flex:1" id="stats-lbl">last month vs month before</div>
+      <div style="display:flex;gap:.4rem;align-items:center">
+        <button class="nav-btn" id="stats-prev" onclick="shiftStats(1)">&#x2190;</button>
+        <button class="nav-btn" id="stats-next" onclick="shiftStats(-1)">&#x2192;</button>
+      </div>
+    </div>
     <div class="stats" id="stats"></div>
 
     <div class="chart-card">
@@ -213,6 +219,8 @@
       <div class="card-hd">
         <h2>Monthly <i>Breakdown</i></h2>
         <div class="card-hd-controls">
+          <div class="pill-group" id="region-pills"></div>
+          <div class="pill-group" id="sector-pills"></div>
           <div class="pill-group" id="year-pills"></div>
         </div>
       </div>
@@ -251,13 +259,17 @@ const SECTOR_ID = {Education:726, 'Membership Associations':728, Charity:727, Co
 const COMBOS    = [];
 REGIONS.forEach(r => SECTORS.forEach(s => COMBOS.push({r, s, label: r + ' \u2014 ' + s})));
 const CHART_WINDOW    = 12;
+const EXCLUDED_MONTHS = new Set(['2025-08']); // Aug 2025: mass lead conversion, exclude leads
 
 const S = {
   deals:[], leads:[], archivedLeads:[],
   mo:{}, allKeys:[],
   chartOffset:0, yearFilter:null,
   diveKey:null, diveTab:'deals',
-  currency:'GBP'
+  currency:'GBP',
+  filterRegion: null,
+  filterSector: null,
+  statsOffset: 0  // 0 = last complete month, 1 = 2 months ago, etc.
 };
 const expandedMonths = new Set();
 
@@ -327,7 +339,9 @@ async function fetchArchivedFromAirtable(){
   }
   return all.map(r=>({
     id:r.fields['Lead ID']||'',title:r.fields['Title']||'',
-    owner:r.fields['Owner']||'',createdOn:r.fields['Lead Created On']||''
+    owner:r.fields['Owner']||'',createdOn:r.fields['Lead Created On']||'',
+    region:r.fields['Sales Region']||'',
+    sector:r.fields['Sector']||''
   })).filter(l=>l.createdOn);
 }
 
@@ -380,7 +394,9 @@ async function doUpload(){
       const batch=rows.slice(i,i+10).map(row=>({fields:{
         'Lead ID':row['Lead - ID']||'','Title':row['Lead - Title']||'',
         'Owner':row['Lead - Owner']||'','Lead Status':row['Lead - Lead status']||'Archived',
-        'Lead Created On':row['Lead - Lead created on']?row['Lead - Lead created on'].slice(0,10):''
+        'Lead Created On':row['Lead - Lead created on']?row['Lead - Lead created on'].slice(0,10):'',
+        'Sales Region':row['Lead - Sales-Region']||'',
+        'Sector':row['Lead - Sector']||''
       }}));
       await atFetch('',{method:'POST',body:JSON.stringify({records:batch})});
     }
@@ -399,11 +415,25 @@ function buildMonthly(){
   function ensure(k){ if(!S.mo[k]) S.mo[k]={deals:[],leads:[],archivedL:[],conv:[],opps:0}; }
   S.deals.forEach(d=>{
     if(isConvertedDeal(d)){
-      const ld=d[LEAD_DATE_FIELD]; if(ld){ const k=mKey(ld); ensure(k); S.mo[k].conv.push(d); }
+      const ld=d[LEAD_DATE_FIELD];
+      if(ld){
+        const k=mKey(ld);
+        if(EXCLUDED_MONTHS.has(k)) return; // skip converted leads for excluded months
+        ensure(k); S.mo[k].conv.push(d);
+      }
     } else { const k=mKey(d.add_time); ensure(k); S.mo[k].deals.push(d); }
   });
-  S.leads.forEach(l=>{ const k=mKey(l.add_time); ensure(k); S.mo[k].leads.push(l); });
-  S.archivedLeads.forEach(l=>{ if(!l.createdOn) return; const k=mKey(l.createdOn); ensure(k); S.mo[k].archivedL.push(l); });
+  S.leads.forEach(l=>{
+    const k=mKey(l.add_time);
+    if(EXCLUDED_MONTHS.has(k)) return; // skip leads for excluded months
+    ensure(k); S.mo[k].leads.push(l);
+  });
+  S.archivedLeads.forEach(l=>{
+    if(!l.createdOn) return;
+    const k=mKey(l.createdOn);
+    if(EXCLUDED_MONTHS.has(k)) return; // skip archived leads for excluded months
+    ensure(k); S.mo[k].archivedL.push(l);
+  });
   const now=new Date(), start=new Date('2024-01-01');
   let cur=new Date(start);
   while(cur<=now){
@@ -416,15 +446,31 @@ function buildMonthly(){
 }
 
 /* ── Stat cards ── */
+function shiftStats(dir){
+  // dir +1 = go further back, -1 = go forward (more recent)
+  const now=new Date();
+  const maxOffset=S.allKeys.indexOf(now.getFullYear()+'-'+String(now.getMonth()).padStart(2,'0')); // can't go past current month
+  S.statsOffset=Math.max(0,S.statsOffset+dir);
+  renderStats();
+}
+
 function renderStats(){
   const now=new Date();
-  const lm=new Date(now.getFullYear(),now.getMonth()-1,1);
-  const pm=new Date(now.getFullYear(),now.getMonth()-2,1);
+  // lm = the month we're showing (offset back from last complete month)
+  const lm=new Date(now.getFullYear(),now.getMonth()-1-S.statsOffset,1);
+  const pm=new Date(now.getFullYear(),now.getMonth()-2-S.statsOffset,1);
   const lmKey=lm.getFullYear()+'-'+String(lm.getMonth()+1).padStart(2,'0');
   const pmKey=pm.getFullYear()+'-'+String(pm.getMonth()+1).padStart(2,'0');
   const lmd=S.mo[lmKey]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
   const pmd=S.mo[pmKey]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
   const pmLabel=pm.toLocaleString('en-GB',{month:'long'});
+  const lmLabel=lm.toLocaleString('en-GB',{month:'long',year:'numeric'});
+
+  // Update nav button states and label
+  $('stats-next').disabled=(S.statsOffset<=0);
+  const lbl=S.statsOffset===0?'last month vs month before':lmLabel+' vs '+pmLabel;
+  $('stats-lbl').textContent=lbl;
+
   function trend(cur,prev){
     if(prev===0&&cur===0) return '<span class="trend-flat">\u2014</span>';
     const diff=cur-prev;
@@ -434,12 +480,11 @@ function renderStats(){
   }
   const lmO=lmd.opps, lmD=lmd.deals.length, lmL=lmd.leads.length+lmd.archivedL.length+lmd.conv.length;
   const pmO=pmd.opps, pmD=pmd.deals.length, pmL=pmd.leads.length+pmd.archivedL.length+pmd.conv.length;
-  const lmLabel=lm.toLocaleString('en-GB',{month:'long',year:'numeric'});
   $('stats').innerHTML=[
     {c:'p',ico:'&#x1F4CA;',n:fmt(lmO), l:'New Opportunities',t:trend(lmO,pmO)},
     {c:'g',ico:'&#x1F4E5;',n:fmt(lmD), l:'New Deals',        t:trend(lmD,pmD)},
     {c:'p',ico:'&#x1F331;',n:fmt(lmL), l:'New Leads',        t:trend(lmL,pmL)},
-    {c:'g',ico:'&#x1F4C5;',n:lmLabel,  l:'Showing month',    t:'<span class="trend-flat">vs previous month</span>'},
+    {c:'g',ico:'&#x1F4C5;',n:lmLabel,  l:'Showing month',    t:'<span class="trend-flat">vs '+pmLabel+'</span>'},
   ].map(x=>'<div class="sc '+x.c+'"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div><div class="sc-trend">'+x.t+'</div></div>').join('');
 }
 
@@ -470,12 +515,55 @@ function renderChart(){
   }).join('');
 }
 
-/* ── Year pills ── */
+/* ── Filter pills: year, region, sector ── */
 function getYears(){ return [...new Set(S.allKeys.map(mYear))].sort(); }
-function renderYearPills(){
-  $('year-pills').innerHTML=getYears().map(y=>'<button class="f-pill'+(S.yearFilter===y?' active':'')+'" onclick="setYear(\''+y+'\')">'+y+'</button>').join('');
+
+function renderFilterPills(){
+  // Year pills
+  document.getElementById('year-pills').innerHTML =
+    getYears().map(y=>'<button class="f-pill'+(S.yearFilter===y?' active':'')+'" data-pill-year="'+y+'">'+y+'</button>').join('');
+  // Region pills
+  document.getElementById('region-pills').innerHTML =
+    '<span style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);margin-right:.2rem">Region:</span>'
+    + REGIONS.map(r=>'<button class="f-pill'+(S.filterRegion===r?' active':'')+'" data-pill-region="'+r+'">'+r+'</button>').join('');
+  // Sector pills
+  document.getElementById('sector-pills').innerHTML =
+    '<span style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);margin-right:.2rem">Sector:</span>'
+    + SECTORS.map(s=>'<button class="f-pill'+(S.filterSector===s?' active':'')+'" data-pill-sector="'+s+'">'+s+'</button>').join('');
 }
-function setYear(y){ S.yearFilter=S.yearFilter===y?null:y; renderYearPills(); renderOvTable(); }
+
+// Delegated click handler for all filter pills
+document.addEventListener('click', function(e){
+  const btn = e.target.closest('[data-pill-year],[data-pill-region],[data-pill-sector]');
+  if(!btn) return;
+  if(btn.dataset.pillYear){
+    const y=btn.dataset.pillYear; S.yearFilter=S.yearFilter===y?null:y;
+  } else if(btn.dataset.pillRegion){
+    const r=btn.dataset.pillRegion; S.filterRegion=S.filterRegion===r?null:r;
+  } else if(btn.dataset.pillSector){
+    const s=btn.dataset.pillSector; S.filterSector=S.filterSector===s?null:s;
+  }
+  renderFilterPills();
+  renderOvTable();
+});
+
+/* ── Helper: apply region+sector filter to a set of items ── */
+function applyFilter(items, isArchived=false){
+  return items.filter(item=>{
+    if(S.filterRegion){
+      const val = isArchived ? (item.region||'').trim() : String(Number(item[REGION_FIELD]));
+      const expected = isArchived ? S.filterRegion : String(REGION_ID[S.filterRegion]);
+      if(val!==expected) return false;
+    }
+    if(S.filterSector){
+      const val = isArchived ? (item.sector||'').trim() : String(Number(item[SECTOR_FIELD]));
+      const expected = isArchived ? S.filterSector : String(SECTOR_ID[S.filterSector]);
+      if(val!==expected) return false;
+    }
+    return true;
+  });
+}
+
 
 /* ── Expand/collapse ── */
 function toggleExpand(k){
@@ -488,6 +576,9 @@ function renderOvTable(){
   let keys=[...S.allKeys].reverse();
   if(S.yearFilter) keys=keys.filter(k=>mYear(k)===S.yearFilter);
 
+  // When a region/sector filter is active, the main row totals are filtered too
+  const filtering = S.filterRegion || S.filterSector;
+
   let html='<thead><tr>'
     +'<th style="width:32px"></th>'
     +'<th>Month</th><th>New Opps</th><th>New Deals</th>'
@@ -496,85 +587,125 @@ function renderOvTable(){
     +'<th></th>'
     +'</tr></thead><tbody>';
 
-  keys.forEach(k=>{
+  keys.forEach(function(k){
     const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
-    const dOpen=m.deals.filter(d=>d.status==='open').length;
-    const dWon=m.deals.filter(d=>d.status==='won').length;
-    const dLost=m.deals.filter(d=>d.status==='lost').length;
-    const tl=m.leads.length+m.conv.length+m.archivedL.length;
-    const isExp=expandedMonths.has(k);
+    const isExcluded = EXCLUDED_MONTHS.has(k);
 
-    html+='<tr>'
-      +'<td style="text-align:center;padding:.5rem"><button class="expand-btn js-expand'+(isExp?' open':'')+' " data-key="'+k+'">&#x25BC;</button></td>'
-      +'<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'
-      +'<td class="tdf">'+m.opps+'</td>'
-      +'<td class="tdf-p">'+m.deals.length+'</td>'
-      +'<td class="tdm">'+dOpen+'</td><td class="tdm">'+dWon+'</td><td class="tdm">'+dLost+'</td>'
-      +'<td class="tdf-p">'+tl+'</td>'
-      +'<td class="tdm">'+m.leads.length+'</td>'
-      +'<td class="tdm">'+m.conv.length+'</td>'
-      +'<td class="tdm">'+m.archivedL.length+'</td>'
-      +'<td><button class="dbtn" onclick="openDive(\''+k+'\')">DIVE &rarr;</button></td>'
+    // Apply region/sector filter to deals, leads, conv
+    // Archived leads don't have region/sector so they're included unless sector filter active
+    const fDeals = applyFilter(m.deals);
+    const fConv  = applyFilter(m.conv);
+    const fLeads = applyFilter(m.leads);
+    // Archived leads: can't filter by region/sector, include only if no region/sector filter
+    const fArch  = applyFilter(m.archivedL, true);
+
+    const dOpen = fDeals.filter(d=>d.status==='open').length;
+    const dWon  = fDeals.filter(d=>d.status==='won').length;
+    const dLost = fDeals.filter(d=>d.status==='lost').length;
+    const lOpen = fLeads.length;
+    const lConv = fConv.length;
+    const lArch = fArch.length;
+    const tl    = lOpen+lConv+lArch;
+    const opps  = fDeals.length+tl;
+
+    const isExp = expandedMonths.has(k);
+    const rowStyle = isExcluded ? ' style="opacity:.45"' : '';
+    const noteCell = isExcluded
+      ? '<td colspan="11" class="tdm" style="color:var(--amb);font-size:.6rem">\u26A0\uFE0F leads excluded (mass conversion)</td>'
+      : '';
+
+    html+='<tr'+rowStyle+'>'
+      +'<td style="text-align:center;padding:.5rem"><button class="expand-btn js-expand'+(isExp?' open':'')+'" data-key="'+k+'">&#x25BC;</button></td>'
+      +(isExcluded
+        ? '<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'+noteCell
+        : '<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'
+          +'<td class="tdf">'+opps+'</td>'
+          +'<td class="tdf-p">'+fDeals.length+'</td>'
+          +'<td class="tdm">'+dOpen+'</td><td class="tdm">'+dWon+'</td><td class="tdm">'+dLost+'</td>'
+          +'<td class="tdf-p">'+tl+'</td>'
+          +'<td class="tdm">'+lOpen+'</td>'
+          +'<td class="tdm">'+lConv+'</td>'
+          +'<td class="tdm">'+lArch+'</td>'
+          +'<td><button class="dbtn" onclick="openDive(\''+k+'\')">DIVE &rarr;</button></td>'
+       )
       +'</tr>';
 
+    // Sub-rows: always show all combos, grey out zeros
     if(isExp){
-      const allItems=[...m.deals,...m.conv];
-      // Show each region x sector combo that has data
-      // Helper: filter allItems by region+sector combo
-      function comboDeals(r,s){
-        return allItems.filter(d=>Number(d[REGION_FIELD])===REGION_ID[r]&&Number(d[SECTOR_FIELD])===SECTOR_ID[s]);
+      function matchCombo(item,r,s,isArch=false){
+        if(isArch){
+          return (item.region||'').trim()===r && (item.sector||'').trim()===s;
+        }
+        return Number(item[REGION_FIELD])===REGION_ID[r]&&Number(item[SECTOR_FIELD])===SECTOR_ID[s];
       }
-      COMBOS.forEach(({r,s,label})=>{
-        const cd=comboDeals(r,s);
-        if(cd.length===0) return;
-        const cdOpen=cd.filter(d=>d.status==='open').length;
-        const cdWon=cd.filter(d=>d.status==='won').length;
-        const cdLost=cd.filter(d=>d.status==='lost').length;
-        // New opps for this combo = deals only (leads have no region/sector)
-        html+='<tr class="sub-row">'
+      function isAssigned(item, isArch=false){
+        if(isArch) return !!(item.region||'').trim() && !!(item.sector||'').trim();
+        return Number(item[REGION_FIELD])>0&&Number(item[SECTOR_FIELD])>0;
+      }
+
+      COMBOS.forEach(function(combo){
+        const r=combo.r, s=combo.s, label=combo.label;
+        const cDeals = m.deals.filter(d=>matchCombo(d,r,s));
+        const cConv  = m.conv.filter(d=>matchCombo(d,r,s));
+        const cLeads = m.leads.filter(l=>matchCombo(l,r,s));
+        const cArch  = m.archivedL.filter(l=>matchCombo(l,r,s,true));
+        const isEmpty= cDeals.length===0&&cConv.length===0&&cLeads.length===0&&cArch.length===0;
+        const rowDim = isEmpty ? ' style="opacity:.35"' : '';
+
+        const cdOpen = cDeals.filter(d=>d.status==='open').length;
+        const cdWon  = cDeals.filter(d=>d.status==='won').length;
+        const cdLost = cDeals.filter(d=>d.status==='lost').length;
+        const clConv = cConv.length;
+        const clOpen = cLeads.length;
+        const clArch = cArch.length;
+        const clTotal= clOpen+clConv+clArch;
+        const cOpps  = cDeals.length+clTotal;
+
+        html+='<tr class="sub-row"'+rowDim+'>'
           +'<td></td>'
           +'<td class="sub-label">'+label+'</td>'
-          +'<td class="tdm">'+cd.length+'</td>'  // new opps (deals only for this combo)
-          +'<td class="tdm">'+cd.length+'</td>'  // new deals
+          +'<td class="tdm">'+cOpps+'</td>'
+          +'<td class="tdm">'+cDeals.length+'</td>'
           +'<td class="tdm">'+cdOpen+'</td>'
           +'<td class="tdm">'+cdWon+'</td>'
           +'<td class="tdm">'+cdLost+'</td>'
-          +'<td class="tdm" style="color:var(--mute)">—</td>'  // new leads (n/a)
-          +'<td class="tdm" style="color:var(--mute)">—</td>'
-          +'<td class="tdm" style="color:var(--mute)">—</td>'
-          +'<td class="tdm" style="color:var(--mute)">—</td>'
+          +'<td class="tdm">'+clTotal+'</td>'
+          +'<td class="tdm">'+clOpen+'</td>'
+          +'<td class="tdm">'+clConv+'</td>'
+          +'<td class="tdm">'+clArch+'</td>'
           +'<td></td>'
           +'</tr>';
       });
-      // Unassigned row
-      const assigned=allItems.filter(d=>Number(d[REGION_FIELD])>0&&Number(d[SECTOR_FIELD])>0).length;
-      const unassigned=allItems.length-assigned;
-      if(unassigned>0){
-        const uItems=allItems.filter(d=>!(Number(d[REGION_FIELD])>0&&Number(d[SECTOR_FIELD])>0));
-        const uOpen=uItems.filter(d=>d.status==='open').length;
-        const uWon=uItems.filter(d=>d.status==='won').length;
-        const uLost=uItems.filter(d=>d.status==='lost').length;
-        html+='<tr class="sub-row">'
-          +'<td></td>'
-          +'<td class="sub-label" style="color:var(--mute)">Unassigned</td>'
-          +'<td class="tdm" style="color:var(--mute)">'+unassigned+'</td>'
-          +'<td class="tdm" style="color:var(--mute)">'+unassigned+'</td>'
-          +'<td class="tdm" style="color:var(--mute)">'+uOpen+'</td>'
-          +'<td class="tdm" style="color:var(--mute)">'+uWon+'</td>'
-          +'<td class="tdm" style="color:var(--mute)">'+uLost+'</td>'
-          +'<td class="tdm" style="color:var(--mute)">—</td>'
-          +'<td class="tdm" style="color:var(--mute)">—</td>'
-          +'<td class="tdm" style="color:var(--mute)">—</td>'
-          +'<td class="tdm" style="color:var(--mute)">—</td>'
-          +'<td></td>'
-          +'</tr>';
-      }
+
+      // Unassigned
+      const uDeals  = m.deals.filter(d=>!isAssigned(d));
+      const uConv   = m.conv.filter(d=>!isAssigned(d));
+      const uLeads  = m.leads.filter(l=>!isAssigned(l));
+      const uArch   = m.archivedL.filter(l=>!isAssigned(l,true));
+      const uOrgD   = m.deals.filter(d=>!isAssigned(d));
+      const uOpps   = uOrgD.length+uConv.length+uLeads.length+uArch.length;
+      const uIsEmpty= uOpps===0;
+      html+='<tr class="sub-row"'+(uIsEmpty?' style="opacity:.35"':'')+'>'
+        +'<td></td>'
+        +'<td class="sub-label" style="color:var(--mute)">Unassigned</td>'
+        +'<td class="tdm" style="color:var(--mute)">'+uOpps+'</td>'
+        +'<td class="tdm" style="color:var(--mute)">'+uOrgD.length+'</td>'
+        +'<td class="tdm" style="color:var(--mute)">'+uOrgD.filter(d=>d.status==='open').length+'</td>'
+        +'<td class="tdm" style="color:var(--mute)">'+uOrgD.filter(d=>d.status==='won').length+'</td>'
+        +'<td class="tdm" style="color:var(--mute)">'+uOrgD.filter(d=>d.status==='lost').length+'</td>'
+        +'<td class="tdm" style="color:var(--mute)">'+(uConv.length+uLeads.length+uArch.length)+'</td>'
+        +'<td class="tdm" style="color:var(--mute)">'+uLeads.length+'</td>'
+        +'<td class="tdm" style="color:var(--mute)">'+uConv.length+'</td>'
+        +'<td class="tdm" style="color:var(--mute)">'+uArch.length+'</td>'
+        +'<td></td>'
+        +'</tr>';
     }
   });
 
   html+='</tbody>';
   $('ov-tbl').innerHTML=html;
 }
+
 
 /* ── Deep dive ── */
 function openDive(k){
@@ -637,7 +768,7 @@ async function init(){
   $('spin').style.display='flex';
   $('dive').style.display='none';
   $('upload-panel').style.display='none';
-  S.diveKey=null; S.chartOffset=0; S.yearFilter=null;
+  S.diveKey=null; S.chartOffset=0; S.yearFilter=null; S.filterRegion=null; S.filterSector=null; S.statsOffset=0;
   expandedMonths.clear();
 
   try{
@@ -647,7 +778,7 @@ async function init(){
     buildMonthly();
     renderStats();
     renderChart();
-    renderYearPills();
+    renderFilterPills();
     renderOvTable();
     $('main').style.display='block';
     $('ts').textContent='Updated '+new Date().toLocaleTimeString('en-GB');
