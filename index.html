@@ -121,10 +121,12 @@
     .f-pill.active{background:var(--pur-soft);border-color:rgba(176,110,243,.4);color:var(--pur)}
     .f-pill:hover:not(.active){color:var(--txt2)}
 
-    /* breakdown dropdown */
-    .breakdown-select{font-family:var(--ff-mono);font-size:.65rem;background:var(--surf2);border:1px solid var(--bord2);color:var(--txt2);padding:.28rem .6rem;border-radius:8px;cursor:pointer;outline:none;transition:border-color .2s}
-    .breakdown-select:focus{border-color:var(--pur)}
-    .breakdown-select option{background:var(--surf2)}
+    /* expand button */
+    .expand-btn{background:none;border:1px solid var(--bord2);color:var(--mute);font-family:var(--ff-mono);font-size:.6rem;width:22px;height:22px;border-radius:5px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:border-color .2s,color .2s,transform .15s}
+    .expand-btn:hover{border-color:var(--pur);color:var(--pur)}
+    .expand-btn.open{transform:rotate(180deg);border-color:var(--pur);color:var(--pur)}
+    .sub-row td{background:rgba(176,110,243,.03);border-top:1px solid rgba(176,110,243,.08)!important}
+    .sub-label{font-family:var(--ff-mono);font-size:.62rem;color:var(--txt2);padding-left:2rem!important}
 
     /* deep dive */
     .dive{display:none;background:var(--bg2);border:1px solid var(--bord2);border-radius:var(--r);padding:1.75rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
@@ -235,11 +237,6 @@
       <div class="card-hd">
         <h2>Monthly <i>Breakdown</i></h2>
         <div class="card-hd-controls">
-          <select class="breakdown-select" id="breakdown-select" onchange="setBreakdown(this.value)">
-            <option value="none">No breakdown</option>
-            <option value="region">By Sales Region</option>
-            <option value="sector">By Sector</option>
-          </select>
           <div class="pill-group" id="year-pills"></div>
         </div>
       </div>
@@ -606,164 +603,90 @@ function renderYearPills(){
 function setYear(y){ S.yearFilter=S.yearFilter===y?null:y; renderYearPills(); renderOvTable(); }
 function setBreakdown(v){ S.breakdown=v; renderOvTable(); }
 
+/* Track which months are expanded */
+const expandedMonths = new Set();
+
+function toggleExpand(k){
+  if(expandedMonths.has(k)) expandedMonths.delete(k);
+  else expandedMonths.add(k);
+  renderOvTable();
+}
+
+/* All region+sector combinations */
+const COMBOS = [];
+REGIONS.forEach(r=> SECTORS.forEach(s=> COMBOS.push({r,s,label:r+' — '+s})));
+
 function renderOvTable(){
   let keys=[...S.allKeys].reverse();
   if(S.yearFilter) keys=keys.filter(k=>mYear(k)===S.yearFilter);
-  const bd=S.breakdown;
 
-  if(bd==='none'){
-    // Standard table
-    $('ov-tbl').innerHTML='<thead><tr>'
-      +'<th>Month</th><th>New Opps</th><th>New Deals</th>'
-      +'<th>&#x2514; Open</th><th>&#x2514; Won</th><th>&#x2514; Lost</th>'
-      +'<th>New Leads</th><th>&#x2514; Open</th><th>&#x2514; Converted</th><th>&#x2514; Archived</th>'
-      +'<th></th></tr></thead><tbody>'
-      +keys.map(k=>{
-        const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
-        const dOpen=m.deals.filter(d=>d.status==='open').length;
-        const dWon=m.deals.filter(d=>d.status==='won').length;
-        const dLost=m.deals.filter(d=>d.status==='lost').length;
-        const tl=m.leads.length+m.conv.length+m.archivedL.length;
-        return '<tr>'
-          +'<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'
-          +'<td class="tdf">'+m.opps+'</td>'
-          +'<td class="tdf-p">'+m.deals.length+'</td>'
-          +'<td class="tdm">'+dOpen+'</td><td class="tdm">'+dWon+'</td><td class="tdm">'+dLost+'</td>'
-          +'<td class="tdf-p">'+tl+'</td>'
-          +'<td class="tdm">'+m.leads.length+'</td>'
-          +'<td class="tdm">'+m.conv.length+'</td>'
-          +'<td class="tdm">'+m.archivedL.length+'</td>'
-          +'<td><button class="dbtn" onclick="openDive(\''+k+'\')">DIVE &rarr;</button></td>'
+  const COLS = 12; // total columns
+
+  let html = '<thead><tr>'
+    +'<th style="width:28px"></th>'
+    +'<th>Month</th><th>New Opps</th><th>New Deals</th>'
+    +'<th>└ Open</th><th>└ Won</th><th>└ Lost</th>'
+    +'<th>New Leads</th><th>└ Open</th><th>└ Converted</th><th>└ Archived</th>'
+    +'<th></th>'
+    +'</tr></thead><tbody>';
+
+  keys.forEach(k=>{
+    const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
+    const dOpen=m.deals.filter(d=>d.status==='open').length;
+    const dWon=m.deals.filter(d=>d.status==='won').length;
+    const dLost=m.deals.filter(d=>d.status==='lost').length;
+    const tl=m.leads.length+m.conv.length+m.archivedL.length;
+    const isExp=expandedMonths.has(k);
+
+    // Main row
+    html += '<tr>'
+      +'<td style="text-align:center"><button class="expand-btn'+(isExp?' open':'')+'" onclick="toggleExpand(''+k+'')">&#x25BC;</button></td>'
+      +'<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'
+      +'<td class="tdf">'+m.opps+'</td>'
+      +'<td class="tdf-p">'+m.deals.length+'</td>'
+      +'<td class="tdm">'+dOpen+'</td>'
+      +'<td class="tdm">'+dWon+'</td>'
+      +'<td class="tdm">'+dLost+'</td>'
+      +'<td class="tdf-p">'+tl+'</td>'
+      +'<td class="tdm">'+m.leads.length+'</td>'
+      +'<td class="tdm">'+m.conv.length+'</td>'
+      +'<td class="tdm">'+m.archivedL.length+'</td>'
+      +'<td><button class="dbtn" onclick="openDive(''+k+'')">DIVE &rarr;</button></td>'
+      +'</tr>';
+
+    // Sub rows — region x sector breakdown (only deals + conv have these fields)
+    if(isExp){
+      const allItems=[...m.deals,...m.conv];
+      COMBOS.forEach(({r,s,label})=>{
+        const count=allItems.filter(d=>{
+          const dRegion=(d[REGION_FIELD]||'').trim();
+          const dSector=(d[SECTOR_FIELD]||'').trim();
+          return dRegion===r && dSector===s;
+        }).length;
+        if(count===0) return; // skip empty combos
+        html += '<tr class="sub-row">'
+          +'<td></td>'
+          +'<td class="sub-label">'+label+'</td>'
+          +'<td class="tdm">'+count+'</td>'
+          +'<td colspan="9" class="tdm" style="color:var(--mute);font-size:.6rem">deals &amp; converted (region/sector not available on leads)</td>'
           +'</tr>';
-      }).join('')+'</tbody>';
-
-  } else {
-    // Breakdown table: month | total opps | [group1 | group2 | group3 | group4] | dive
-    const groups = bd==='region' ? REGIONS : SECTORS;
-    const groupCols = groups.map(g=>'<th>'+g+'</th>').join('');
-    $('ov-tbl').innerHTML='<thead><tr>'
-      +'<th>Month</th><th>New Opps</th>'
-      +groupCols
-      +'<th>Unassigned</th><th></th>'
-      +'</tr></thead><tbody>'
-      +keys.map(k=>{
-        const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
-        const field=bd==='region'?REGION_FIELD:SECTOR_FIELD;
-        // Count deals + conv per group
-        const allItems=[...m.deals,...m.conv];
-        const groupCounts=groups.map(g=>{
-          return allItems.filter(d=>(d[field]||'').trim()===g).length;
-        });
-        const assigned=groupCounts.reduce((a,b)=>a+b,0);
-        const unassigned=allItems.length-assigned;
-        // Note: leads/archived not included in breakdown as they lack field data
-        return '<tr>'
-          +'<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'
-          +'<td class="tdf">'+m.opps+'</td>'
-          +groupCounts.map(c=>'<td class="tdf-p">'+c+'</td>').join('')
-          +'<td class="tdm">'+unassigned+'</td>'
-          +'<td><button class="dbtn" onclick="openDive(\''+k+'\')">DIVE &rarr;</button></td>'
+      });
+      // Also show unassigned
+      const assigned=allItems.filter(d=>(d[REGION_FIELD]||'').trim()&&(d[SECTOR_FIELD]||'').trim()).length;
+      const unassigned=allItems.length-assigned;
+      if(unassigned>0){
+        html += '<tr class="sub-row">'
+          +'<td></td>'
+          +'<td class="sub-label" style="color:var(--mute)">Unassigned</td>'
+          +'<td class="tdm" style="color:var(--mute)">'+unassigned+'</td>'
+          +'<td colspan="9"></td>'
           +'</tr>';
-      }).join('')
-      +'</tbody>';
-  }
+      }
+    }
+  });
+
+  html += '</tbody>';
+  $('ov-tbl').innerHTML = html;
 }
 
-/* ═══════════════════════════════════════
-   DEEP DIVE
-═══════════════════════════════════════ */
-function openDive(k){
-  S.diveKey=k; S.diveTab='deals';
-  renderChart();
-  const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
-  const tl=m.leads.length+m.archivedL.length+m.conv.length;
-  const{mon,y}=mParts(k);
-  $('dive-title').innerHTML='<i>'+mon+'</i> '+y;
-  $('dive-stats').innerHTML=
-    '<div class="ds"><div class="ds-num g">'+m.opps+'</div><div class="ds-lbl">New Opportunities</div></div>'
-   +'<div class="ds"><div class="ds-num p">'+m.deals.length+'</div><div class="ds-lbl">New Deals</div></div>'
-   +'<div class="ds"><div class="ds-num p">'+tl+'</div><div class="ds-lbl">New Leads</div></div>';
-  $('t-deals').classList.add('on'); $('t-leads').classList.remove('on');
-  renderDiveTbl();
-  const dv=$('dive'); dv.style.display='block';
-  setTimeout(()=>dv.scrollIntoView({behavior:'smooth',block:'start'}),40);
-}
-
-function closeDive(){ S.diveKey=null; $('dive').style.display='none'; renderChart(); }
-
-function switchTab(tab){
-  S.diveTab=tab;
-  ['deals','leads'].forEach(t=>$('t-'+t).classList.toggle('on',t===tab));
-  renderDiveTbl();
-}
-
-function renderDiveTbl(){
-  const m=S.mo[S.diveKey]||{deals:[],leads:[],archivedL:[],conv:[]};
-  if(S.diveTab==='deals'){
-    const items=[...m.deals].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
-    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No new deals this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Stage</th><th>Region</th><th>Sector</th><th>Status</th><th>Created</th></tr></thead><tbody>'
-      +items.map(d=>'<tr>'
-        +'<td>'+esc(d.title)+'</td>'
-        +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
-        +'<td class="tdm">'+esc(d.stage_name||'--')+'</td>'
-        +'<td class="tdm">'+esc((d[REGION_FIELD]||'').trim()||'--')+'</td>'
-        +'<td class="tdm">'+esc((d[SECTOR_FIELD]||'').trim()||'--')+'</td>'
-        +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
-        +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
-        +'</tr>').join('')+'</tbody></table>';
-  } else {
-    const items=[
-      ...m.leads.map(l=>({title:l.title,owner:l.person_name||l.organization_name||'--',date:l.add_time,status:'open'})),
-      ...m.archivedL.map(l=>({title:l.title,owner:l.owner||'--',date:l.createdOn,status:'archived'})),
-      ...m.conv.map(d=>({title:d.title,owner:d.owner_name||'--',date:d[LEAD_DATE_FIELD],status:'converted'})),
-    ].sort((a,b)=>new Date(b.date)-new Date(a.date));
-    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No leads this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Status</th><th>Lead Created</th></tr></thead><tbody>'
-      +items.map(l=>'<tr>'
-        +'<td>'+esc(l.title)+'</td>'
-        +'<td class="tdm">'+esc(l.owner)+'</td>'
-        +'<td><span class="pill pill-'+l.status+'">'+l.status+'</span></td>'
-        +'<td class="tdm">'+fmtD(l.date)+'</td>'
-        +'</tr>').join('')+'</tbody></table>';
-  }
-}
-
-/* ═══════════════════════════════════════
-   INIT
-═══════════════════════════════════════ */
-async function init(){
-  $('err').style.display='none';
-  $('main').style.display='none';
-  $('spin').style.display='flex';
-  $('dive').style.display='none';
-  $('upload-panel').style.display='none';
-  S.diveKey=null; S.chartOffset=0; S.yearFilter=null; S.breakdown='none';
-  $('breakdown-select').value='none';
-
-  try{
-    await fetchCurrency();
-    const[deals,leads,archived]=await Promise.all([fetchDeals(),fetchLeads(),fetchArchivedFromAirtable()]);
-    S.deals=deals; S.leads=leads; S.archivedLeads=archived; S.mo={};
-    buildMonthly();
-    renderStats();
-    renderChart();
-    renderYearPills();
-    renderOvTable();
-    $('main').style.display='block';
-    $('ts').textContent='Updated '+new Date().toLocaleTimeString('en-GB');
-    $('at-status-text').innerHTML=archived.length>0
-      ?'<strong>'+archived.length+' archived leads</strong> loaded from Airtable and included in counts.'
-      :'No archived leads found in Airtable. Use <strong>Update Archived Leads</strong> to sync your first export.';
-    $('at-status').style.display='flex';
-  }catch(e){
-    showErr(e.message);
-  }finally{
-    $('spin').style.display='none';
-  }
-}
-
-init();
-</script>
-</body>
-</html>
+function setBreakdown(v){ S.breakdown=v; renderOvTable(); }
