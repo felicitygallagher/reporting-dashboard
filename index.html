@@ -305,13 +305,13 @@ async function pd(path){
 
 async function fetchDeals(){
   // Fetch all deals from Sep 2024 onwards to capture full status history
-  const ss='2024-09-01';
+  const ss='2024-01-01';
   let all=[],start=0;
   while(true){
     const d=await pd('/deals?limit=500&start='+start+'&status=all&pipeline_id='+MAIN_PIPELINE+'&since_timestamp='+ss+'%2000:00:00&custom_fields='+LEAD_DATE_FIELD);
     if(!d.success) throw new Error(d.error||'Deals fetch failed');
     // filter client-side to only deals created on/after Sep 2024
-    all=all.concat((d.data||[]).filter(deal=>new Date(deal.add_time)>=new Date('2024-09-01')));
+    all=all.concat((d.data||[]).filter(deal=>new Date(deal.add_time)>=new Date('2024-01-01')));
     if(!d.additional_data?.pagination?.more_items_in_collection) break;
     start+=500;
   }
@@ -499,7 +499,7 @@ function buildMonthly(){
 
   // Build sorted key list (only months with any data or between Sep 2025 and now)
   const now=new Date();
-  const start=new Date('2025-09-01');
+  const start=new Date('2024-01-01');
   const keys=new Set(Object.keys(S.mo));
   // fill in all months from start to now so chart has no gaps
   let cur=new Date(start);
@@ -530,12 +530,13 @@ function renderStats(){
   const lmData=S.mo[lmKey]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
   const pmData=S.mo[pmKey]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
 
+  const pmLabel=pm.toLocaleString('en-GB',{month:'long'});
   function trend(cur,prev){
     if(prev===0&&cur===0) return '<span class="trend-flat">&#x2014;</span>';
     const diff=cur-prev;
-    if(diff>0) return '<span class="trend-up">&#x2191; '+diff+' vs '+prev+'</span>';
-    if(diff<0) return '<span class="trend-down">&#x2193; '+Math.abs(diff)+' vs '+prev+'</span>';
-    return '<span class="trend-flat">&#x2014; same as '+prev+'</span>';
+    if(diff>0) return '<span class="trend-up">&#x2191; '+diff+' vs '+prev+' in '+pmLabel+'</span>';
+    if(diff<0) return '<span class="trend-down">&#x2193; '+Math.abs(diff)+' vs '+prev+' in '+pmLabel+'</span>';
+    return '<span class="trend-flat">&#x2014; same as '+pmLabel+' ('+prev+')</span>';
   }
 
   const lmOpps  = lmData.opps;
@@ -585,11 +586,12 @@ function renderChart(){
     $('nav-label').textContent=mShort(keys[0])+' – '+mShort(keys[keys.length-1]);
   }
 
-  const mx=Math.max(...keys.map(k=>S.mo[k]?S.mo[k].opps:0),1);
+  // Use global max across ALL months so bar heights are consistent when navigating
+  const globalMax=Math.max(...S.allKeys.map(k=>S.mo[k]?S.mo[k].opps:0),1);
   const mxH=165;
   $('bars').innerHTML=keys.map(k=>{
     const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
-    const h=Math.max(3,Math.round(m.opps/mx*mxH));
+    const h=Math.max(3,Math.round(m.opps/globalMax*mxH));
     const sel=S.diveKey===k?'sel':'';
     const tl=m.leads.length+m.archivedL.length+m.conv.length;
     const tip=m.opps+' opp'+(m.opps!==1?'s':'')+' ('+m.deals.length+' deal'+(m.deals.length!==1?'s':'')+' + '+tl+' lead'+(tl!==1?'s':'')+')';
@@ -649,7 +651,7 @@ function renderOvTable(){
         +'<td class="tdm">'+dOpen+'</td>'
         +'<td class="tdm">'+dWon+'</td>'
         +'<td class="tdm">'+dLost+'</td>'
-        +'<td class="tdf">'+tl+'</td>'
+        +'<td class="tdf-p">'+tl+'</td>'
         +'<td class="tdm">'+lOpen+'</td>'
         +'<td class="tdm">'+lConv+'</td>'
         +'<td class="tdm">'+lArch+'</td>'
