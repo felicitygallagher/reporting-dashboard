@@ -503,7 +503,7 @@ function renderOvTable(){
     const isExp=expandedMonths.has(k);
 
     html+='<tr>'
-      +'<td style="text-align:center;padding:.5rem"><button class="expand-btn'+(isExp?' open':'')+'" onclick="toggleExpand(\''+k+'\')">&#x25BC;</button></td>'
+      +'<td style="text-align:center;padding:.5rem"><button class="expand-btn js-expand'+(isExp?' open':'')+' " data-key="'+k+'">&#x25BC;</button></td>'
       +'<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'
       +'<td class="tdf">'+m.opps+'</td>'
       +'<td class="tdf-p">'+m.deals.length+'</td>'
@@ -544,6 +544,11 @@ function renderOvTable(){
 
   html+='</tbody>';
   $('ov-tbl').innerHTML=html;
+// Attach expand button listeners via delegation (avoids quote escaping issues)
+  document.getElementById('ov-tbl').addEventListener('click', function(e){
+    const btn = e.target.closest('.js-expand');
+    if(btn){ toggleExpand(btn.dataset.key); }
+  });
 }
 
 /* ── Deep dive ── */
