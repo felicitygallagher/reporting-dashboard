@@ -118,7 +118,7 @@
   <header class="hdr">
     <div class="hdr-l">
       <h1>Pipe<i>drive</i></h1>
-      <p class="hdr-sub">// Sales Intelligence Dashboard</p>
+      <p class="hdr-sub">// Sales Intelligence Dashboard &middot; Main Pipeline</p>
     </div>
     <div class="hdr-r">
       <div class="badge-live"><span class="dot-live"></span>LIVE DATA</div>
@@ -129,13 +129,13 @@
   <div class="err-bar" id="err"></div>
   <div class="spinner-wrap" id="spin"><div class="spinner"></div><p>Pulling data from Pipedrive&hellip;</p></div>
   <div id="main" style="display:none">
-    <div class="sec-lbl">12-month overview</div>
+    <div class="sec-lbl">12-month overview &mdash; main pipeline only</div>
     <div class="stats" id="stats"></div>
     <div class="chart-card">
       <div class="chart-top">
         <h2>New <i>Opportunities</i> per Month</h2>
       </div>
-      <p class="chart-note">Organic deals created + leads created. Deals converted from leads are excluded to avoid double-counting.</p>
+      <p class="chart-note">New deals in Main Pipeline (excl. those converted from leads) + new leads. Deals with a "Lead created date" set are counted in their lead month instead.</p>
       <div class="chart-scrl"><div class="bars" id="bars"></div></div>
       <p class="chart-hint">&#x2191; Click any month bar to open a deep dive</p>
     </div>
@@ -153,18 +153,26 @@
       </div>
       <div class="dive-stats" id="dive-stats"></div>
       <div class="dive-tabs">
-        <button class="dtab on" id="t-deals" onclick="switchTab('deals')">Deals (excl. conversions)</button>
-        <button class="dtab" id="t-leads" onclick="switchTab('leads')">Leads</button>
-        <button class="dtab" id="t-conv" onclick="switchTab('conv')">Converted (excluded)</button>
+        <button class="dtab on" id="t-deals" onclick="switchTab('deals')">Deals (new)</button>
+        <button class="dtab" id="t-leads" onclick="switchTab('leads')">Leads (new)</button>
+        <button class="dtab" id="t-conv" onclick="switchTab('conv')">From leads (excluded)</button>
       </div>
       <div class="tbl-wrap" id="dive-tbl"></div>
     </div>
   </div>
-  <footer>PIPEDRIVE DASHBOARD &middot; DATA &copy; PIPEDRIVE &middot; CONFIDENTIAL</footer>
+  <footer>PIPEDRIVE DASHBOARD &middot; MAIN PIPELINE &middot; DATA &copy; PIPEDRIVE &middot; CONFIDENTIAL</footer>
 </div>
 <script>
-const API_TOKEN = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
+/* ═══════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════ */
+const API_TOKEN      = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
+const MAIN_PIPELINE  = 11;       // "Main Pipeline"
+const LEAD_DATE_FIELD = '7dbac76a365841c9ab9c494fc52b8186849bb742'; // "Lead created date (for reporting)"
 
+/* ═══════════════════════════════════════
+   STATE
+═══════════════════════════════════════ */
 const S = { deals:[], leads:[], mo:{}, currency:'GBP', diveKey:null, diveTab:'deals' };
 const $ = id => document.getElementById(id);
 
@@ -195,12 +203,14 @@ function since12(){ const d=new Date(); d.setMonth(d.getMonth()-11); d.setDate(1
 function esc(s){ return String(s||'--').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtD(s){ return s?new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'--'; }
 
+/* A deal is "converted from a lead" if the Lead created date custom field has a value */
 function isConversion(deal){
-  if(deal.origin&&deal.origin==='LeadConversion') return true;
-  if(deal.channel&&typeof deal.channel==='string'&&deal.channel.toLowerCase().includes('lead')) return true;
-  return false;
+  return !!(deal[LEAD_DATE_FIELD]);
 }
 
+/* ═══════════════════════════════════════
+   API
+═══════════════════════════════════════ */
 async function pd(path){
   const sep=path.includes('?')?'&':'?';
   const r=await fetch('https://api.pipedrive.com/v1'+path+sep+'api_token='+encodeURIComponent(API_TOKEN));
@@ -208,11 +218,12 @@ async function pd(path){
   return r.json();
 }
 
+/* Fetch only deals from Main Pipeline, with the custom field included */
 async function fetchDeals(since){
   const ss=since.toISOString().slice(0,10);
   let all=[],start=0;
   while(true){
-    const d=await pd('/deals?limit=500&start='+start+'&status=all&since_timestamp='+ss+'%2000:00:00');
+    const d=await pd('/deals?limit=500&start='+start+'&status=all&pipeline_id='+MAIN_PIPELINE+'&since_timestamp='+ss+'%2000:00:00&custom_fields='+LEAD_DATE_FIELD);
     if(!d.success) throw new Error(d.error||'Deals fetch failed');
     all=all.concat(d.data||[]);
     if(!d.additional_data?.pagination?.more_items_in_collection) break;
@@ -238,38 +249,58 @@ async function fetchCurrency(){
   try{ const d=await pd('/currencies?default_currency=1'); const c=d.data?.find(x=>x.default_flag); if(c)S.currency=c.code; }catch(e){}
 }
 
+/* ═══════════════════════════════════════
+   BUILD MONTHLY ROLLUP
+   - deals:  Main Pipeline deals where "Lead created date" is EMPTY, bucketed by add_time
+   - leads:  all leads bucketed by add_time
+   - conv:   Main Pipeline deals where "Lead created date" IS SET (excluded from count)
+═══════════════════════════════════════ */
 function buildMonthly(){
   last12().forEach(k=>S.mo[k]={deals:[],leads:[],conv:[],won:0,val:0,opps:0});
+
   S.deals.forEach(d=>{
     const k=mKey(d.add_time);
     if(!S.mo[k]) return;
-    if(isConversion(d)){ S.mo[k].conv.push(d); }
-    else{
+    if(isConversion(d)){
+      S.mo[k].conv.push(d);
+    } else {
       S.mo[k].deals.push(d);
       if(d.status==='won'){ S.mo[k].won++; S.mo[k].val+=(d.value||0); }
       else if(d.status==='open'){ S.mo[k].val+=(d.value||0); }
     }
   });
-  S.leads.forEach(l=>{ const k=mKey(l.add_time); if(S.mo[k])S.mo[k].leads.push(l); });
+
+  S.leads.forEach(l=>{
+    const k=mKey(l.add_time);
+    if(S.mo[k]) S.mo[k].leads.push(l);
+  });
+
   last12().forEach(k=>{ S.mo[k].opps=S.mo[k].deals.length+S.mo[k].leads.length; });
 }
 
+/* ═══════════════════════════════════════
+   RENDER — STAT CARDS
+═══════════════════════════════════════ */
 function renderStats(){
-  const totalOpps=last12().reduce((s,k)=>s+S.mo[k].opps,0);
-  const totalDeals=last12().reduce((s,k)=>s+S.mo[k].deals.length,0);
-  const totalLeads=last12().reduce((s,k)=>s+S.mo[k].leads.length,0);
-  const totalConv=last12().reduce((s,k)=>s+S.mo[k].conv.length,0);
-  const totalWon=last12().reduce((s,k)=>s+S.mo[k].won,0);
-  const wr=totalDeals?Math.round(totalWon/totalDeals*100):0;
-  const totalVal=S.deals.filter(d=>!isConversion(d)&&(d.status==='won'||d.status==='open')).reduce((s,d)=>s+(d.value||0),0);
+  const totalOpps  = last12().reduce((s,k)=>s+S.mo[k].opps,0);
+  const totalDeals = last12().reduce((s,k)=>s+S.mo[k].deals.length,0);
+  const totalLeads = last12().reduce((s,k)=>s+S.mo[k].leads.length,0);
+  const totalConv  = last12().reduce((s,k)=>s+S.mo[k].conv.length,0);
+  const totalWon   = last12().reduce((s,k)=>s+S.mo[k].won,0);
+  const wr         = totalDeals?Math.round(totalWon/totalDeals*100):0;
+  const totalVal   = S.deals.filter(d=>!isConversion(d)&&(d.status==='won'||d.status==='open')).reduce((s,d)=>s+(d.value||0),0);
+
   $('stats').innerHTML=[
-    {c:'p',ico:'&#x1F4CA;',n:fmt(totalOpps),l:'New Opportunities',s:'deals + leads, last 12 mo'},
-    {c:'g',ico:'&#x1F4E5;',n:fmt(totalDeals),l:'Organic Deals',s:totalConv+' conversions excluded'},
-    {c:'p',ico:'&#x1F331;',n:fmt(totalLeads),l:'New Leads',s:'last 12 months'},
+    {c:'p',ico:'&#x1F4CA;',n:fmt(totalOpps),  l:'New Opportunities',s:'deals + leads, last 12 mo'},
+    {c:'g',ico:'&#x1F4E5;',n:fmt(totalDeals), l:'New Deals (Main Pipeline)',s:totalConv+' lead conversions excluded'},
+    {c:'p',ico:'&#x1F331;',n:fmt(totalLeads), l:'New Leads',s:'last 12 months'},
     {c:'g',ico:'&#x1F4B0;',n:fmtC(totalVal,S.currency),l:'Pipeline Value',s:wr+'% win rate on deals'},
   ].map(x=>'<div class="sc '+x.c+'"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div><div class="sc-sub">'+x.s+'</div></div>').join('');
 }
 
+/* ═══════════════════════════════════════
+   RENDER — BAR CHART
+═══════════════════════════════════════ */
 function renderChart(){
   const keys=last12();
   const mx=Math.max(...keys.map(k=>S.mo[k].opps),1);
@@ -283,11 +314,14 @@ function renderChart(){
   }).join('');
 }
 
+/* ═══════════════════════════════════════
+   RENDER — OVERVIEW TABLE
+═══════════════════════════════════════ */
 function renderOvTable(){
   const keys=[...last12()].reverse();
   $('ov-tbl').innerHTML='<thead><tr>'
-    +'<th>Month</th><th>New Opps</th><th>&#x2514; Organic Deals</th><th>&#x2514; Leads</th>'
-    +'<th>Conversions excl.</th><th>Deals Won</th><th>Win Rate</th><th>Value (Open+Won)</th><th></th>'
+    +'<th>Month</th><th>New Opps</th><th>&#x2514; New Deals</th><th>&#x2514; New Leads</th>'
+    +'<th>Lead convs. excl.</th><th>Deals Won</th><th>Win Rate</th><th>Value (Open+Won)</th><th></th>'
     +'</tr></thead><tbody>'
     +keys.map(k=>{
       const m=S.mo[k];
@@ -307,6 +341,9 @@ function renderOvTable(){
     +'</tbody>';
 }
 
+/* ═══════════════════════════════════════
+   DEEP DIVE
+═══════════════════════════════════════ */
 function openDive(k){
   S.diveKey=k; S.diveTab='deals';
   renderChart();
@@ -314,14 +351,16 @@ function openDive(k){
   const wr=m.deals.length?Math.round(m.won/m.deals.length*100):0;
   const{mon,y}=mParts(k);
   $('dive-title').innerHTML='<i>'+mon+'</i> '+y;
+
   $('dive-stats').innerHTML=
     '<div class="ds"><div class="ds-num g">'+m.opps+'</div><div class="ds-lbl">New Opportunities</div></div>'
-   +'<div class="ds"><div class="ds-num p">'+m.deals.length+'</div><div class="ds-lbl">Organic Deals</div></div>'
+   +'<div class="ds"><div class="ds-num p">'+m.deals.length+'</div><div class="ds-lbl">New Deals</div></div>'
    +'<div class="ds"><div class="ds-num p">'+m.leads.length+'</div><div class="ds-lbl">New Leads</div></div>'
    +'<div class="ds"><div class="ds-num a">'+m.won+'</div><div class="ds-lbl">Deals Won</div></div>'
    +'<div class="ds"><div class="ds-num p">'+wr+'%</div><div class="ds-lbl">Win Rate</div></div>'
    +'<div class="ds"><div class="ds-num g sm">'+fmtC(m.val,S.currency)+'</div><div class="ds-lbl">Open + Won Value</div></div>'
-   +'<div class="ds"><div class="ds-num sm" style="color:var(--mute)">'+m.conv.length+'</div><div class="ds-lbl">Conversions excl.</div></div>';
+   +'<div class="ds"><div class="ds-num sm" style="color:var(--mute)">'+m.conv.length+'</div><div class="ds-lbl">Lead convs. excl.</div></div>';
+
   $('t-deals').classList.add('on'); $('t-leads').classList.remove('on'); $('t-conv').classList.remove('on');
   renderDiveTbl();
   const dv=$('dive');
@@ -340,33 +379,60 @@ function switchTab(tab){
 function renderDiveTbl(){
   const m=S.mo[S.diveKey];
   const tab=S.diveTab;
+
   if(tab==='deals'){
     const items=[...m.deals].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
-    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No organic deals this month.</div>';return;}
+    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No new deals in Main Pipeline this month.</div>';return;}
     $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Contact / Org</th><th>Stage</th><th>Value</th><th>Status</th><th>Created</th></tr></thead><tbody>'
-      +items.map(d=>'<tr><td>'+esc(d.title)+'</td><td class="tdm">'+esc(d.person_name||d.org_name||'--')+'</td><td class="tdm">'+esc(d.stage_name||'--')+'</td><td class="tdm">'+fmtC(d.value,d.currency||S.currency)+'</td><td><span class="pill pill-'+d.status+'">'+d.status+'</span></td><td class="tdm">'+fmtD(d.add_time)+'</td></tr>').join('')
+      +items.map(d=>'<tr>'
+        +'<td>'+esc(d.title)+'</td>'
+        +'<td class="tdm">'+esc(d.person_name||d.org_name||'--')+'</td>'
+        +'<td class="tdm">'+esc(d.stage_name||'--')+'</td>'
+        +'<td class="tdm">'+fmtC(d.value,d.currency||S.currency)+'</td>'
+        +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
+        +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
+        +'</tr>').join('')
       +'</tbody></table>';
+
   } else if(tab==='leads'){
     const items=[...m.leads].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
-    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No leads this month.</div>';return;}
+    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No new leads this month.</div>';return;}
     $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Contact / Org</th><th>Value</th><th>Created</th></tr></thead><tbody>'
-      +items.map(l=>'<tr><td>'+esc(l.title)+'</td><td class="tdm">'+esc(l.person_name||l.organization_name||'--')+'</td><td class="tdm">'+(l.value?fmtC(l.value.amount,l.value.currency||S.currency):'--')+'</td><td class="tdm">'+fmtD(l.add_time)+'</td></tr>').join('')
+      +items.map(l=>'<tr>'
+        +'<td>'+esc(l.title)+'</td>'
+        +'<td class="tdm">'+esc(l.person_name||l.organization_name||'--')+'</td>'
+        +'<td class="tdm">'+(l.value?fmtC(l.value.amount,l.value.currency||S.currency):'--')+'</td>'
+        +'<td class="tdm">'+fmtD(l.add_time)+'</td>'
+        +'</tr>').join('')
       +'</tbody></table>';
+
   } else {
+    // conv tab — show excluded deals with their lead created date
     const items=[...m.conv].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No lead-converted deals this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Contact / Org</th><th>Stage</th><th>Value</th><th>Status</th><th>Created</th></tr></thead><tbody>'
-      +items.map(d=>'<tr><td>'+esc(d.title)+'</td><td class="tdm">'+esc(d.person_name||d.org_name||'--')+'</td><td class="tdm">'+esc(d.stage_name||'--')+'</td><td class="tdm">'+fmtC(d.value,d.currency||S.currency)+'</td><td><span class="pill pill-'+d.status+'">'+d.status+'</span></td><td class="tdm">'+fmtD(d.add_time)+'</td></tr>').join('')
+    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Contact / Org</th><th>Deal Created</th><th>Lead Created Date</th><th>Value</th><th>Status</th></tr></thead><tbody>'
+      +items.map(d=>'<tr>'
+        +'<td>'+esc(d.title)+'</td>'
+        +'<td class="tdm">'+esc(d.person_name||d.org_name||'--')+'</td>'
+        +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
+        +'<td class="tdm" style="color:var(--amb)">'+fmtD(d[LEAD_DATE_FIELD])+'</td>'
+        +'<td class="tdm">'+fmtC(d.value,d.currency||S.currency)+'</td>'
+        +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
+        +'</tr>').join('')
       +'</tbody></table>';
   }
 }
 
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
 async function init(){
   $('err').style.display='none';
   $('main').style.display='none';
   $('spin').style.display='flex';
   $('dive').style.display='none';
   S.diveKey=null;
+
   try{
     const since=since12();
     await fetchCurrency();
