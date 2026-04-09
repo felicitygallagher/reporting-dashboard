@@ -186,12 +186,14 @@
     <div class="warn-text"><strong>Known data limitation:</strong> The Pipedrive API does not return archived leads. Export archived leads from Pipedrive&rsquo;s reporting tool and use &ldquo;Update Archived Leads&rdquo; to sync them to Airtable. The dashboard combines these with live API data on every load.</div>
   </div>
 
-  <div id="at-status" style="display:none;margin-bottom:1rem">
+  <div id="at-status" style="display:none;margin-bottom:.5rem">
     <div class="info-bar" style="margin-bottom:0">
       <span>&#x1F4CA;</span>
       <span id="at-status-text" style="flex:1"></span>
-      <button class="logic-pill" onclick="toggleLogic()">&#x2139;&#xFE0F; Source logic &nbsp;&#x25BC;</button>
     </div>
+  </div>
+  <div style="margin-bottom:1.5rem">
+    <button class="logic-pill" onclick="toggleLogic()">&#x2139;&#xFE0F; Source classification logic &nbsp;&#x25BC;</button>
     <div class="logic-box" id="logic-box">
       <strong>Deals</strong><br>
       &bull; <em>Marketplace</em> origin &rarr; Website / Call Booking<br>
@@ -201,22 +203,14 @@
       &bull; <em>WebForms</em> origin &rarr; Conference (channel ID = form name)<br>
       &bull; <em>API</em> origin &rarr; API / Integration<br>
       <br>
-      <strong>Leads (API)</strong><br>
-      &bull; channel_id = <em>Zapier</em> &rarr; Website / Call Booking<br>
-      &bull; channel_id contains <em>chatbot</em> &rarr; Chatbot<br>
-      &bull; channel_id contains <em>surfe</em> &rarr; Surfe / LinkedIn ⚠️<br>
-      &bull; channel_id = a web form name &rarr; Conference (form name shown)<br>
-      &bull; no channel_id &rarr; Manually Added<br>
-      <br>
-      <strong>Archived Leads (Airtable)</strong><br>
-      &bull; Source Channel = <em>Zapier</em> &rarr; Website / Call Booking<br>
-      &bull; Source Channel contains <em>chatbot</em> &rarr; Chatbot<br>
-      &bull; Source Channel contains <em>surfe</em> &rarr; Surfe / LinkedIn ⚠️<br>
-      &bull; Other Source Channel value &rarr; Conference (value shown)<br>
-      &bull; No Source Channel &rarr; Manually Added
+      <strong>Leads</strong> (API active + archived &mdash; same logic for both)<br>
+      &bull; Source channel = <em>Zapier</em> &rarr; Website / Call Booking<br>
+      &bull; Source channel contains <em>chatbot</em> &rarr; Chatbot<br>
+      &bull; Source channel contains <em>surfe</em> &rarr; Surfe / LinkedIn &#x26A0;&#xFE0F;<br>
+      &bull; Source channel = a web form name &rarr; Conference (form name shown)<br>
+      &bull; No source channel &rarr; Manually Added
     </div>
-    </div>
-
+  </div>
   <div class="upload-panel" id="upload-panel">
     <h3>Sync Archived Leads to Airtable</h3>
     <p>Export archived leads from Pipedrive: Reports &rarr; Leads &rarr; filter by Status = Archived &rarr; Export CSV.<br>This will <strong>overwrite all previous data</strong> in Airtable.</p>
@@ -257,23 +251,34 @@
     <div class="ov-card">
       <div class="card-hd">
         <h2>Monthly <i>Breakdown</i></h2>
-        <div class="card-hd-controls" style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
-          <span class="pill-label">Owner:</span>
-          <select class="owner-select" id="owner-select" onchange="setOwner(this.value)">
-            <option value="">All</option>
-            <option value="Amy">Amy</option>
-            <option value="Fady">Fady</option>
-            <option value="Matt">Matt</option>
-            <option value="Merryn">Merryn</option>
-            <option value="Myron">Myron</option>
-            <option value="Other">Other</option>
-          </select>
+        <div class="card-hd-controls" style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:.4rem">
+            <span class="pill-label">Owner:</span>
+            <select class="owner-select" id="owner-select" onchange="setOwner(this.value)">
+              <option value="">All</option>
+              <option value="Amy">Amy</option>
+              <option value="Fady">Fady</option>
+              <option value="Matt">Matt</option>
+              <option value="Merryn">Merryn</option>
+              <option value="Myron">Myron</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
           <div class="pill-divider"></div>
-          <div class="pill-group" id="region-pills"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
+            <span class="pill-label">Region</span>
+            <div class="pill-group" id="region-pills"></div>
+          </div>
           <div class="pill-divider"></div>
-          <div class="pill-group" id="sector-pills"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
+            <span class="pill-label">Sector</span>
+            <div class="pill-group" id="sector-pills"></div>
+          </div>
           <div class="pill-divider"></div>
-          <div class="pill-group" id="year-pills"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
+            <span class="pill-label">Year</span>
+            <div class="pill-group" id="year-pills"></div>
+          </div>
         </div>
       </div>
       <div class="tbl-wrap"><table id="ov-tbl"></table></div>
@@ -634,17 +639,12 @@ function renderFilterPills(){
   // Year pills
   document.getElementById('year-pills').innerHTML =
     getYears().map(y=>'<button class="f-pill'+(S.yearFilter===y?' active':'')+'" data-pill-year="'+y+'">'+y+'</button>').join('');
-  // Region pills — label in the middle
-  const rActive = REGIONS.findIndex(r=>r===S.filterRegion);
+  // Region pills
   document.getElementById('region-pills').innerHTML =
-    REGIONS.slice(0, Math.ceil(REGIONS.length/2)).map(r=>'<button class="f-pill'+(S.filterRegion===r?' active':'')+'" data-pill-region="'+r+'">'+r+'</button>').join('')
-    + '<span class="pill-label" style="margin:0 .3rem">Region</span>'
-    + REGIONS.slice(Math.ceil(REGIONS.length/2)).map(r=>'<button class="f-pill'+(S.filterRegion===r?' active':'')+'" data-pill-region="'+r+'">'+r+'</button>').join('');
-  // Sector pills — label in the middle
+    REGIONS.map(r=>'<button class="f-pill'+(S.filterRegion===r?' active':'')+'" data-pill-region="'+r+'">'+r+'</button>').join('');
+  // Sector pills
   document.getElementById('sector-pills').innerHTML =
-    SECTORS.slice(0, Math.ceil(SECTORS.length/2)).map(s=>'<button class="f-pill'+(S.filterSector===s?' active':'')+'" data-pill-sector="'+s+'">'+s+'</button>').join('')
-    + '<span class="pill-label" style="margin:0 .3rem">Sector</span>'
-    + SECTORS.slice(Math.ceil(SECTORS.length/2)).map(s=>'<button class="f-pill'+(S.filterSector===s?' active':'')+'" data-pill-sector="'+s+'">'+s+'</button>').join('');
+    SECTORS.map(s=>'<button class="f-pill'+(S.filterSector===s?' active':'')+'" data-pill-sector="'+s+'">'+s+'</button>').join('');
 }
 
 // Delegated click handler for all filter pills
