@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pipedrive Dashboard</title>
+  <title>Opportunities Analysis</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,700;0,900;1,300;1,700&family=Epilogue:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
@@ -156,8 +156,8 @@
 <div class="wrap">
   <header class="hdr">
     <div class="hdr-l">
-      <h1>Pipe<i>drive</i></h1>
-      <p class="hdr-sub">// Sales Intelligence Dashboard &middot; Main Pipeline</p>
+      <h1>Opportunities <i>Analysis</i></h1>
+      <p class="hdr-sub">// Leads &amp; Deals Analysis</p>
     </div>
     <div class="hdr-r">
       <div class="badge-live"><span class="dot-live"></span>LIVE DATA</div>
@@ -165,6 +165,7 @@
       <div class="hdr-btns">
         <button class="btn-hdr grn" onclick="toggleUpload()">&#x2191; Update Archived Leads</button>
         <button class="btn-hdr" onclick="init()">&#x21BA; Refresh</button>
+        <p class="ts" id="sync-ts" style="text-align:right"></p>
       </div>
     </div>
   </header>
@@ -245,7 +246,7 @@
 </div>
 <script>
 const API_TOKEN       = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
-const MAIN_PIPELINE   = 11;
+const EXCLUDED_PIPELINE = 9; // Consultant (not a direct sale)
 const LEAD_DATE_FIELD = '7dbac76a365841c9ab9c494fc52b8186849bb742';
 const REGION_FIELD    = '2f8f785f22d986dcf51775b73af98a140a34c5ae';
 const SECTOR_FIELD    = 'cd63d398be9a5c23147344f38f1ae37fb81fc60a';
@@ -295,11 +296,14 @@ async function pd(path){
 async function fetchDeals(){
   let all=[],start=0;
   while(true){
-    const d=await pd('/deals?limit=500&start='+start+'&status=all&pipeline_id='+MAIN_PIPELINE
+    const d=await pd('/deals?limit=500&start='+start+'&status=all'
       +'&since_timestamp=2024-01-01%2000:00:00'
       +'&custom_fields='+LEAD_DATE_FIELD+','+REGION_FIELD+','+SECTOR_FIELD);
     if(!d.success) throw new Error(d.error||'Deals fetch failed');
-    all=all.concat((d.data||[]).filter(x=>new Date(x.add_time)>=new Date('2024-01-01')));
+    all=all.concat((d.data||[]).filter(x=>
+      new Date(x.add_time)>=new Date('2024-01-01') &&
+      x.pipeline_id !== EXCLUDED_PIPELINE
+    ));
     if(!d.additional_data?.pagination?.more_items_in_collection) break;
     start+=500;
   }
@@ -341,7 +345,8 @@ async function fetchArchivedFromAirtable(){
     id:r.fields['Lead ID']||'',title:r.fields['Title']||'',
     owner:r.fields['Owner']||'',createdOn:r.fields['Lead Created On']||'',
     region:r.fields['Sales Region']||'',
-    sector:r.fields['Sector']||''
+    sector:r.fields['Sector']||'',
+    createdTime:r.createdTime||''
   })).filter(l=>l.createdOn);
 }
 
@@ -609,24 +614,21 @@ function renderOvTable(){
     const opps  = fDeals.length+tl;
 
     const isExp = expandedMonths.has(k);
-    const rowStyle = isExcluded ? ' style="opacity:.45"' : '';
-    const noteCell = isExcluded
-      ? '<td colspan="11" class="tdm" style="color:var(--amb);font-size:.6rem">\u26A0\uFE0F leads excluded (mass conversion)</td>'
-      : '';
+    const rowStyle = isExcluded ? ' style="opacity:.55"' : '';
 
     html+='<tr'+rowStyle+'>'
       +'<td style="text-align:center;padding:.5rem"><button class="expand-btn js-expand'+(isExp?' open':'')+'" data-key="'+k+'">&#x25BC;</button></td>'
+      +'<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'
+      +'<td class="tdf">'+opps+'</td>'
+      +'<td class="tdf-p">'+fDeals.length+'</td>'
+      +'<td class="tdm">'+dOpen+'</td><td class="tdm">'+dWon+'</td><td class="tdm">'+dLost+'</td>'
+      +'<td class="tdf-p">'+tl+'</td>'
+      +'<td class="tdm">'+lOpen+'</td>'
+      +'<td class="tdm">'+lConv+'</td>'
+      +'<td class="tdm">'+lArch+'</td>'
       +(isExcluded
-        ? '<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'+noteCell
-        : '<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'
-          +'<td class="tdf">'+opps+'</td>'
-          +'<td class="tdf-p">'+fDeals.length+'</td>'
-          +'<td class="tdm">'+dOpen+'</td><td class="tdm">'+dWon+'</td><td class="tdm">'+dLost+'</td>'
-          +'<td class="tdf-p">'+tl+'</td>'
-          +'<td class="tdm">'+lOpen+'</td>'
-          +'<td class="tdm">'+lConv+'</td>'
-          +'<td class="tdm">'+lArch+'</td>'
-          +'<td><button class="dbtn" onclick="openDive(\''+k+'\')">DIVE &rarr;</button></td>'
+        ? '<td class="tdm" style="color:var(--amb);text-align:right;font-size:.6rem">&#x26A0;&#xFE0F; leads excluded (mass conversion)</td>'
+        : '<td><button class="dbtn" onclick="openDive(\''+k+'\')">DIVE &rarr;</button></td>'
        )
       +'</tr>';
 
@@ -786,6 +788,17 @@ async function init(){
       ?'<strong>'+archived.length+' archived leads</strong> loaded from Airtable and included in counts.'
       :'No archived leads in Airtable. Use <strong>Update Archived Leads</strong> to sync.';
     $('at-status').style.display='flex';
+    // Show last sync date from most recently created Airtable record
+    if(archived.length>0){
+      const dates=archived.map(l=>l.createdTime).filter(Boolean).sort();
+      if(dates.length){
+        const d=new Date(dates[dates.length-1]);
+        const fmt=d.toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+        $('sync-ts').textContent='Archived leads last synced: '+fmt;
+      }
+    } else {
+      $('sync-ts').textContent='Archived leads not yet synced';
+    }
   }catch(e){
     showErr(e.message);
   }finally{
