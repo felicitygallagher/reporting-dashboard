@@ -26,7 +26,6 @@
     #atm span:nth-child(3){width:300px;height:300px;top:40%;left:50%;background:radial-gradient(circle,rgba(176,110,243,.06) 0%,transparent 70%)}
     .wrap{position:relative;z-index:1;max-width:1300px;margin:0 auto;padding:2.5rem 1.75rem 5rem}
 
-    /* header */
     .hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--bord);flex-wrap:wrap}
     .hdr-l h1{font-family:var(--ff-head);font-size:clamp(2.4rem,5vw,3.8rem);font-weight:900;letter-spacing:-.03em;line-height:1}
     .hdr-l h1 i{font-style:italic;color:var(--pur);font-weight:300}
@@ -42,17 +41,14 @@
     .btn-hdr.grn{border-color:rgba(31,222,158,.3);color:var(--grn)}
     .btn-hdr.grn:hover{border-color:var(--grn);background:var(--grn-soft)}
 
-    /* warning / info banners */
     .warn-bar{background:rgba(248,194,71,.07);border:1px solid rgba(248,194,71,.25);border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:1rem;display:flex;gap:.75rem;align-items:flex-start}
     .warn-icon{font-size:1rem;flex-shrink:0;margin-top:.05rem}
     .warn-text{font-family:var(--ff-mono);font-size:.65rem;color:var(--amb);line-height:1.6;letter-spacing:.02em}
     .warn-text strong{font-weight:700}
-
     .info-bar{background:rgba(31,222,158,.06);border:1px solid rgba(31,222,158,.2);border-radius:var(--r);padding:.75rem 1.1rem;margin-bottom:1.5rem;display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
     .info-bar span{font-family:var(--ff-mono);font-size:.65rem;color:var(--grn);line-height:1.5}
     .info-bar strong{font-weight:700}
 
-    /* csv upload panel */
     .upload-panel{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:none}
     .upload-panel h3{font-family:var(--ff-head);font-size:1.1rem;margin-bottom:.5rem}
     .upload-panel p{font-family:var(--ff-mono);font-size:.65rem;color:var(--mute);line-height:1.7;margin-bottom:1rem}
@@ -63,9 +59,7 @@
     .btn-upload:hover{background:rgba(31,222,158,.15)}
     .btn-upload:disabled{opacity:.4;cursor:not-allowed}
     .upload-status{font-family:var(--ff-mono);font-size:.65rem;margin-top:.6rem;display:none;line-height:1.5}
-    .upload-status.ok{color:var(--grn)}
-    .upload-status.err{color:var(--red)}
-    .upload-status.working{color:var(--amb)}
+    .upload-status.ok{color:var(--grn)}.upload-status.err{color:var(--red)}.upload-status.working{color:var(--amb)}
 
     .err-bar{display:none;background:rgba(244,115,115,.08);border:1px solid rgba(244,115,115,.3);color:#fca5a5;font-family:var(--ff-mono);font-size:.76rem;padding:.8rem 1rem;border-radius:var(--r);margin-bottom:1.5rem}
     .spinner-wrap{display:none;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;padding:7rem 2rem}
@@ -76,7 +70,6 @@
     .sec-lbl{font-family:var(--ff-mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.15em;color:var(--mute);margin-bottom:1rem;display:flex;align-items:center;gap:.7rem}
     .sec-lbl::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--bord),transparent)}
 
-    /* stat cards */
     .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:1rem;margin-bottom:1.5rem}
     .sc{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:1.4rem 1.6rem;position:relative;overflow:hidden;opacity:0;transform:translateY(18px);animation:fup .55s forwards;transition:border-color .25s,transform .2s;cursor:default}
     @keyframes fup{to{opacity:1;transform:translateY(0)}}
@@ -92,33 +85,30 @@
     .sc-lbl{font-size:.78rem;color:var(--txt2);margin-top:.35rem;font-weight:500}
     .sc-sub{font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);margin-top:.2rem}
 
-    /* chart */
+    /* chart — no scroll, fluid bars */
     .chart-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:1.75rem;margin-bottom:1.5rem;opacity:0;transform:translateY(18px);animation:fup .55s .28s forwards}
     .chart-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;flex-wrap:wrap;gap:.75rem}
     .chart-top h2{font-family:var(--ff-head);font-size:1.3rem;font-weight:700;letter-spacing:-.02em}
     .chart-top h2 i{font-style:italic;color:var(--pur);font-weight:300}
     .chart-note{font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);margin-bottom:1.2rem;line-height:1.6}
-    .chart-scrl{overflow-x:auto;padding-bottom:.5rem}
-    .bars{display:flex;align-items:flex-end;gap:7px;height:190px;min-width:580px;padding-top:.5rem}
-    .bg{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;cursor:pointer}
-    .bw{display:flex;gap:0;align-items:flex-end;width:100%;transition:filter .15s;position:relative}
+    .bars{display:flex;align-items:flex-end;gap:6px;height:190px;width:100%;padding-top:.5rem}
+    .bg{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;min-width:0;cursor:pointer}
+    .bw{display:flex;align-items:flex-end;width:100%;transition:filter .15s;position:relative}
     .bg:hover .bw{filter:brightness(1.2)}.bg.sel .bw{filter:brightness(1.25)}
     .bg.sel .bw::after{content:'';position:absolute;inset:-3px;border:2px solid var(--pur);border-radius:6px 6px 2px 2px;pointer-events:none}
     .b{flex:1;border-radius:4px 4px 0 0;min-height:3px;transition:height .65s cubic-bezier(.34,1.4,.64,1);position:relative;background:linear-gradient(to top,var(--pur-d),var(--grn));box-shadow:0 -3px 16px rgba(176,110,243,.3)}
     .tip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--surf2);border:1px solid var(--bord2);color:var(--txt);font-family:var(--ff-mono);font-size:.6rem;padding:.26rem .55rem;border-radius:5px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:20}
     .b:hover .tip{opacity:1}
-    .blbl{font-family:var(--ff-mono);font-size:.56rem;color:var(--mute);text-align:center;white-space:nowrap;transition:color .2s}
+    .blbl{font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;transition:color .2s}
     .bg.sel .blbl{color:var(--pur);font-weight:500}
     .chart-hint{font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);text-align:center;margin-top:.75rem;letter-spacing:.05em}
 
-    /* overview table */
     .ov-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;margin-bottom:1.5rem;opacity:0;transform:translateY(18px);animation:fup .55s .33s forwards}
     .card-hd{padding:1.2rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bord);flex-wrap:wrap;gap:.5rem}
     .card-hd h2{font-family:var(--ff-head);font-size:1.2rem;font-weight:700}
     .card-hd h2 i{font-style:italic;color:var(--grn);font-weight:300}
     .card-hd span{font-family:var(--ff-mono);font-size:.6rem;color:var(--mute)}
 
-    /* deep dive */
     .dive{display:none;background:var(--bg2);border:1px solid var(--bord2);border-radius:var(--r);padding:1.75rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
     .dive::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--pur),var(--grn))}
     .dive-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem}
@@ -135,7 +125,6 @@
     .dtab{font-family:var(--ff-mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);padding:.6rem 1.1rem;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;transition:color .2s,border-color .2s;margin-bottom:-1px}
     .dtab.on{color:var(--grn);border-bottom-color:var(--grn)}.dtab:hover:not(.on){color:var(--txt2)}
 
-    /* tables */
     .tbl-wrap{overflow-x:auto}
     table{width:100%;border-collapse:collapse}
     thead th{background:var(--surf2);font-family:var(--ff-mono);font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);padding:.68rem 1rem;text-align:left;white-space:nowrap;font-weight:400}
@@ -144,10 +133,11 @@
     tbody td{padding:.78rem 1rem;font-size:.82rem;color:var(--txt);white-space:nowrap}
     .tdm{font-family:var(--ff-mono);font-size:.68rem;color:var(--txt2)}
     .pill{display:inline-block;font-family:var(--ff-mono);font-size:.57rem;padding:.17rem .52rem;border-radius:100px;letter-spacing:.05em}
-    .pill-won     {background:rgba(31,222,158,.12); color:var(--grn); border:1px solid rgba(31,222,158,.25)}
-    .pill-lost    {background:rgba(244,115,115,.10);color:var(--red); border:1px solid rgba(244,115,115,.2)}
-    .pill-open    {background:rgba(176,110,243,.10);color:var(--pur); border:1px solid rgba(176,110,243,.2)}
-    .pill-archived{background:rgba(86,73,122,.2);   color:var(--mute);border:1px solid rgba(86,73,122,.4)}
+    .pill-won      {background:rgba(31,222,158,.12); color:var(--grn); border:1px solid rgba(31,222,158,.25)}
+    .pill-lost     {background:rgba(244,115,115,.10);color:var(--red); border:1px solid rgba(244,115,115,.2)}
+    .pill-open     {background:rgba(176,110,243,.10);color:var(--pur); border:1px solid rgba(176,110,243,.2)}
+    .pill-archived {background:rgba(86,73,122,.2);   color:var(--mute);border:1px solid rgba(86,73,122,.4)}
+    .pill-converted{background:rgba(248,194,71,.12); color:var(--amb); border:1px solid rgba(248,194,71,.25)}
     .empty{text-align:center;padding:3rem;font-family:var(--ff-mono);font-size:.7rem;color:var(--mute)}
     .dbtn{background:var(--pur-soft);border:1px solid rgba(176,110,243,.22);color:var(--pur);font-family:var(--ff-mono);font-size:.57rem;padding:.2rem .58rem;border-radius:5px;cursor:pointer;letter-spacing:.06em;transition:background .15s,border-color .15s}
     .dbtn:hover{background:var(--pur-mid);border-color:rgba(176,110,243,.4)}
@@ -175,27 +165,23 @@
     </div>
   </header>
 
-  <!-- Warning banner -->
   <div class="warn-bar">
     <span class="warn-icon">⚠️</span>
     <div class="warn-text">
-      <strong>Known data limitation:</strong> The Pipedrive API does not return archived leads. To include them, export archived leads from Pipedrive&rsquo;s reporting tool and use the &ldquo;Update Archived Leads&rdquo; button above to sync them to Airtable. The dashboard then combines these with live API data on every load. Archived leads that have never been synced will not appear in the counts.
+      <strong>Known data limitation:</strong> The Pipedrive API does not return archived leads. To include them, export archived leads from Pipedrive&rsquo;s reporting tool and use the &ldquo;Update Archived Leads&rdquo; button above to sync them to Airtable. The dashboard combines these with live API data on every load. Archived leads that have never been synced will not appear in the counts.
     </div>
   </div>
 
-  <!-- Airtable sync status -->
   <div class="info-bar" id="at-status" style="display:none">
     <span>&#x1F4CA;</span>
     <span id="at-status-text"></span>
   </div>
 
-  <!-- CSV Upload panel -->
   <div class="upload-panel" id="upload-panel">
     <h3>Sync Archived Leads to Airtable</h3>
     <p>
       Export archived leads from Pipedrive: Reports &rarr; Leads &rarr; filter by Status = Archived &rarr; Export CSV.<br>
-      Select the file below. This will <strong>overwrite all previous data</strong> in the Airtable &ldquo;Pipedrive Reporting&rdquo; table and replace it with the new export.<br>
-      The dashboard will automatically use the updated data on every future load.
+      This will <strong>overwrite all previous data</strong> in Airtable and replace it with the new export.
     </p>
     <div class="upload-row">
       <input type="file" accept=".csv" class="file-input" id="csv-file"/>
@@ -214,10 +200,9 @@
     <div class="chart-card">
       <div class="chart-top"><h2>New <i>Opportunities</i> per Month</h2></div>
       <p class="chart-note">
-        New deals in Main Pipeline (no lead created date) bucketed by deal date.<br>
-        New leads = active API leads + archived leads from Airtable + converted deals, all bucketed by their lead created date.
+        New deals in Main Pipeline (no lead created date) bucketed by deal date. New leads = active API leads + archived leads from Airtable + converted deals, all bucketed by lead created date.
       </p>
-      <div class="chart-scrl"><div class="bars" id="bars"></div></div>
+      <div class="bars" id="bars"></div>
       <p class="chart-hint">&#x2191; Click any month bar to open a deep dive</p>
     </div>
 
@@ -237,9 +222,7 @@
       <div class="dive-stats" id="dive-stats"></div>
       <div class="dive-tabs">
         <button class="dtab on" id="t-deals" onclick="switchTab('deals')">New Deals</button>
-        <button class="dtab" id="t-leads" onclick="switchTab('leads')">Active Leads (API)</button>
-        <button class="dtab" id="t-arch"  onclick="switchTab('arch')">Archived Leads</button>
-        <button class="dtab" id="t-conv"  onclick="switchTab('conv')">Converted from Lead</button>
+        <button class="dtab" id="t-leads" onclick="switchTab('leads')">New Leads</button>
       </div>
       <div class="tbl-wrap" id="dive-tbl"></div>
     </div>
@@ -248,24 +231,14 @@
   <footer>PIPEDRIVE DASHBOARD &middot; MAIN PIPELINE &middot; DATA &copy; PIPEDRIVE &middot; CONFIDENTIAL</footer>
 </div>
 <script>
-/* ═══════════════════════════════════════
-   CONFIG
-═══════════════════════════════════════ */
 const API_TOKEN       = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
 const MAIN_PIPELINE   = 11;
 const LEAD_DATE_FIELD = '7dbac76a365841c9ab9c494fc52b8186849bb742';
-
 const AT_TOKEN  = 'patPYjR2vQ2YOoWKt.48823a6794cf304ed4f9f0e107fd205b29c6cfa39552a927362ee41f66fad4e9';
 const AT_BASE   = 'appRsF7Zfa3iKjTFD';
 const AT_TABLE  = 'tblf16aeWs3w3yMcU';
 
-/* ═══════════════════════════════════════
-   STATE
-═══════════════════════════════════════ */
-const S = {
-  deals: [], leads: [], archivedLeads: [], mo: {},
-  currency: 'GBP', diveKey: null, diveTab: 'deals'
-};
+const S = { deals:[], leads:[], archivedLeads:[], mo:{}, currency:'GBP', diveKey:null, diveTab:'deals' };
 const $ = id => document.getElementById(id);
 
 function showErr(m){ const e=$('err'); e.textContent='Warning: '+m; e.style.display='block'; }
@@ -281,9 +254,7 @@ function esc(s){ return String(s||'--').replace(/&/g,'&amp;').replace(/</g,'&lt;
 function fmtD(s){ return s?new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'--'; }
 function isConvertedDeal(d){ return !!(d[LEAD_DATE_FIELD]); }
 
-/* ═══════════════════════════════════════
-   PIPEDRIVE API
-═══════════════════════════════════════ */
+/* ── Pipedrive ── */
 async function pd(path){
   const sep=path.includes('?')?'&':'?';
   const r=await fetch('https://api.pipedrive.com/v1'+path+sep+'api_token='+encodeURIComponent(API_TOKEN));
@@ -321,21 +292,17 @@ async function fetchCurrency(){
   try{ const d=await pd('/currencies?default_currency=1'); const c=d.data?.find(x=>x.default_flag); if(c)S.currency=c.code; }catch(e){}
 }
 
-/* ═══════════════════════════════════════
-   AIRTABLE API
-═══════════════════════════════════════ */
-async function atFetch(path, opts={}){
-  const r=await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+AT_TABLE+path, {
-    ...opts,
-    headers:{ 'Authorization':'Bearer '+AT_TOKEN, 'Content-Type':'application/json', ...(opts.headers||{}) }
+/* ── Airtable ── */
+async function atFetch(path,opts={}){
+  const r=await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+AT_TABLE+path,{
+    ...opts, headers:{'Authorization':'Bearer '+AT_TOKEN,'Content-Type':'application/json',...(opts.headers||{})}
   });
   if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.error?.message||'Airtable HTTP '+r.status); }
   return r.json();
 }
 
-/* Fetch all archived leads stored in Airtable */
 async function fetchArchivedFromAirtable(){
-  let all=[], offset=null;
+  let all=[],offset=null;
   while(true){
     const qs=offset?'?offset='+encodeURIComponent(offset):'';
     const d=await atFetch(qs);
@@ -344,31 +311,28 @@ async function fetchArchivedFromAirtable(){
     offset=d.offset;
   }
   return all.map(r=>({
-    id:   r.fields['Lead ID']||'',
-    title: r.fields['Title']||'',
-    owner: r.fields['Owner']||'',
-    createdOn: r.fields['Lead Created On']||''
+    id:r.fields['Lead ID']||'',
+    title:r.fields['Title']||'',
+    owner:r.fields['Owner']||'',
+    createdOn:r.fields['Lead Created On']||''
   })).filter(l=>l.createdOn);
 }
 
-/* ═══════════════════════════════════════
-   CSV UPLOAD → AIRTABLE
-═══════════════════════════════════════ */
+/* ── Upload ── */
 function toggleUpload(){
   const p=$('upload-panel');
-  p.style.display = p.style.display==='block' ? 'none' : 'block';
+  p.style.display=p.style.display==='block'?'none':'block';
 }
 
 function parseCSV(text){
   const lines=text.trim().split('\n');
   if(lines.length<2) return [];
-  // parse headers — handle quoted fields
   function parseLine(line){
-    const fields=[]; let cur='', inQ=false;
+    const fields=[]; let cur='',inQ=false;
     for(let i=0;i<line.length;i++){
       const c=line[i];
-      if(c==='"'){ inQ=!inQ; }
-      else if(c===','&&!inQ){ fields.push(cur); cur=''; }
+      if(c==='"'){inQ=!inQ;}
+      else if(c===','&&!inQ){fields.push(cur);cur='';}
       else cur+=c;
     }
     fields.push(cur);
@@ -381,27 +345,19 @@ function parseCSV(text){
 async function doUpload(){
   const file=$('csv-file').files[0];
   if(!file){ setUploadStatus('Please select a CSV file first.','err'); return; }
-
-  const btn=$('btn-do-upload');
-  btn.disabled=true;
+  const btn=$('btn-do-upload'); btn.disabled=true;
   setUploadStatus('Reading CSV...','working');
-
   try{
     const text=await file.text();
     const rows=parseCSV(text);
     if(!rows.length){ setUploadStatus('CSV appears to be empty.','err'); btn.disabled=false; return; }
-
-    // Validate expected columns
     const sample=rows[0];
     if(!('Lead - Title' in sample)||!('Lead - Lead created on' in sample)){
-      setUploadStatus('CSV missing expected columns. Make sure you exported from Pipedrive Leads reporting with "Lead - Title" and "Lead - Lead created on" columns.','err');
+      setUploadStatus('CSV missing expected columns. Ensure you exported from Pipedrive Leads reporting with "Lead - Title" and "Lead - Lead created on" columns.','err');
       btn.disabled=false; return;
     }
-
     setUploadStatus('Clearing existing Airtable records...','working');
-
-    // Step 1: fetch all existing record IDs and delete them in batches of 10
-    let existingIds=[], offset=null;
+    let existingIds=[],offset=null;
     while(true){
       const qs=offset?'?fields%5B%5D=Lead+ID&offset='+encodeURIComponent(offset):'?fields%5B%5D=Lead+ID';
       const d=await atFetch(qs);
@@ -409,60 +365,41 @@ async function doUpload(){
       if(!d.offset) break;
       offset=d.offset;
     }
-
-    // Delete in batches of 10
     for(let i=0;i<existingIds.length;i+=10){
       const batch=existingIds.slice(i,i+10);
       const qs='?'+batch.map(id=>'records[]='+encodeURIComponent(id)).join('&');
       await atFetch(qs,{method:'DELETE'});
     }
-
     setUploadStatus('Writing '+rows.length+' records to Airtable...','working');
-
-    // Step 2: write new records in batches of 10
     for(let i=0;i<rows.length;i+=10){
       const batch=rows.slice(i,i+10).map(row=>({
         fields:{
-          'Lead ID':    row['Lead - ID']||'',
-          'Title':      row['Lead - Title']||'',
-          'Owner':      row['Lead - Owner']||'',
+          'Lead ID':row['Lead - ID']||'',
+          'Title':row['Lead - Title']||'',
+          'Owner':row['Lead - Owner']||'',
           'Lead Status':row['Lead - Lead status']||'Archived',
-          'Lead Created On': row['Lead - Lead created on']
-            ? row['Lead - Lead created on'].slice(0,10)
-            : ''
+          'Lead Created On':row['Lead - Lead created on']?row['Lead - Lead created on'].slice(0,10):''
         }
       }));
       await atFetch('',{method:'POST',body:JSON.stringify({records:batch})});
     }
-
-    setUploadStatus('✓ Successfully synced '+rows.length+' archived leads to Airtable. Refreshing dashboard...','ok');
-
-    // Refresh dashboard data with new archived leads
-    setTimeout(()=>init(), 1500);
-
+    setUploadStatus('✓ Successfully synced '+rows.length+' archived leads to Airtable. Refreshing...','ok');
+    setTimeout(()=>init(),1500);
   }catch(e){
     setUploadStatus('Error: '+e.message,'err');
     btn.disabled=false;
   }
 }
 
-function setUploadStatus(msg, type){
+function setUploadStatus(msg,type){
   const el=$('upload-status');
-  el.textContent=msg;
-  el.className='upload-status '+type;
-  el.style.display='block';
-  $('btn-do-upload').disabled = type==='working';
+  el.textContent=msg; el.className='upload-status '+type; el.style.display='block';
+  $('btn-do-upload').disabled=type==='working';
 }
 
-/* ═══════════════════════════════════════
-   BUILD MONTHLY ROLLUP
-   deals       — organic Main Pipeline deals (no lead date), by add_time
-   leads       — active API leads, by add_time
-   archivedL   — archived leads from Airtable, by Lead Created On
-   conv        — converted deals (has lead date), counted as leads by lead date
-═══════════════════════════════════════ */
+/* ── Build monthly ── */
 function buildMonthly(){
-  last12().forEach(k=>S.mo[k]={deals:[],leads:[],archivedL:[],conv:[],won:0,val:0,opps:0});
+  last12().forEach(k=>S.mo[k]={deals:[],leads:[],archivedL:[],conv:[],opps:0});
 
   S.deals.forEach(d=>{
     if(isConvertedDeal(d)){
@@ -472,8 +409,6 @@ function buildMonthly(){
       const k=mKey(d.add_time);
       if(!S.mo[k]) return;
       S.mo[k].deals.push(d);
-      if(d.status==='won'){ S.mo[k].won++; S.mo[k].val+=(d.value||0); }
-      else if(d.status==='open'){ S.mo[k].val+=(d.value||0); }
     }
   });
 
@@ -494,29 +429,25 @@ function buildMonthly(){
   });
 }
 
-/* ═══════════════════════════════════════
-   RENDER — STAT CARDS
-═══════════════════════════════════════ */
+/* ── Stat cards ── */
 function renderStats(){
-  const totalDeals  = last12().reduce((s,k)=>s+S.mo[k].deals.length,0);
-  const totalLeads  = last12().reduce((s,k)=>s+S.mo[k].leads.length+S.mo[k].archivedL.length+S.mo[k].conv.length,0);
-  const totalOpps   = totalDeals+totalLeads;
-  const totalWon    = last12().reduce((s,k)=>s+S.mo[k].won,0);
-  const wr          = totalDeals?Math.round(totalWon/totalDeals*100):0;
-  const totalVal    = S.deals.filter(d=>!isConvertedDeal(d)&&(d.status==='won'||d.status==='open')).reduce((s,d)=>s+(d.value||0),0);
-  const totalArchived=last12().reduce((s,k)=>s+S.mo[k].archivedL.length,0);
+  const totalDeals = last12().reduce((s,k)=>s+S.mo[k].deals.length,0);
+  const totalLeads = last12().reduce((s,k)=>s+S.mo[k].leads.length+S.mo[k].archivedL.length+S.mo[k].conv.length,0);
+  const totalOpps  = totalDeals+totalLeads;
+  const totalWon   = S.deals.filter(d=>!isConvertedDeal(d)&&d.status==='won').length;
+  const wr         = totalDeals?Math.round(totalWon/totalDeals*100):0;
+  const totalVal   = S.deals.filter(d=>!isConvertedDeal(d)&&(d.status==='won'||d.status==='open')).reduce((s,d)=>s+(d.value||0),0);
+  const totalArch  = last12().reduce((s,k)=>s+S.mo[k].archivedL.length,0);
 
   $('stats').innerHTML=[
-    {c:'p',ico:'&#x1F4CA;',n:fmt(totalOpps),  l:'New Opportunities',     s:'deals + all leads, last 12 mo'},
-    {c:'g',ico:'&#x1F4E5;',n:fmt(totalDeals), l:'New Deals',             s:'Main Pipeline, no lead date'},
-    {c:'p',ico:'&#x1F331;',n:fmt(totalLeads), l:'New Leads',             s:totalArchived+' archived from Airtable'},
+    {c:'p',ico:'&#x1F4CA;',n:fmt(totalOpps),  l:'New Opportunities',    s:'deals + all leads, last 12 mo'},
+    {c:'g',ico:'&#x1F4E5;',n:fmt(totalDeals), l:'New Deals',            s:'Main Pipeline, no lead date'},
+    {c:'p',ico:'&#x1F331;',n:fmt(totalLeads), l:'New Leads',            s:totalArch+' archived from Airtable'},
     {c:'g',ico:'&#x1F4B0;',n:fmtC(totalVal,S.currency),l:'Pipeline Value',s:wr+'% win rate on deals'},
   ].map(x=>'<div class="sc '+x.c+'"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div><div class="sc-sub">'+x.s+'</div></div>').join('');
 }
 
-/* ═══════════════════════════════════════
-   RENDER — BAR CHART
-═══════════════════════════════════════ */
+/* ── Bar chart (no scrollbar) ── */
 function renderChart(){
   const keys=last12();
   const mx=Math.max(...keys.map(k=>S.mo[k].opps),1);
@@ -531,44 +462,54 @@ function renderChart(){
   }).join('');
 }
 
-/* ═══════════════════════════════════════
-   RENDER — OVERVIEW TABLE
-═══════════════════════════════════════ */
+/* ── Overview table ── */
 function renderOvTable(){
   const keys=[...last12()].reverse();
   $('ov-tbl').innerHTML='<thead><tr>'
-    +'<th>Month</th><th>New Opps</th><th>&#x2514; New Deals</th><th>&#x2514; New Leads</th>'
-    +'<th>&nbsp;&nbsp;&#x2514; Active</th><th>&nbsp;&nbsp;&#x2514; Archived</th><th>&nbsp;&nbsp;&#x2514; Conv. Deals</th>'
-    +'<th>Deals Won</th><th>Win Rate</th><th>Value (Open+Won)</th><th></th>'
+    +'<th>Month</th>'
+    +'<th>New Opps</th>'
+    +'<th>New Deals</th>'
+    +'<th>&#x2514; Open</th>'
+    +'<th>&#x2514; Won</th>'
+    +'<th>&#x2514; Lost</th>'
+    +'<th>New Leads</th>'
+    +'<th>&#x2514; Open</th>'
+    +'<th>&#x2514; Converted</th>'
+    +'<th>&#x2514; Archived</th>'
+    +'<th></th>'
     +'</tr></thead><tbody>'
     +keys.map(k=>{
       const m=S.mo[k];
-      const wr=m.deals.length?Math.round(m.won/m.deals.length*100):0;
-      const tl=m.leads.length+m.archivedL.length+m.conv.length;
+      // Deal status counts (current status of deals created that month)
+      const dOpen  = m.deals.filter(d=>d.status==='open').length;
+      const dWon   = m.deals.filter(d=>d.status==='won').length;
+      const dLost  = m.deals.filter(d=>d.status==='lost').length;
+      // Lead counts by type
+      const lOpen  = m.leads.length;          // active API leads = open
+      const lConv  = m.conv.length;           // converted deals counted as leads
+      const lArch  = m.archivedL.length;      // archived leads from Airtable
+      const tl     = lOpen+lConv+lArch;
       return '<tr>'
         +'<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'
         +'<td style="font-family:\'Fraunces\',serif;font-size:1.3rem;letter-spacing:-.03em;color:var(--grn)">'+m.opps+'</td>'
         +'<td class="tdm">'+m.deals.length+'</td>'
+        +'<td class="tdm">'+dOpen+'</td>'
+        +'<td class="tdm">'+dWon+'</td>'
+        +'<td class="tdm">'+dLost+'</td>'
         +'<td class="tdm">'+tl+'</td>'
-        +'<td class="tdm" style="color:var(--mute)">'+m.leads.length+'</td>'
-        +'<td class="tdm" style="color:var(--mute)">'+m.archivedL.length+'</td>'
-        +'<td class="tdm" style="color:var(--amb)">'+m.conv.length+'</td>'
-        +'<td class="tdm">'+m.won+'</td>'
-        +'<td class="tdm">'+wr+'%</td>'
-        +'<td class="tdm">'+fmtC(m.val,S.currency)+'</td>'
+        +'<td class="tdm">'+lOpen+'</td>'
+        +'<td class="tdm" style="color:var(--amb)">'+lConv+'</td>'
+        +'<td class="tdm" style="color:var(--mute)">'+lArch+'</td>'
         +'<td><button class="dbtn" onclick="openDive(\''+k+'\')">DIVE &rarr;</button></td>'
         +'</tr>';
     }).join('')+'</tbody>';
 }
 
-/* ═══════════════════════════════════════
-   DEEP DIVE
-═══════════════════════════════════════ */
+/* ── Deep dive ── */
 function openDive(k){
   S.diveKey=k; S.diveTab='deals';
   renderChart();
   const m=S.mo[k];
-  const wr=m.deals.length?Math.round(m.won/m.deals.length*100):0;
   const tl=m.leads.length+m.archivedL.length+m.conv.length;
   const{mon,y}=mParts(k);
   $('dive-title').innerHTML='<i>'+mon+'</i> '+y;
@@ -576,12 +517,9 @@ function openDive(k){
   $('dive-stats').innerHTML=
     '<div class="ds"><div class="ds-num g">'+m.opps+'</div><div class="ds-lbl">New Opportunities</div></div>'
    +'<div class="ds"><div class="ds-num p">'+m.deals.length+'</div><div class="ds-lbl">New Deals</div></div>'
-   +'<div class="ds"><div class="ds-num p">'+tl+'</div><div class="ds-lbl">New Leads</div></div>'
-   +'<div class="ds"><div class="ds-num a">'+m.won+'</div><div class="ds-lbl">Deals Won</div></div>'
-   +'<div class="ds"><div class="ds-num p">'+wr+'%</div><div class="ds-lbl">Win Rate</div></div>'
-   +'<div class="ds"><div class="ds-num g sm">'+fmtC(m.val,S.currency)+'</div><div class="ds-lbl">Open + Won Value</div></div>';
+   +'<div class="ds"><div class="ds-num p">'+tl+'</div><div class="ds-lbl">New Leads</div></div>';
 
-  ['deals','leads','arch','conv'].forEach(t=>$('t-'+t).classList.toggle('on',t==='deals'));
+  $('t-deals').classList.add('on'); $('t-leads').classList.remove('on');
   renderDiveTbl();
   const dv=$('dive');
   dv.style.display='block';
@@ -592,47 +530,51 @@ function closeDive(){ S.diveKey=null; $('dive').style.display='none'; renderChar
 
 function switchTab(tab){
   S.diveTab=tab;
-  ['deals','leads','arch','conv'].forEach(t=>$('t-'+t).classList.toggle('on',t===tab));
+  ['deals','leads'].forEach(t=>$('t-'+t).classList.toggle('on',t===tab));
   renderDiveTbl();
 }
 
 function renderDiveTbl(){
   const m=S.mo[S.diveKey];
-  const tab=S.diveTab;
 
-  if(tab==='deals'){
+  if(S.diveTab==='deals'){
     const items=[...m.deals].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No new deals in Main Pipeline this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Contact / Org</th><th>Stage</th><th>Value</th><th>Status</th><th>Created</th></tr></thead><tbody>'
-      +items.map(d=>'<tr><td>'+esc(d.title)+'</td><td class="tdm">'+esc(d.person_name||d.org_name||'--')+'</td><td class="tdm">'+esc(d.stage_name||'--')+'</td><td class="tdm">'+fmtC(d.value,d.currency||S.currency)+'</td><td><span class="pill pill-'+d.status+'">'+d.status+'</span></td><td class="tdm">'+fmtD(d.add_time)+'</td></tr>').join('')
-      +'</tbody></table>';
-
-  } else if(tab==='leads'){
-    const items=[...m.leads].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
-    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No active API leads this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Contact / Org</th><th>Value</th><th>Status</th><th>Created</th></tr></thead><tbody>'
-      +items.map(l=>'<tr><td>'+esc(l.title)+'</td><td class="tdm">'+esc(l.person_name||l.organization_name||'--')+'</td><td class="tdm">'+(l.value?fmtC(l.value.amount,l.value.currency||S.currency):'--')+'</td><td><span class="pill '+(l.is_archived?'pill-archived':'pill-open')+'">'+(l.is_archived?'archived':'open')+'</span></td><td class="tdm">'+fmtD(l.add_time)+'</td></tr>').join('')
-      +'</tbody></table>';
-
-  } else if(tab==='arch'){
-    const items=[...m.archivedL].sort((a,b)=>new Date(b.createdOn)-new Date(a.createdOn));
-    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No archived leads for this month in Airtable. Use &ldquo;Update Archived Leads&rdquo; to sync.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Lead Created On</th></tr></thead><tbody>'
-      +items.map(l=>'<tr><td>'+esc(l.title)+'</td><td class="tdm">'+esc(l.owner)+'</td><td class="tdm">'+fmtD(l.createdOn)+'</td></tr>').join('')
+    $('dive-tbl').innerHTML='<table><thead><tr>'
+      +'<th>Title</th><th>Owner</th><th>Stage</th><th>Status</th><th>Created</th>'
+      +'</tr></thead><tbody>'
+      +items.map(d=>'<tr>'
+        +'<td>'+esc(d.title)+'</td>'
+        +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
+        +'<td class="tdm">'+esc(d.stage_name||'--')+'</td>'
+        +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
+        +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
+        +'</tr>').join('')
       +'</tbody></table>';
 
   } else {
-    const items=[...m.conv].sort((a,b)=>new Date(b[LEAD_DATE_FIELD])-new Date(a[LEAD_DATE_FIELD]));
-    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No converted deals counted as leads this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Contact / Org</th><th>Lead Created Date</th><th>Deal Created</th><th>Value</th><th>Deal Status</th></tr></thead><tbody>'
-      +items.map(d=>'<tr><td>'+esc(d.title)+'</td><td class="tdm">'+esc(d.person_name||d.org_name||'--')+'</td><td class="tdm" style="color:var(--amb)">'+fmtD(d[LEAD_DATE_FIELD])+'</td><td class="tdm">'+fmtD(d.add_time)+'</td><td class="tdm">'+fmtC(d.value,d.currency||S.currency)+'</td><td><span class="pill pill-'+d.status+'">'+d.status+'</span></td></tr>').join('')
+    // Merge all three lead sources with status labels, sort by date
+    const items = [
+      ...m.leads.map(l=>({title:l.title,owner:l.person_name||l.organization_name||'--',date:l.add_time,status:'open',src:'api'})),
+      ...m.archivedL.map(l=>({title:l.title,owner:l.owner||'--',date:l.createdOn,status:'archived',src:'at'})),
+      ...m.conv.map(d=>({title:d.title,owner:d.owner_name||'--',date:d[LEAD_DATE_FIELD],status:'converted',src:'conv'})),
+    ].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No leads this month.</div>';return;}
+    $('dive-tbl').innerHTML='<table><thead><tr>'
+      +'<th>Title</th><th>Owner</th><th>Status</th><th>Lead Created</th>'
+      +'</tr></thead><tbody>'
+      +items.map(l=>'<tr>'
+        +'<td>'+esc(l.title)+'</td>'
+        +'<td class="tdm">'+esc(l.owner)+'</td>'
+        +'<td><span class="pill pill-'+l.status+'">'+l.status+'</span></td>'
+        +'<td class="tdm">'+fmtD(l.date)+'</td>'
+        +'</tr>').join('')
       +'</tbody></table>';
   }
 }
 
-/* ═══════════════════════════════════════
-   INIT
-═══════════════════════════════════════ */
+/* ── Init ── */
 async function init(){
   $('err').style.display='none';
   $('main').style.display='none';
@@ -643,13 +585,8 @@ async function init(){
 
   try{
     const since=since12();
-    // Fetch all three sources in parallel
     await fetchCurrency();
-    const[deals,leads,archived]=await Promise.all([
-      fetchDeals(since),
-      fetchLeads(since),
-      fetchArchivedFromAirtable()
-    ]);
+    const[deals,leads,archived]=await Promise.all([fetchDeals(since),fetchLeads(since),fetchArchivedFromAirtable()]);
     S.deals=deals; S.leads=leads; S.archivedLeads=archived; S.mo={};
     buildMonthly();
     renderStats();
@@ -657,15 +594,10 @@ async function init(){
     renderOvTable();
     $('main').style.display='block';
     $('ts').textContent='Updated '+new Date().toLocaleTimeString('en-GB');
-
-    // Show Airtable status
-    if(archived.length>0){
-      $('at-status-text').innerHTML='<strong>'+archived.length+' archived leads</strong> loaded from Airtable and included in counts.';
-      $('at-status').style.display='flex';
-    } else {
-      $('at-status-text').innerHTML='No archived leads found in Airtable. Use <strong>Update Archived Leads</strong> to sync your first export.';
-      $('at-status').style.display='flex';
-    }
+    $('at-status-text').innerHTML=archived.length>0
+      ?'<strong>'+archived.length+' archived leads</strong> loaded from Airtable and included in counts.'
+      :'No archived leads found in Airtable. Use <strong>Update Archived Leads</strong> to sync your first export.';
+    $('at-status').style.display='flex';
   }catch(e){
     showErr(e.message);
   }finally{
