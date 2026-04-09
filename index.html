@@ -26,7 +26,6 @@
     #atm span:nth-child(3){width:300px;height:300px;top:40%;left:50%;background:radial-gradient(circle,rgba(176,110,243,.06) 0%,transparent 70%)}
     .wrap{position:relative;z-index:1;max-width:1300px;margin:0 auto;padding:2.5rem 1.75rem 5rem}
 
-    /* header */
     .hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--bord);flex-wrap:wrap}
     .hdr-l h1{font-family:var(--ff-head);font-size:clamp(2.4rem,5vw,3.8rem);font-weight:900;letter-spacing:-.03em;line-height:1}
     .hdr-l h1 i{font-style:italic;color:var(--pur);font-weight:300}
@@ -42,7 +41,6 @@
     .btn-hdr.grn{border-color:rgba(31,222,158,.3);color:var(--grn)}
     .btn-hdr.grn:hover{border-color:var(--grn);background:var(--grn-soft)}
 
-    /* banners */
     .warn-bar{background:rgba(248,194,71,.07);border:1px solid rgba(248,194,71,.25);border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:1rem;display:flex;gap:.75rem;align-items:flex-start}
     .warn-icon{font-size:1rem;flex-shrink:0;margin-top:.05rem}
     .warn-text{font-family:var(--ff-mono);font-size:.65rem;color:var(--amb);line-height:1.6;letter-spacing:.02em}
@@ -51,7 +49,6 @@
     .info-bar span{font-family:var(--ff-mono);font-size:.65rem;color:var(--grn);line-height:1.5}
     .info-bar strong{font-weight:700}
 
-    /* upload panel */
     .upload-panel{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:none}
     .upload-panel h3{font-family:var(--ff-head);font-size:1.1rem;margin-bottom:.5rem}
     .upload-panel p{font-family:var(--ff-mono);font-size:.65rem;color:var(--mute);line-height:1.7;margin-bottom:1rem}
@@ -86,7 +83,7 @@
     .sc-num{font-family:var(--ff-head);font-size:2.9rem;font-weight:700;letter-spacing:-.04em;line-height:1}
     .sc.p .sc-num{color:var(--pur)}.sc.g .sc-num{color:var(--grn)}
     .sc-lbl{font-size:.78rem;color:var(--txt2);margin-top:.35rem;font-weight:500}
-    .sc-trend{font-family:var(--ff-mono);font-size:.62rem;margin-top:.3rem;display:flex;align-items:center;gap:.3rem}
+    .sc-trend{font-family:var(--ff-mono);font-size:.6rem;margin-top:.3rem}
     .trend-up{color:var(--grn)}.trend-down{color:var(--red)}.trend-flat{color:var(--mute)}
 
     /* chart */
@@ -96,11 +93,10 @@
     .chart-top h2 i{font-style:italic;color:var(--pur);font-weight:300}
     .chart-nav{display:flex;align-items:center;gap:.5rem}
     .nav-btn{background:none;border:1px solid var(--bord2);color:var(--txt2);font-family:var(--ff-mono);font-size:.75rem;width:28px;height:28px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .2s,color .2s}
-    .nav-btn:hover{border-color:var(--pur);color:var(--pur)}
-    .nav-btn:disabled{opacity:.3;cursor:default}
-    .nav-label{font-family:var(--ff-mono);font-size:.6rem;color:var(--mute);min-width:80px;text-align:center}
+    .nav-btn:hover{border-color:var(--pur);color:var(--pur)}.nav-btn:disabled{opacity:.3;cursor:default}
+    .nav-label{font-family:var(--ff-mono);font-size:.6rem;color:var(--mute);min-width:90px;text-align:center}
     .chart-note{font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);margin-bottom:1.2rem;line-height:1.6}
-    .bars{display:flex;align-items:flex-end;gap:6px;height:190px;width:100%;padding-top:.5rem}
+    .bars{display:flex;align-items:flex-end;gap:6px;height:300px;width:100%;padding-top:.5rem}
     .bg{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;min-width:0;cursor:pointer}
     .bw{display:flex;align-items:flex-end;width:100%;transition:filter .15s;position:relative}
     .bg:hover .bw{filter:brightness(1.2)}.bg.sel .bw{filter:brightness(1.25)}
@@ -112,15 +108,23 @@
     .bg.sel .blbl{color:var(--pur);font-weight:500}
     .chart-hint{font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);text-align:center;margin-top:.75rem;letter-spacing:.05em}
 
-    /* overview table + year filter */
+    /* overview table */
     .ov-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;margin-bottom:1.5rem;opacity:0;transform:translateY(18px);animation:fup .55s .33s forwards}
     .card-hd{padding:1.2rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bord);flex-wrap:wrap;gap:.75rem}
     .card-hd h2{font-family:var(--ff-head);font-size:1.2rem;font-weight:700}
     .card-hd h2 i{font-style:italic;color:var(--grn);font-weight:300}
-    .year-pills{display:flex;gap:.4rem}
-    .yr-pill{font-family:var(--ff-mono);font-size:.62rem;padding:.25rem .75rem;border-radius:100px;border:1px solid var(--bord2);color:var(--mute);background:none;cursor:pointer;transition:all .2s;letter-spacing:.06em}
-    .yr-pill.active{background:var(--pur-soft);border-color:rgba(176,110,243,.4);color:var(--pur)}
-    .yr-pill:hover:not(.active){border-color:var(--bord2);color:var(--txt2)}
+    .card-hd-controls{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+
+    /* filter pills (year) */
+    .pill-group{display:flex;gap:.4rem}
+    .f-pill{font-family:var(--ff-mono);font-size:.62rem;padding:.25rem .75rem;border-radius:100px;border:1px solid var(--bord2);color:var(--mute);background:none;cursor:pointer;transition:all .2s;letter-spacing:.06em}
+    .f-pill.active{background:var(--pur-soft);border-color:rgba(176,110,243,.4);color:var(--pur)}
+    .f-pill:hover:not(.active){color:var(--txt2)}
+
+    /* breakdown dropdown */
+    .breakdown-select{font-family:var(--ff-mono);font-size:.65rem;background:var(--surf2);border:1px solid var(--bord2);color:var(--txt2);padding:.28rem .6rem;border-radius:8px;cursor:pointer;outline:none;transition:border-color .2s}
+    .breakdown-select:focus{border-color:var(--pur)}
+    .breakdown-select option{background:var(--surf2)}
 
     /* deep dive */
     .dive{display:none;background:var(--bg2);border:1px solid var(--bord2);border-radius:var(--r);padding:1.75rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
@@ -146,7 +150,6 @@
     tbody tr{border-top:1px solid var(--bord);transition:background .12s}
     tbody tr:hover{background:rgba(176,110,243,.04)}
     tbody td{padding:.78rem 1rem;font-size:.82rem;color:var(--txt);white-space:nowrap}
-    /* Fraunces number cells */
     .tdf{font-family:var(--ff-head);font-size:1.05rem;letter-spacing:-.02em;color:var(--grn)}
     .tdf-p{font-family:var(--ff-head);font-size:1.05rem;letter-spacing:-.02em;color:var(--pur)}
     .tdm{font-family:var(--ff-mono);font-size:.68rem;color:var(--txt2)}
@@ -159,6 +162,9 @@
     .empty{text-align:center;padding:3rem;font-family:var(--ff-mono);font-size:.7rem;color:var(--mute)}
     .dbtn{background:var(--pur-soft);border:1px solid rgba(176,110,243,.22);color:var(--pur);font-family:var(--ff-mono);font-size:.57rem;padding:.2rem .58rem;border-radius:5px;cursor:pointer;letter-spacing:.06em;transition:background .15s,border-color .15s}
     .dbtn:hover{background:var(--pur-mid);border-color:rgba(176,110,243,.4)}
+
+    /* breakdown table sub-section header */
+    .sub-hd td{background:var(--surf2);font-family:var(--ff-mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--pur);padding:.5rem 1rem;font-weight:500}
 
     ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--pur-d)}
     footer{font-family:var(--ff-mono);font-size:.56rem;color:var(--mute);text-align:center;padding-top:1.5rem;letter-spacing:.1em}
@@ -186,13 +192,12 @@
   <div class="warn-bar">
     <span class="warn-icon">⚠️</span>
     <div class="warn-text">
-      <strong>Known data limitation:</strong> The Pipedrive API does not return archived leads. Export archived leads from Pipedrive&rsquo;s reporting tool and use &ldquo;Update Archived Leads&rdquo; to sync them to Airtable. The dashboard combines these with live API data on every load. Only leads created on or after <strong>1 September 2025</strong> are counted.
+      <strong>Known data limitation:</strong> The Pipedrive API does not return archived leads. Export archived leads from Pipedrive&rsquo;s reporting tool and use &ldquo;Update Archived Leads&rdquo; to sync them to Airtable. The dashboard combines these with live API data on every load.
     </div>
   </div>
 
   <div class="info-bar" id="at-status" style="display:none">
-    <span>&#x1F4CA;</span>
-    <span id="at-status-text"></span>
+    <span>&#x1F4CA;</span><span id="at-status-text"></span>
   </div>
 
   <div class="upload-panel" id="upload-panel">
@@ -221,7 +226,7 @@
           <button class="nav-btn" id="nav-next" onclick="shiftChart(1)">&#x2192;</button>
         </div>
       </div>
-      <p class="chart-note">New deals (Main Pipeline, no lead date) + new leads (active API + archived Airtable + converted deals), all from Sept 2025 onwards.</p>
+      <p class="chart-note">New deals (Main Pipeline, no lead date) + new leads (active API + archived Airtable + converted deals). Bar heights are consistent across all months.</p>
       <div class="bars" id="bars"></div>
       <p class="chart-hint">&#x2191; Click any month bar to open a deep dive</p>
     </div>
@@ -229,7 +234,14 @@
     <div class="ov-card">
       <div class="card-hd">
         <h2>Monthly <i>Breakdown</i></h2>
-        <div class="year-pills" id="year-pills"></div>
+        <div class="card-hd-controls">
+          <select class="breakdown-select" id="breakdown-select" onchange="setBreakdown(this.value)">
+            <option value="none">No breakdown</option>
+            <option value="region">By Sales Region</option>
+            <option value="sector">By Sector</option>
+          </select>
+          <div class="pill-group" id="year-pills"></div>
+        </div>
       </div>
       <div class="tbl-wrap"><table id="ov-tbl"></table></div>
     </div>
@@ -257,41 +269,50 @@
 const API_TOKEN       = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
 const MAIN_PIPELINE   = 11;
 const LEAD_DATE_FIELD = '7dbac76a365841c9ab9c494fc52b8186849bb742';
+const REGION_FIELD    = '2f8f785f22d986dcf51775b73af98a140a34c5ae';
+const SECTOR_FIELD    = 'cd63d398be9a5c23147344f38f1ae37fb81fc60a';
 const AT_TOKEN        = 'patPYjR2vQ2YOoWKt.48823a6794cf304ed4f9f0e107fd205b29c6cfa39552a927362ee41f66fad4e9';
 const AT_BASE         = 'appRsF7Zfa3iKjTFD';
 const AT_TABLE        = 'tblf16aeWs3w3yMcU';
-const LEAD_START      = new Date('2025-09-01T00:00:00.000Z'); // leads only counted from here
+
+const REGIONS  = ['EMEA','AMER','APAC'];
+const SECTORS  = ['Education','Membership Associations','Charity','Company'];
 
 /* ═══════════════════════════════════════
    STATE
 ═══════════════════════════════════════ */
 const S = {
-  deals: [], leads: [], archivedLeads: [],
-  mo: {},           // all months keyed YYYY-MM
-  allKeys: [],      // sorted list of all month keys with data
-  chartOffset: 0,   // how many months back from "end" the 12-bar window starts
-  yearFilter: null, // null = all, '2025', '2026', etc
-  diveKey: null, diveTab: 'deals',
-  currency: 'GBP'
+  deals:[], leads:[], archivedLeads:[],
+  mo:{}, allKeys:[],
+  chartOffset:0,
+  yearFilter:null,
+  breakdown:'none', // 'none' | 'region' | 'sector'
+  diveKey:null, diveTab:'deals',
+  currency:'GBP'
 };
-
-const CHART_WINDOW = 12; // bars shown at once
+const CHART_WINDOW = 12;
 
 const $ = id => document.getElementById(id);
-
 function showErr(m){ const e=$('err'); e.textContent='Warning: '+m; e.style.display='block'; }
 function fmt(n){ if(n>=1e6)return(n/1e6).toFixed(1)+'M'; if(n>=1e3)return(n/1e3).toFixed(1)+'k'; return String(n); }
-function fmtC(n,c){ if(!n&&n!==0)return'--'; return new Intl.NumberFormat('en-GB',{style:'currency',currency:c||'GBP',maximumFractionDigits:0}).format(n); }
 function mKey(d){ const dt=new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); }
 function mShort(k){ const[y,m]=k.split('-'); return new Date(+y,+m-1).toLocaleString('en-GB',{month:'short',year:'2-digit'}); }
 function mLong(k){ const[y,m]=k.split('-'); return new Date(+y,+m-1).toLocaleString('en-GB',{month:'long',year:'numeric'}); }
 function mParts(k){ const[y,m]=k.split('-'); return{mon:new Date(+y,+m-1).toLocaleString('en-GB',{month:'long'}),y}; }
 function mYear(k){ return k.split('-')[0]; }
-
-function sinceDate(){ return new Date('2024-09-01T00:00:00.000Z'); } // fetch deals from Sep 2024 to get full status data
 function esc(s){ return String(s||'--').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtD(s){ return s?new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'--'; }
 function isConvertedDeal(d){ return !!(d[LEAD_DATE_FIELD]); }
+
+/* Get region/sector label from a deal's numeric field value */
+function getFieldLabel(deal, fieldKey, options){
+  const val = deal[fieldKey];
+  if(!val) return null;
+  // Pipedrive returns option ID as integer; match against options array index
+  // Actually it returns the label string directly for enum fields when fetched with custom_fields
+  if(typeof val === 'string') return val.trim() || null;
+  return null;
+}
 
 /* ═══════════════════════════════════════
    PIPEDRIVE API
@@ -304,13 +325,13 @@ async function pd(path){
 }
 
 async function fetchDeals(){
-  // Fetch all deals from Sep 2024 onwards to capture full status history
   const ss='2024-01-01';
   let all=[],start=0;
   while(true){
-    const d=await pd('/deals?limit=500&start='+start+'&status=all&pipeline_id='+MAIN_PIPELINE+'&since_timestamp='+ss+'%2000:00:00&custom_fields='+LEAD_DATE_FIELD);
+    const d=await pd('/deals?limit=500&start='+start+'&status=all&pipeline_id='+MAIN_PIPELINE
+      +'&since_timestamp='+ss+'%2000:00:00'
+      +'&custom_fields='+LEAD_DATE_FIELD+','+REGION_FIELD+','+SECTOR_FIELD);
     if(!d.success) throw new Error(d.error||'Deals fetch failed');
-    // filter client-side to only deals created on/after Sep 2024
     all=all.concat((d.data||[]).filter(deal=>new Date(deal.add_time)>=new Date('2024-01-01')));
     if(!d.additional_data?.pagination?.more_items_in_collection) break;
     start+=500;
@@ -319,10 +340,9 @@ async function fetchDeals(){
 }
 
 async function fetchLeads(){
-  // Fetch active leads from Sep 2025 onwards
   let all=[],start=0;
   while(true){
-    const d=await pd('/leads?limit=500&start='+start+'&created_after=2025-09-01');
+    const d=await pd('/leads?limit=500&start='+start+'&created_after=2024-01-01');
     if(!d.success) throw new Error(d.error||'Leads fetch failed');
     all=all.concat(d.data||[]);
     if(!d.additional_data?.pagination?.more_items_in_collection) break;
@@ -336,7 +356,7 @@ async function fetchCurrency(){
 }
 
 /* ═══════════════════════════════════════
-   AIRTABLE API
+   AIRTABLE
 ═══════════════════════════════════════ */
 async function atFetch(path,opts={}){
   const r=await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+AT_TABLE+path,{
@@ -360,10 +380,7 @@ async function fetchArchivedFromAirtable(){
     title:r.fields['Title']||'',
     owner:r.fields['Owner']||'',
     createdOn:r.fields['Lead Created On']||''
-  })).filter(l=>{
-    if(!l.createdOn) return false;
-    return new Date(l.createdOn) >= LEAD_START; // only from Sep 2025
-  });
+  })).filter(l=>l.createdOn);
 }
 
 /* ═══════════════════════════════════════
@@ -373,7 +390,6 @@ function toggleUpload(){
   const p=$('upload-panel');
   p.style.display=p.style.display==='block'?'none':'block';
 }
-
 function parseCSV(text){
   const lines=text.trim().split('\n');
   if(lines.length<2) return [];
@@ -381,9 +397,7 @@ function parseCSV(text){
     const fields=[]; let cur='',inQ=false;
     for(let i=0;i<line.length;i++){
       const c=line[i];
-      if(c==='"'){inQ=!inQ;}
-      else if(c===','&&!inQ){fields.push(cur);cur='';}
-      else cur+=c;
+      if(c==='"'){inQ=!inQ;}else if(c===','&&!inQ){fields.push(cur);cur='';}else cur+=c;
     }
     fields.push(cur);
     return fields.map(f=>f.trim());
@@ -391,7 +405,6 @@ function parseCSV(text){
   const headers=parseLine(lines[0]);
   return lines.slice(1).map(l=>{ const vals=parseLine(l); const obj={}; headers.forEach((h,i)=>obj[h]=vals[i]||''); return obj; });
 }
-
 async function doUpload(){
   const file=$('csv-file').files[0];
   if(!file){ setUploadStatus('Please select a CSV file first.','err'); return; }
@@ -401,10 +414,8 @@ async function doUpload(){
     const text=await file.text();
     const rows=parseCSV(text);
     if(!rows.length){ setUploadStatus('CSV appears to be empty.','err'); btn.disabled=false; return; }
-    const sample=rows[0];
-    if(!('Lead - Title' in sample)||!('Lead - Lead created on' in sample)){
-      setUploadStatus('CSV missing expected columns. Ensure columns "Lead - Title" and "Lead - Lead created on" are present.','err');
-      btn.disabled=false; return;
+    if(!('Lead - Title' in rows[0])||!('Lead - Lead created on' in rows[0])){
+      setUploadStatus('CSV missing expected columns.','err'); btn.disabled=false; return;
     }
     setUploadStatus('Clearing existing Airtable records...','working');
     let existingIds=[],offset=null;
@@ -412,125 +423,113 @@ async function doUpload(){
       const qs=offset?'?fields%5B%5D=Lead+ID&offset='+encodeURIComponent(offset):'?fields%5B%5D=Lead+ID';
       const d=await atFetch(qs);
       existingIds=existingIds.concat((d.records||[]).map(r=>r.id));
-      if(!d.offset) break;
-      offset=d.offset;
+      if(!d.offset) break; offset=d.offset;
     }
     for(let i=0;i<existingIds.length;i+=10){
       const batch=existingIds.slice(i,i+10);
-      const qs='?'+batch.map(id=>'records[]='+encodeURIComponent(id)).join('&');
-      await atFetch(qs,{method:'DELETE'});
+      await atFetch('?'+batch.map(id=>'records[]='+encodeURIComponent(id)).join('&'),{method:'DELETE'});
     }
     setUploadStatus('Writing '+rows.length+' records to Airtable...','working');
     for(let i=0;i<rows.length;i+=10){
-      const batch=rows.slice(i,i+10).map(row=>({
-        fields:{
-          'Lead ID':row['Lead - ID']||'',
-          'Title':row['Lead - Title']||'',
-          'Owner':row['Lead - Owner']||'',
-          'Lead Status':row['Lead - Lead status']||'Archived',
-          'Lead Created On':row['Lead - Lead created on']?row['Lead - Lead created on'].slice(0,10):''
-        }
-      }));
+      const batch=rows.slice(i,i+10).map(row=>({fields:{
+        'Lead ID':row['Lead - ID']||'',
+        'Title':row['Lead - Title']||'',
+        'Owner':row['Lead - Owner']||'',
+        'Lead Status':row['Lead - Lead status']||'Archived',
+        'Lead Created On':row['Lead - Lead created on']?row['Lead - Lead created on'].slice(0,10):''
+      }}));
       await atFetch('',{method:'POST',body:JSON.stringify({records:batch})});
     }
-    setUploadStatus('✓ Synced '+rows.length+' archived leads to Airtable. Refreshing...','ok');
+    setUploadStatus('✓ Synced '+rows.length+' archived leads. Refreshing...','ok');
     setTimeout(()=>init(),1500);
-  }catch(e){
-    setUploadStatus('Error: '+e.message,'err');
-    $('btn-do-upload').disabled=false;
-  }
+  }catch(e){ setUploadStatus('Error: '+e.message,'err'); $('btn-do-upload').disabled=false; }
 }
-
 function setUploadStatus(msg,type){
-  const el=$('upload-status');
-  el.textContent=msg; el.className='upload-status '+type; el.style.display='block';
+  const el=$('upload-status'); el.textContent=msg; el.className='upload-status '+type; el.style.display='block';
   $('btn-do-upload').disabled=type==='working';
 }
 
 /* ═══════════════════════════════════════
    BUILD MONTHLY ROLLUP
-   - Deals: counted from Sep 2024 onwards (for status breakdown)
-   - Leads (all sources): counted from Sep 2025 onwards only
+   Each month entry stores full arrays so we can filter by region/sector on demand
 ═══════════════════════════════════════ */
 function buildMonthly(){
   S.mo={};
-
   function ensureKey(k){
     if(!S.mo[k]) S.mo[k]={deals:[],leads:[],archivedL:[],conv:[],opps:0};
   }
-
   S.deals.forEach(d=>{
     if(isConvertedDeal(d)){
-      // Count as lead in lead-created-date month, only if >= Sep 2025
       const ld=d[LEAD_DATE_FIELD];
-      if(ld && new Date(ld)>=LEAD_START){
-        const k=mKey(ld);
-        ensureKey(k);
-        S.mo[k].conv.push(d);
-      }
+      if(ld){ const k=mKey(ld); ensureKey(k); S.mo[k].conv.push(d); }
     } else {
-      // Organic deal — counted in deal add_time month
-      const k=mKey(d.add_time);
-      ensureKey(k);
-      S.mo[k].deals.push(d);
+      const k=mKey(d.add_time); ensureKey(k); S.mo[k].deals.push(d);
     }
   });
-
-  S.leads.forEach(l=>{
-    // Already filtered to Sep 2025+ by fetch
-    const k=mKey(l.add_time);
-    ensureKey(k);
-    S.mo[k].leads.push(l);
-  });
-
+  S.leads.forEach(l=>{ const k=mKey(l.add_time); ensureKey(k); S.mo[k].leads.push(l); });
   S.archivedLeads.forEach(l=>{
-    // Already filtered to Sep 2025+ by Airtable fetch
     if(!l.createdOn) return;
-    const k=mKey(l.createdOn);
-    ensureKey(k);
-    S.mo[k].archivedL.push(l);
+    const k=mKey(l.createdOn); ensureKey(k); S.mo[k].archivedL.push(l);
   });
 
-  // Compute opps
+  // Fill all months from Jan 2024 to now
+  const now=new Date(), start=new Date('2024-01-01');
+  let cur=new Date(start);
+  while(cur<=now){
+    const k=cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0');
+    ensureKey(k);
+    cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+  }
+
+  // Compute opps per month
   Object.keys(S.mo).forEach(k=>{
     const m=S.mo[k];
     m.opps=m.deals.length+m.leads.length+m.archivedL.length+m.conv.length;
   });
 
-  // Build sorted key list (only months with any data or between Sep 2025 and now)
-  const now=new Date();
-  const start=new Date('2024-01-01');
-  const keys=new Set(Object.keys(S.mo));
-  // fill in all months from start to now so chart has no gaps
-  let cur=new Date(start);
-  while(cur<=now){
-    const k=cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0');
-    keys.add(k);
-    ensureKey(k);
-    cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
-  }
-
-  S.allKeys=[...keys].sort();
-  // Default chart shows most recent 12 months
+  S.allKeys=[...new Set(Object.keys(S.mo))].sort();
   S.chartOffset=0;
 }
 
+/* ── Filter helpers ── */
+function filterVal(breakdown, item, isLead=false){
+  if(breakdown==='none') return true;
+  if(isLead) return true; // leads don't have region/sector from API
+  const field=breakdown==='region'?REGION_FIELD:SECTOR_FIELD;
+  return !!(item[field]); // include if field has any value (filter is applied at render time)
+}
+
+function getItemGroup(breakdown, item){
+  if(breakdown==='none') return 'all';
+  const field=breakdown==='region'?REGION_FIELD:SECTOR_FIELD;
+  return (item[field]||'').toString().trim()||'Unknown';
+}
+
+function monthOppsForGroup(k, breakdown, group){
+  const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[]};
+  if(breakdown==='none') return m.opps;
+  // For region/sector breakdown, only deals and conv have the field
+  const deals=m.deals.filter(d=>getItemGroup(breakdown,d)===group).length;
+  const conv=m.conv.filter(d=>getItemGroup(breakdown,d)===group).length;
+  // leads/archived don't have region/sector in API data — include all as-is
+  const leads=m.leads.length+m.archivedL.length;
+  // Actually for breakdown we only show deals+conv since leads lack the field
+  return deals+conv;
+}
+
 /* ═══════════════════════════════════════
-   STAT CARDS — show last complete month vs month before
+   STAT CARDS
 ═══════════════════════════════════════ */
 function renderStats(){
   const now=new Date();
-  // Last complete month
   const lm=new Date(now.getFullYear(),now.getMonth()-1,1);
-  const lmKey=lm.getFullYear()+'-'+String(lm.getMonth()+1).padStart(2,'0');
-  // Month before that
   const pm=new Date(now.getFullYear(),now.getMonth()-2,1);
+  const lmKey=lm.getFullYear()+'-'+String(lm.getMonth()+1).padStart(2,'0');
   const pmKey=pm.getFullYear()+'-'+String(pm.getMonth()+1).padStart(2,'0');
-
   const lmData=S.mo[lmKey]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
   const pmData=S.mo[pmKey]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
-
   const pmLabel=pm.toLocaleString('en-GB',{month:'long'});
+
   function trend(cur,prev){
     if(prev===0&&cur===0) return '<span class="trend-flat">&#x2014;</span>';
     const diff=cur-prev;
@@ -539,25 +538,24 @@ function renderStats(){
     return '<span class="trend-flat">&#x2014; same as '+pmLabel+' ('+prev+')</span>';
   }
 
-  const lmOpps  = lmData.opps;
-  const lmDeals = lmData.deals.length;
-  const lmLeads = lmData.leads.length+lmData.archivedL.length+lmData.conv.length;
-  const pmOpps  = pmData.opps;
-  const pmDeals = pmData.deals.length;
-  const pmLeads = pmData.leads.length+pmData.archivedL.length+pmData.conv.length;
-
+  const lmOpps =lmData.opps;
+  const lmDeals=lmData.deals.length;
+  const lmLeads=lmData.leads.length+lmData.archivedL.length+lmData.conv.length;
+  const pmOpps =pmData.opps;
+  const pmDeals=pmData.deals.length;
+  const pmLeads=pmData.leads.length+pmData.archivedL.length+pmData.conv.length;
   const lmLabel=lm.toLocaleString('en-GB',{month:'long',year:'numeric'});
 
   $('stats').innerHTML=[
-    {c:'p',ico:'&#x1F4CA;',n:fmt(lmOpps), l:'New Opportunities',   t:trend(lmOpps,pmOpps)},
-    {c:'g',ico:'&#x1F4E5;',n:fmt(lmDeals),l:'New Deals',           t:trend(lmDeals,pmDeals)},
-    {c:'p',ico:'&#x1F331;',n:fmt(lmLeads),l:'New Leads',           t:trend(lmLeads,pmLeads)},
-    {c:'g',ico:'&#x1F4B0;',n:lmLabel,     l:'Showing month',       t:'<span class="trend-flat">vs previous month</span>'},
+    {c:'p',ico:'&#x1F4CA;',n:fmt(lmOpps), l:'New Opportunities', t:trend(lmOpps,pmOpps)},
+    {c:'g',ico:'&#x1F4E5;',n:fmt(lmDeals),l:'New Deals',         t:trend(lmDeals,pmDeals)},
+    {c:'p',ico:'&#x1F331;',n:fmt(lmLeads),l:'New Leads',         t:trend(lmLeads,pmLeads)},
+    {c:'g',ico:'&#x1F4C5;',n:lmLabel,     l:'Showing month',     t:'<span class="trend-flat">vs previous month</span>'},
   ].map(x=>'<div class="sc '+x.c+'"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div><div class="sc-trend">'+x.t+'</div></div>').join('');
 }
 
 /* ═══════════════════════════════════════
-   CHART — 12-bar sliding window
+   CHART — sliding window, global max
 ═══════════════════════════════════════ */
 function getChartKeys(){
   const total=S.allKeys.length;
@@ -567,7 +565,6 @@ function getChartKeys(){
 }
 
 function shiftChart(dir){
-  // dir: -1 = go back (older), +1 = go forward (newer)
   const total=S.allKeys.length;
   const maxOffset=Math.max(0,total-CHART_WINDOW);
   S.chartOffset=Math.min(maxOffset,Math.max(0,S.chartOffset-dir));
@@ -578,17 +575,14 @@ function renderChart(){
   const keys=getChartKeys();
   const total=S.allKeys.length;
   const maxOffset=Math.max(0,total-CHART_WINDOW);
-
-  // Nav buttons
   $('nav-prev').disabled=(S.chartOffset>=maxOffset);
   $('nav-next').disabled=(S.chartOffset<=0);
-  if(keys.length>0){
-    $('nav-label').textContent=mShort(keys[0])+' – '+mShort(keys[keys.length-1]);
-  }
+  if(keys.length>0) $('nav-label').textContent=mShort(keys[0])+' \u2013 '+mShort(keys[keys.length-1]);
 
-  // Use global max across ALL months so bar heights are consistent when navigating
+  // Global max across ALL months for consistent bar heights
   const globalMax=Math.max(...S.allKeys.map(k=>S.mo[k]?S.mo[k].opps:0),1);
-  const mxH=165;
+  const mxH=265;
+
   $('bars').innerHTML=keys.map(k=>{
     const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
     const h=Math.max(3,Math.round(m.opps/globalMax*mxH));
@@ -600,64 +594,79 @@ function renderChart(){
 }
 
 /* ═══════════════════════════════════════
-   OVERVIEW TABLE — with year filter
+   OVERVIEW TABLE — year filter + breakdown
 ═══════════════════════════════════════ */
-function getYears(){
-  const yrs=new Set(S.allKeys.map(mYear));
-  return [...yrs].sort();
-}
+function getYears(){ return [...new Set(S.allKeys.map(mYear))].sort(); }
 
 function renderYearPills(){
   const yrs=getYears();
-  $('year-pills').innerHTML=yrs.map(y=>'<button class="yr-pill'+(S.yearFilter===y?' active':'')+'" onclick="setYear(\''+y+'\')">'+(y==='all'?'All':y)+'</button>').join('');
+  $('year-pills').innerHTML=yrs.map(y=>'<button class="f-pill'+(S.yearFilter===y?' active':'')+'" onclick="setYear(\''+y+'\')">'+(y)+' </button>').join('');
 }
 
-function setYear(y){
-  S.yearFilter=S.yearFilter===y?null:y;
-  renderYearPills();
-  renderOvTable();
-}
+function setYear(y){ S.yearFilter=S.yearFilter===y?null:y; renderYearPills(); renderOvTable(); }
+function setBreakdown(v){ S.breakdown=v; renderOvTable(); }
 
 function renderOvTable(){
   let keys=[...S.allKeys].reverse();
   if(S.yearFilter) keys=keys.filter(k=>mYear(k)===S.yearFilter);
+  const bd=S.breakdown;
 
-  $('ov-tbl').innerHTML='<thead><tr>'
-    +'<th>Month</th>'
-    +'<th>New Opps</th>'
-    +'<th>New Deals</th>'
-    +'<th>&#x2514; Open</th>'
-    +'<th>&#x2514; Won</th>'
-    +'<th>&#x2514; Lost</th>'
-    +'<th>New Leads</th>'
-    +'<th>&#x2514; Open</th>'
-    +'<th>&#x2514; Converted</th>'
-    +'<th>&#x2514; Archived</th>'
-    +'<th></th>'
-    +'</tr></thead><tbody>'
-    +keys.map(k=>{
-      const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
-      const dOpen =m.deals.filter(d=>d.status==='open').length;
-      const dWon  =m.deals.filter(d=>d.status==='won').length;
-      const dLost =m.deals.filter(d=>d.status==='lost').length;
-      const lOpen =m.leads.length;
-      const lConv =m.conv.length;
-      const lArch =m.archivedL.length;
-      const tl    =lOpen+lConv+lArch;
-      return '<tr>'
-        +'<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'
-        +'<td class="tdf">'+m.opps+'</td>'
-        +'<td class="tdf-p">'+m.deals.length+'</td>'
-        +'<td class="tdm">'+dOpen+'</td>'
-        +'<td class="tdm">'+dWon+'</td>'
-        +'<td class="tdm">'+dLost+'</td>'
-        +'<td class="tdf-p">'+tl+'</td>'
-        +'<td class="tdm">'+lOpen+'</td>'
-        +'<td class="tdm">'+lConv+'</td>'
-        +'<td class="tdm">'+lArch+'</td>'
-        +'<td><button class="dbtn" onclick="openDive(\''+k+'\')">DIVE &rarr;</button></td>'
-        +'</tr>';
-    }).join('')+'</tbody>';
+  if(bd==='none'){
+    // Standard table
+    $('ov-tbl').innerHTML='<thead><tr>'
+      +'<th>Month</th><th>New Opps</th><th>New Deals</th>'
+      +'<th>&#x2514; Open</th><th>&#x2514; Won</th><th>&#x2514; Lost</th>'
+      +'<th>New Leads</th><th>&#x2514; Open</th><th>&#x2514; Converted</th><th>&#x2514; Archived</th>'
+      +'<th></th></tr></thead><tbody>'
+      +keys.map(k=>{
+        const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
+        const dOpen=m.deals.filter(d=>d.status==='open').length;
+        const dWon=m.deals.filter(d=>d.status==='won').length;
+        const dLost=m.deals.filter(d=>d.status==='lost').length;
+        const tl=m.leads.length+m.conv.length+m.archivedL.length;
+        return '<tr>'
+          +'<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'
+          +'<td class="tdf">'+m.opps+'</td>'
+          +'<td class="tdf-p">'+m.deals.length+'</td>'
+          +'<td class="tdm">'+dOpen+'</td><td class="tdm">'+dWon+'</td><td class="tdm">'+dLost+'</td>'
+          +'<td class="tdf-p">'+tl+'</td>'
+          +'<td class="tdm">'+m.leads.length+'</td>'
+          +'<td class="tdm">'+m.conv.length+'</td>'
+          +'<td class="tdm">'+m.archivedL.length+'</td>'
+          +'<td><button class="dbtn" onclick="openDive(\''+k+'\')">DIVE &rarr;</button></td>'
+          +'</tr>';
+      }).join('')+'</tbody>';
+
+  } else {
+    // Breakdown table: month | total opps | [group1 | group2 | group3 | group4] | dive
+    const groups = bd==='region' ? REGIONS : SECTORS;
+    const groupCols = groups.map(g=>'<th>'+g+'</th>').join('');
+    $('ov-tbl').innerHTML='<thead><tr>'
+      +'<th>Month</th><th>New Opps</th>'
+      +groupCols
+      +'<th>Unassigned</th><th></th>'
+      +'</tr></thead><tbody>'
+      +keys.map(k=>{
+        const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
+        const field=bd==='region'?REGION_FIELD:SECTOR_FIELD;
+        // Count deals + conv per group
+        const allItems=[...m.deals,...m.conv];
+        const groupCounts=groups.map(g=>{
+          return allItems.filter(d=>(d[field]||'').trim()===g).length;
+        });
+        const assigned=groupCounts.reduce((a,b)=>a+b,0);
+        const unassigned=allItems.length-assigned;
+        // Note: leads/archived not included in breakdown as they lack field data
+        return '<tr>'
+          +'<td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td>'
+          +'<td class="tdf">'+m.opps+'</td>'
+          +groupCounts.map(c=>'<td class="tdf-p">'+c+'</td>').join('')
+          +'<td class="tdm">'+unassigned+'</td>'
+          +'<td><button class="dbtn" onclick="openDive(\''+k+'\')">DIVE &rarr;</button></td>'
+          +'</tr>';
+      }).join('')
+      +'</tbody>';
+  }
 }
 
 /* ═══════════════════════════════════════
@@ -670,16 +679,13 @@ function openDive(k){
   const tl=m.leads.length+m.archivedL.length+m.conv.length;
   const{mon,y}=mParts(k);
   $('dive-title').innerHTML='<i>'+mon+'</i> '+y;
-
   $('dive-stats').innerHTML=
     '<div class="ds"><div class="ds-num g">'+m.opps+'</div><div class="ds-lbl">New Opportunities</div></div>'
    +'<div class="ds"><div class="ds-num p">'+m.deals.length+'</div><div class="ds-lbl">New Deals</div></div>'
    +'<div class="ds"><div class="ds-num p">'+tl+'</div><div class="ds-lbl">New Leads</div></div>';
-
   $('t-deals').classList.add('on'); $('t-leads').classList.remove('on');
   renderDiveTbl();
-  const dv=$('dive');
-  dv.style.display='block';
+  const dv=$('dive'); dv.style.display='block';
   setTimeout(()=>dv.scrollIntoView({behavior:'smooth',block:'start'}),40);
 }
 
@@ -693,26 +699,25 @@ function switchTab(tab){
 
 function renderDiveTbl(){
   const m=S.mo[S.diveKey]||{deals:[],leads:[],archivedL:[],conv:[]};
-
   if(S.diveTab==='deals'){
     const items=[...m.deals].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
-    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No new deals in Main Pipeline this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Stage</th><th>Status</th><th>Created</th></tr></thead><tbody>'
+    if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No new deals this month.</div>';return;}
+    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Stage</th><th>Region</th><th>Sector</th><th>Status</th><th>Created</th></tr></thead><tbody>'
       +items.map(d=>'<tr>'
         +'<td>'+esc(d.title)+'</td>'
         +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
         +'<td class="tdm">'+esc(d.stage_name||'--')+'</td>'
+        +'<td class="tdm">'+esc((d[REGION_FIELD]||'').trim()||'--')+'</td>'
+        +'<td class="tdm">'+esc((d[SECTOR_FIELD]||'').trim()||'--')+'</td>'
         +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
         +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
-        +'</tr>').join('')
-      +'</tbody></table>';
+        +'</tr>').join('')+'</tbody></table>';
   } else {
     const items=[
       ...m.leads.map(l=>({title:l.title,owner:l.person_name||l.organization_name||'--',date:l.add_time,status:'open'})),
       ...m.archivedL.map(l=>({title:l.title,owner:l.owner||'--',date:l.createdOn,status:'archived'})),
       ...m.conv.map(d=>({title:d.title,owner:d.owner_name||'--',date:d[LEAD_DATE_FIELD],status:'converted'})),
     ].sort((a,b)=>new Date(b.date)-new Date(a.date));
-
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No leads this month.</div>';return;}
     $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Status</th><th>Lead Created</th></tr></thead><tbody>'
       +items.map(l=>'<tr>'
@@ -720,8 +725,7 @@ function renderDiveTbl(){
         +'<td class="tdm">'+esc(l.owner)+'</td>'
         +'<td><span class="pill pill-'+l.status+'">'+l.status+'</span></td>'
         +'<td class="tdm">'+fmtD(l.date)+'</td>'
-        +'</tr>').join('')
-      +'</tbody></table>';
+        +'</tr>').join('')+'</tbody></table>';
   }
 }
 
@@ -734,7 +738,8 @@ async function init(){
   $('spin').style.display='flex';
   $('dive').style.display='none';
   $('upload-panel').style.display='none';
-  S.diveKey=null; S.chartOffset=0; S.yearFilter=null;
+  S.diveKey=null; S.chartOffset=0; S.yearFilter=null; S.breakdown='none';
+  $('breakdown-select').value='none';
 
   try{
     await fetchCurrency();
@@ -748,7 +753,7 @@ async function init(){
     $('main').style.display='block';
     $('ts').textContent='Updated '+new Date().toLocaleTimeString('en-GB');
     $('at-status-text').innerHTML=archived.length>0
-      ?'<strong>'+archived.length+' archived leads</strong> loaded from Airtable (Sept 2025+) and included in counts.'
+      ?'<strong>'+archived.length+' archived leads</strong> loaded from Airtable and included in counts.'
       :'No archived leads found in Airtable. Use <strong>Update Archived Leads</strong> to sync your first export.';
     $('at-status').style.display='flex';
   }catch(e){
