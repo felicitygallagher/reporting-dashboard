@@ -520,25 +520,53 @@ function renderOvTable(){
     if(isExp){
       const allItems=[...m.deals,...m.conv];
       // Show each region x sector combo that has data
+      // Helper: filter allItems by region+sector combo
+      function comboDeals(r,s){
+        return allItems.filter(d=>Number(d[REGION_FIELD])===REGION_ID[r]&&Number(d[SECTOR_FIELD])===SECTOR_ID[s]);
+      }
       COMBOS.forEach(({r,s,label})=>{
-        const count=allItems.filter(d=>Number(d[REGION_FIELD])===REGION_ID[r]&&Number(d[SECTOR_FIELD])===SECTOR_ID[s]).length;
-        if(count===0) return;
+        const cd=comboDeals(r,s);
+        if(cd.length===0) return;
+        const cdOpen=cd.filter(d=>d.status==='open').length;
+        const cdWon=cd.filter(d=>d.status==='won').length;
+        const cdLost=cd.filter(d=>d.status==='lost').length;
+        // New opps for this combo = deals only (leads have no region/sector)
         html+='<tr class="sub-row">'
           +'<td></td>'
           +'<td class="sub-label">'+label+'</td>'
-          +'<td class="tdm">'+count+'</td>'
-          +'<td colspan="9" class="tdm" style="color:var(--mute);font-size:.6rem">deals &amp; converted deals only</td>'
+          +'<td class="tdm">'+cd.length+'</td>'  // new opps (deals only for this combo)
+          +'<td class="tdm">'+cd.length+'</td>'  // new deals
+          +'<td class="tdm">'+cdOpen+'</td>'
+          +'<td class="tdm">'+cdWon+'</td>'
+          +'<td class="tdm">'+cdLost+'</td>'
+          +'<td class="tdm" style="color:var(--mute)">—</td>'  // new leads (n/a)
+          +'<td class="tdm" style="color:var(--mute)">—</td>'
+          +'<td class="tdm" style="color:var(--mute)">—</td>'
+          +'<td class="tdm" style="color:var(--mute)">—</td>'
+          +'<td></td>'
           +'</tr>';
       });
-      // Unassigned
-      const assigned=allItems.filter(d=>REGION_ID[Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))]&&SECTOR_ID[Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))]).length;
+      // Unassigned row
+      const assigned=allItems.filter(d=>Number(d[REGION_FIELD])>0&&Number(d[SECTOR_FIELD])>0).length;
       const unassigned=allItems.length-assigned;
       if(unassigned>0){
+        const uItems=allItems.filter(d=>!(Number(d[REGION_FIELD])>0&&Number(d[SECTOR_FIELD])>0));
+        const uOpen=uItems.filter(d=>d.status==='open').length;
+        const uWon=uItems.filter(d=>d.status==='won').length;
+        const uLost=uItems.filter(d=>d.status==='lost').length;
         html+='<tr class="sub-row">'
           +'<td></td>'
           +'<td class="sub-label" style="color:var(--mute)">Unassigned</td>'
           +'<td class="tdm" style="color:var(--mute)">'+unassigned+'</td>'
-          +'<td colspan="9"></td>'
+          +'<td class="tdm" style="color:var(--mute)">'+unassigned+'</td>'
+          +'<td class="tdm" style="color:var(--mute)">'+uOpen+'</td>'
+          +'<td class="tdm" style="color:var(--mute)">'+uWon+'</td>'
+          +'<td class="tdm" style="color:var(--mute)">'+uLost+'</td>'
+          +'<td class="tdm" style="color:var(--mute)">—</td>'
+          +'<td class="tdm" style="color:var(--mute)">—</td>'
+          +'<td class="tdm" style="color:var(--mute)">—</td>'
+          +'<td class="tdm" style="color:var(--mute)">—</td>'
+          +'<td></td>'
           +'</tr>';
       }
     }
