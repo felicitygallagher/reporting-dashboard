@@ -340,13 +340,13 @@ function classifyLead(l){
 }
 
 function classifyArchivedLead(l){
-  // Archived leads from Airtable have source channel stored
-  const src = (l.sourceChannel||'').trim();
-  if(!src) return 'Manually Added';
-  if(src==='Zapier') return 'Website / Call Booking';
-  if(src.toLowerCase().includes('chatbot')) return 'Chatbot';
-  if(src.toLowerCase().includes('surfe')) return 'Surfe / LinkedIn';
-  return 'Conference: '+src;
+  // Use Source channel ID — same logic as API leads
+  const ch = (l.sourceChannelId||l.sourceChannel||'').trim();
+  if(!ch) return 'Manually Added';
+  if(ch==='Zapier') return 'Website / Call Booking';
+  if(ch.toLowerCase().includes('chatbot')) return 'Chatbot';
+  if(ch.toLowerCase().includes('surfe')) return 'Surfe / LinkedIn';
+  return 'Conference: '+ch;
 }
 const LEAD_DATE_FIELD = '7dbac76a365841c9ab9c494fc52b8186849bb742';
 const REGION_FIELD    = '2f8f785f22d986dcf51775b73af98a140a34c5ae';
@@ -445,12 +445,18 @@ async function fetchArchivedFromAirtable(){
     offset=d.offset;
   }
   return all.map(r=>({
-    id:r.fields['Lead ID']||'',title:r.fields['Title']||'',
-    owner:r.fields['Owner']||'',createdOn:r.fields['Lead Created On']||'',
-    region:r.fields['Sales Region']||'',
-    sector:r.fields['Sector']||'',
-    createdTime:r.createdTime||'',
-    sourceChannel:r.fields['Source Channel']||''
+    title:           r.fields['Lead - Title']||'',
+    owner:           r.fields['Lead - Owner']||'',
+    status:          r.fields['Lead - Lead status']||'',
+    leadSource:      r.fields['Lead - Lead source']||'',
+    createdOn:       r.fields['Lead - Lead created on']||'',
+    sourceChannel:   r.fields['Lead - Source channel']||'',
+    sourceChannelAttr: r.fields['Lead - Source Channel (Attribution)']||'',
+    sourceChannelId: r.fields['Lead - Source channel ID']||'',
+    sourceOrigin:    r.fields['Lead - Source origin']||'',
+    region:          r.fields['Lead - Sales-Region']||'',
+    sector:          r.fields['Lead - Sector']||'',
+    createdTime:     r.createdTime||''
   })).filter(l=>l.createdOn);
 }
 
@@ -501,12 +507,17 @@ async function doUpload(){
     setUploadStatus('Writing '+rows.length+' records...','working');
     for(let i=0;i<rows.length;i+=10){
       const batch=rows.slice(i,i+10).map(row=>({fields:{
-        'Lead ID':row['Lead - ID']||'','Title':row['Lead - Title']||'',
-        'Owner':row['Lead - Owner']||'','Lead Status':row['Lead - Lead status']||'Archived',
-        'Lead Created On':row['Lead - Lead created on']?row['Lead - Lead created on'].slice(0,10):'',
-        'Sales Region':row['Lead - Sales-Region']||'',
-        'Sector':row['Lead - Sector']||'',
-        'Source Channel':row['Lead - Source channel']||row['Lead - Source Channel (Attribution)']||''
+        'Lead - Title':row['Lead - Title']||'',
+        'Lead - Owner':row['Lead - Owner']||'',
+        'Lead - Lead status':row['Lead - Lead status']||'Archived',
+        'Lead - Lead source':row['Lead - Lead source']||'',
+        'Lead - Lead created on':row['Lead - Lead created on']?row['Lead - Lead created on'].slice(0,10):'',
+        'Lead - Source channel':row['Lead - Source channel']||'',
+        'Lead - Source Channel (Attribution)':row['Lead - Source Channel (Attribution)']||'',
+        'Lead - Source channel ID':row['Lead - Source channel ID']||'',
+        'Lead - Source origin':row['Lead - Source origin']||'',
+        'Lead - Sales-Region':row['Lead - Sales-Region']||'',
+        'Lead - Sector':row['Lead - Sector']||''
       }}));
       await atFetch('',{method:'POST',body:JSON.stringify({records:batch})});
     }
