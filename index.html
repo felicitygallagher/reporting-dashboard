@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pipedrive Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,700;0,900;1,300;1,700&family=Epilogue:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#08060f;--bg1:#0e0b1a;--bg2:#130f24;--surf:#1c1733;--surf2:#241e42;
+      --bord:#2f2855;--bord2:#3e3570;
+      --pur:#b06ef3;--pur-d:#7c3aed;--pur-glow:rgba(176,110,243,.20);--pur-soft:rgba(176,110,243,.08);--pur-mid:rgba(176,110,243,.14);
+      --grn:#1fde9e;--grn-d:#0b9e6d;--grn-glow:rgba(31,222,158,.16);--grn-soft:rgba(31,222,158,.07);
+      --amb:#f8c247;--red:#f47373;--txt:#ece8f8;--txt2:#9a8ec5;--mute:#56497a;
+      --ff-head:'Fraunces',serif;--ff-body:'Epilogue',sans-serif;--ff-mono:'JetBrains Mono',monospace;
+      --r:12px;
+    }
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--txt);font-family:var(--ff-body);min-height:100vh;overflow-x:hidden}
+    #atm{position:fixed;inset:0;pointer-events:none;z-index:0}
+    #atm span{position:absolute;border-radius:50%}
+    #atm span:nth-child(1){width:800px;height:800px;top:-260px;left:-180px;background:radial-gradient(circle,rgba(124,58,237,.13) 0%,transparent 68%)}
+    #atm span:nth-child(2){width:600px;height:600px;bottom:-180px;right:-120px;background:radial-gradient(circle,rgba(31,222,158,.10) 0%,transparent 68%)}
+    #atm span:nth-child(3){width:300px;height:300px;top:40%;left:50%;background:radial-gradient(circle,rgba(176,110,243,.06) 0%,transparent 70%)}
+    .wrap{position:relative;z-index:1;max-width:1300px;margin:0 auto;padding:2.5rem 1.75rem 5rem}
+    .hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;margin-bottom:3rem;padding-bottom:2rem;border-bottom:1px solid var(--bord);flex-wrap:wrap}
+    .hdr-l h1{font-family:var(--ff-head);font-size:clamp(2.4rem,5vw,3.8rem);font-weight:900;letter-spacing:-.03em;line-height:1}
+    .hdr-l h1 i{font-style:italic;color:var(--pur);font-weight:300}
+    .hdr-sub{font-family:var(--ff-mono);font-size:.62rem;color:var(--mute);letter-spacing:.14em;text-transform:uppercase;margin-top:.5rem}
+    .hdr-r{display:flex;flex-direction:column;align-items:flex-end;gap:.5rem}
+    .badge-live{display:flex;align-items:center;gap:.45rem;background:var(--pur-soft);border:1px solid rgba(176,110,243,.28);padding:.32rem .85rem;border-radius:100px;font-family:var(--ff-mono);font-size:.6rem;color:var(--pur);letter-spacing:.12em}
+    .dot-live{width:6px;height:6px;border-radius:50%;background:var(--grn);box-shadow:0 0 7px var(--grn);animation:blink 2.5s ease-in-out infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+    .ts{font-family:var(--ff-mono);font-size:.58rem;color:var(--mute)}
+    .btn-refresh{background:none;border:1px solid var(--bord2);color:var(--txt2);font-family:var(--ff-mono);font-size:.6rem;padding:.28rem .7rem;border-radius:8px;cursor:pointer;letter-spacing:.06em;transition:border-color .2s,color .2s}
+    .btn-refresh:hover{border-color:var(--pur);color:var(--pur)}
+    .err-bar{display:none;background:rgba(244,115,115,.08);border:1px solid rgba(244,115,115,.3);color:#fca5a5;font-family:var(--ff-mono);font-size:.76rem;padding:.8rem 1rem;border-radius:var(--r);margin-bottom:1.5rem}
+    .spinner-wrap{display:none;flex-direction:column;align-items:center;justify-content:center;gap:1.2rem;padding:7rem 2rem}
+    .spinner{width:50px;height:50px;border-radius:50%;border:3px solid var(--bord);border-top-color:var(--pur);border-right-color:var(--grn);animation:spin .85s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spinner-wrap p{font-family:var(--ff-mono);font-size:.72rem;color:var(--mute);letter-spacing:.08em}
+    .sec-lbl{font-family:var(--ff-mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.15em;color:var(--mute);margin-bottom:1rem;display:flex;align-items:center;gap:.7rem}
+    .sec-lbl::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--bord),transparent)}
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:1rem;margin-bottom:1.5rem}
+    .sc{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:1.4rem 1.6rem;position:relative;overflow:hidden;opacity:0;transform:translateY(18px);animation:fup .55s forwards;transition:border-color .25s,transform .2s;cursor:default}
+    @keyframes fup{to{opacity:1;transform:translateY(0)}}
+    .sc:nth-child(1){animation-delay:.05s}.sc:nth-child(2){animation-delay:.11s}.sc:nth-child(3){animation-delay:.17s}.sc:nth-child(4){animation-delay:.23s}
+    .sc::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none}
+    .sc.p::before{background:var(--pur-soft)}.sc.g::before{background:var(--grn-soft)}
+    .sc:hover{transform:translateY(-3px)}.sc.p:hover{border-color:rgba(176,110,243,.45)}.sc.g:hover{border-color:rgba(31,222,158,.45)}
+    .sc-glow{position:absolute;width:150px;height:150px;border-radius:50%;top:-55px;right:-45px;pointer-events:none}
+    .sc.p .sc-glow{background:var(--pur-glow)}.sc.g .sc-glow{background:var(--grn-glow)}
+    .sc-ico{font-size:1rem;display:block;margin-bottom:.6rem}
+    .sc-num{font-family:var(--ff-head);font-size:2.9rem;font-weight:700;letter-spacing:-.04em;line-height:1}
+    .sc.p .sc-num{color:var(--pur)}.sc.g .sc-num{color:var(--grn)}
+    .sc-lbl{font-size:.78rem;color:var(--txt2);margin-top:.35rem;font-weight:500}
+    .sc-sub{font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);margin-top:.2rem}
+    .chart-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:1.75rem;margin-bottom:1.5rem;opacity:0;transform:translateY(18px);animation:fup .55s .28s forwards}
+    .chart-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem}
+    .chart-top h2{font-family:var(--ff-head);font-size:1.3rem;font-weight:700;letter-spacing:-.02em}
+    .chart-top h2 i{font-style:italic;color:var(--pur);font-weight:300}
+    .legend{display:flex;gap:1.2rem;font-family:var(--ff-mono);font-size:.6rem;color:var(--txt2)}
+    .legend span{display:flex;align-items:center;gap:.4rem}
+    .lpip{width:10px;height:10px;border-radius:3px;display:inline-block}
+    .chart-scrl{overflow-x:auto;padding-bottom:.5rem}
+    .bars{display:flex;align-items:flex-end;gap:7px;height:190px;min-width:580px;padding-top:.5rem}
+    .bg{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;cursor:pointer}
+    .bw{display:flex;gap:3px;align-items:flex-end;width:100%;transition:filter .15s;position:relative}
+    .bg:hover .bw{filter:brightness(1.2)}.bg.sel .bw{filter:brightness(1.25)}
+    .bg.sel .bw::after{content:'';position:absolute;inset:-3px;border:2px solid var(--pur);border-radius:6px 6px 2px 2px;pointer-events:none}
+    .b{flex:1;border-radius:4px 4px 0 0;min-height:3px;transition:height .65s cubic-bezier(.34,1.4,.64,1);position:relative}
+    .b.bd{background:linear-gradient(to top,var(--pur-d),var(--pur));box-shadow:0 -3px 14px rgba(176,110,243,.35)}
+    .b.bl{background:linear-gradient(to top,var(--grn-d),var(--grn));box-shadow:0 -3px 14px rgba(31,222,158,.3)}
+    .tip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--surf2);border:1px solid var(--bord2);color:var(--txt);font-family:var(--ff-mono);font-size:.6rem;padding:.26rem .5rem;border-radius:5px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:20}
+    .b:hover .tip{opacity:1}
+    .blbl{font-family:var(--ff-mono);font-size:.56rem;color:var(--mute);text-align:center;white-space:nowrap;transition:color .2s}
+    .bg.sel .blbl{color:var(--pur);font-weight:500}
+    .chart-hint{font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);text-align:center;margin-top:.75rem;letter-spacing:.05em}
+    .ov-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;margin-bottom:1.5rem;opacity:0;transform:translateY(18px);animation:fup .55s .33s forwards}
+    .card-hd{padding:1.2rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bord);flex-wrap:wrap;gap:.5rem}
+    .card-hd h2{font-family:var(--ff-head);font-size:1.2rem;font-weight:700}
+    .card-hd h2 i{font-style:italic;color:var(--grn);font-weight:300}
+    .card-hd span{font-family:var(--ff-mono);font-size:.6rem;color:var(--mute)}
+    .dive{display:none;background:var(--bg2);border:1px solid var(--bord2);border-radius:var(--r);padding:1.75rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
+    .dive::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--pur),var(--grn))}
+    .dive-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem}
+    .dive-hd h2{font-family:var(--ff-head);font-size:1.9rem;font-weight:900;letter-spacing:-.03em}
+    .dive-hd h2 i{font-style:italic;color:var(--pur);font-weight:300}
+    .btn-close{background:none;border:1px solid var(--bord2);color:var(--mute);font-family:var(--ff-mono);font-size:.6rem;padding:.28rem .7rem;border-radius:8px;cursor:pointer;letter-spacing:.08em;transition:border-color .2s,color .2s}
+    .btn-close:hover{border-color:var(--red);color:var(--red)}
+    .dive-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:.75rem;margin-bottom:1.5rem}
+    .ds{background:var(--surf);border:1px solid var(--bord);border-radius:10px;padding:.95rem 1.1rem}
+    .ds-num{font-family:var(--ff-head);font-size:2rem;font-weight:700;letter-spacing:-.04em;line-height:1}
+    .ds-num.p{color:var(--pur)}.ds-num.g{color:var(--grn)}.ds-num.a{color:var(--amb)}.ds-num.sm{font-size:1.3rem}
+    .ds-lbl{font-size:.7rem;color:var(--txt2);margin-top:.2rem}
+    .dive-tabs{display:flex;border-bottom:1px solid var(--bord);margin-bottom:1rem}
+    .dtab{font-family:var(--ff-mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);padding:.6rem 1.1rem;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;transition:color .2s,border-color .2s;margin-bottom:-1px}
+    .dtab.on{color:var(--grn);border-bottom-color:var(--grn)}.dtab:hover:not(.on){color:var(--txt2)}
+    .tbl-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse}
+    thead th{background:var(--surf2);font-family:var(--ff-mono);font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);padding:.68rem 1rem;text-align:left;white-space:nowrap;font-weight:400}
+    tbody tr{border-top:1px solid var(--bord);transition:background .12s}
+    tbody tr:hover{background:rgba(176,110,243,.04)}
+    tbody td{padding:.78rem 1rem;font-size:.82rem;color:var(--txt);white-space:nowrap}
+    .tdm{font-family:var(--ff-mono);font-size:.68rem;color:var(--txt2)}
+    .pill{display:inline-block;font-family:var(--ff-mono);font-size:.57rem;padding:.17rem .52rem;border-radius:100px;letter-spacing:.05em}
+    .pill-won{background:rgba(31,222,158,.12);color:var(--grn);border:1px solid rgba(31,222,158,.25)}
+    .pill-lost{background:rgba(244,115,115,.10);color:var(--red);border:1px solid rgba(244,115,115,.2)}
+    .pill-open{background:rgba(176,110,243,.10);color:var(--pur);border:1px solid rgba(176,110,243,.2)}
+    .empty{text-align:center;padding:3rem;font-family:var(--ff-mono);font-size:.7rem;color:var(--mute)}
+    .dbtn{background:var(--pur-soft);border:1px solid rgba(176,110,243,.22);color:var(--pur);font-family:var(--ff-mono);font-size:.57rem;padding:.2rem .58rem;border-radius:5px;cursor:pointer;letter-spacing:.06em;transition:background .15s,border-color .15s}
+    .dbtn:hover{background:var(--pur-mid);border-color:rgba(176,110,243,.4)}
+    ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--pur-d)}
+    footer{font-family:var(--ff-mono);font-size:.56rem;color:var(--mute);text-align:center;padding-top:1.5rem;letter-spacing:.1em}
+  </style>
+</head>
+<body>
+<div id="atm"><span></span><span></span><span></span></div>
+<div class="wrap">
+  <header class="hdr">
+    <div class="hdr-l">
+      <h1>Pipe<i>drive</i></h1>
+      <p class="hdr-sub">// Sales Intelligence Dashboard</p>
+    </div>
+    <div class="hdr-r">
+      <div class="badge-live"><span class="dot-live"></span>LIVE DATA</div>
+      <p class="ts" id="ts"></p>
+      <button class="btn-refresh" onclick="init()">&#x21BA; REFRESH</button>
+    </div>
+  </header>
+  <div class="err-bar" id="err"></div>
+  <div class="spinner-wrap" id="spin"><div class="spinner"></div><p>Pulling data from Pipedrive&hellip;</p></div>
+  <div id="main" style="display:none">
+    <div class="sec-lbl">12-month overview</div>
+    <div class="stats" id="stats"></div>
+    <div class="chart-card">
+      <div class="chart-top">
+        <h2>Monthly <i>Activity</i></h2>
+        <div class="legend">
+          <span><span class="lpip" style="background:var(--pur)"></span>Deals</span>
+          <span><span class="lpip" style="background:var(--grn)"></span>Leads</span>
+        </div>
+      </div>
+      <div class="chart-scrl"><div class="bars" id="bars"></div></div>
+      <p class="chart-hint">&#x2191; Click any month bar to open a deep dive</p>
+    </div>
+    <div class="ov-card">
+      <div class="card-hd">
+        <h2>Monthly <i>Breakdown</i></h2>
+        <span>Last 12 months &mdash; newest first</span>
+      </div>
+      <div class="tbl-wrap"><table id="ov-tbl"></table></div>
+    </div>
+    <div class="dive" id="dive">
+      <div class="dive-hd">
+        <h2 id="dive-title"></h2>
+        <button class="btn-close" onclick="closeDive()">&#x2715; CLOSE</button>
+      </div>
+      <div class="dive-stats" id="dive-stats"></div>
+      <div class="dive-tabs">
+        <button class="dtab on" id="t-deals" onclick="switchTab('deals')">Deals</button>
+        <button class="dtab" id="t-leads" onclick="switchTab('leads')">Leads</button>
+      </div>
+      <div class="tbl-wrap" id="dive-tbl"></div>
+    </div>
+  </div>
+  <footer>PIPEDRIVE DASHBOARD &middot; DATA &copy; PIPEDRIVE &middot; CONFIDENTIAL</footer>
+</div>
+<script>
+const API_TOKEN = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
+const S={deals:[],leads:[],mo:{},currency:'GBP',diveKey:null,diveTab:'deals'};
+const $=id=>document.getElementById(id);
+function showErr(m){const e=$('err');e.textContent='Warning: '+m;e.style.display='block';}
+function fmt(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'k';return String(n);}
+function fmtC(n,c){if(!n&&n!==0)return'--';return new Intl.NumberFormat('en-GB',{style:'currency',currency:c||'GBP',maximumFractionDigits:0}).format(n);}
+function mKey(d){const dt=new Date(d);return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');}
+function mShort(k){const[y,m]=k.split('-');return new Date(+y,+m-1).toLocaleString('en-GB',{month:'short',year:'2-digit'});}
+function mLong(k){const[y,m]=k.split('-');return new Date(+y,+m-1).toLocaleString('en-GB',{month:'long',year:'numeric'});}
+function mParts(k){const[y,m]=k.split('-');return{mon:new Date(+y,+m-1).toLocaleString('en-GB',{month:'long'}),y};}
+function last12(){const keys=[];const now=new Date();for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);keys.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));}return keys;}
+function since12(){const d=new Date();d.setMonth(d.getMonth()-11);d.setDate(1);d.setHours(0,0,0,0);return d;}
+function esc(s){return String(s||'--').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtD(s){return s?new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'--';}
+async function pd(path){const sep=path.includes('?')?'&':'?';const r=await fetch('https://api.pipedrive.com/v1'+path+sep+'api_token='+encodeURIComponent(API_TOKEN));if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||'HTTP '+r.status);}return r.json();}
+async function fetchDeals(since){const ss=since.toISOString().slice(0,10);let all=[],start=0;while(true){const d=await pd('/deals?limit=500&start='+start+'&status=all&since_timestamp='+ss+'%2000:00:00');if(!d.success)throw new Error(d.error||'Deals failed');all=all.concat(d.data||[]);if(!d.additional_data?.pagination?.more_items_in_collection)break;start+=500;}return all;}
+async function fetchLeads(since){const ss=since.toISOString().slice(0,10);let all=[],start=0;while(true){const d=await pd('/leads?limit=500&start='+start+'&created_after='+ss);if(!d.success)throw new Error(d.error||'Leads failed');all=all.concat(d.data||[]);if(!d.additional_data?.pagination?.more_items_in_collection)break;start+=500;}return all;}
+async function fetchCurrency(){try{const d=await pd('/currencies?default_currency=1');const c=d.data?.find(x=>x.default_flag);if(c)S.currency=c.code;}catch(e){}}
+function buildMonthly(){last12().forEach(k=>S.mo[k]={deals:[],leads:[],won:0,val:0});S.deals.forEach(d=>{const k=mKey(d.add_time);if(!S.mo[k])return;S.mo[k].deals.push(d);if(d.status==='won'){S.mo[k].won++;S.mo[k].val+=(d.value||0);}else if(d.status==='open')S.mo[k].val+=(d.value||0);});S.leads.forEach(l=>{const k=mKey(l.add_time);if(S.mo[k])S.mo[k].leads.push(l);});}
+function renderStats(){const td=S.deals.length,tl=S.leads.length,tw=S.deals.filter(d=>d.status==='won').length,wr=td?Math.round(tw/td*100):0,tv=S.deals.filter(d=>d.status==='won'||d.status==='open').reduce((s,d)=>s+(d.value||0),0);$('stats').innerHTML=[{c:'p',ico:'📥',n:fmt(td),l:'New Deals',s:'last 12 months'},{c:'g',ico:'🌱',n:fmt(tl),l:'New Leads',s:'last 12 months'},{c:'p',ico:'🏆',n:fmt(tw),l:'Deals Won',s:wr+'% win rate'},{c:'g',ico:'💰',n:fmtC(tv,S.currency),l:'Pipeline Value',s:'open & won'}].map(x=>'<div class="sc '+x.c+'"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div><div class="sc-sub">'+x.s+'</div></div>').join('');}
+function renderChart(){const keys=last12();const mx=Math.max(...keys.map(k=>Math.max(S.mo[k].deals.length,S.mo[k].leads.length,1)));const mxH=165;$('bars').innerHTML=keys.map(k=>{const{deals,leads}=S.mo[k];const dH=Math.max(3,Math.round(deals.length/mx*mxH));const lH=Math.max(3,Math.round(leads.length/mx*mxH));const sel=S.diveKey===k?'sel':'';return '<div class="bg '+sel+'" onclick="openDive(\''+k+'\')"><div class="bw"><div class="b bd" style="height:'+dH+'px"><div class="tip">'+deals.length+' deal'+(deals.length!==1?'s':'')+'</div></div><div class="b bl" style="height:'+lH+'px"><div class="tip">'+leads.length+' lead'+(leads.length!==1?'s':'')+'</div></div></div><div class="blbl">'+mShort(k)+'</div></div>';}).join('');}
+function renderOvTable(){const keys=[...last12()].reverse();$('ov-tbl').innerHTML='<thead><tr><th>Month</th><th>New Deals</th><th>New Leads</th><th>Won</th><th>Win Rate</th><th>Value (Open+Won)</th><th></th></tr></thead><tbody>'+keys.map(k=>{const m=S.mo[k];const wr=m.deals.length?Math.round(m.won/m.deals.length*100):0;return'<tr><td class="tdm" style="color:var(--pur)">'+mLong(k)+'</td><td style="font-family:\'Fraunces\',serif;font-size:1.15rem;letter-spacing:-.03em;color:var(--pur)">'+m.deals.length+'</td><td style="font-family:\'Fraunces\',serif;font-size:1.15rem;letter-spacing:-.03em;color:var(--grn)">'+m.leads.length+'</td><td class="tdm">'+m.won+'</td><td class="tdm">'+wr+'%</td><td class="tdm">'+fmtC(m.val,S.currency)+'</td><td><button class="dbtn" onclick="openDive(\''+k+'\')">DIVE &rarr;</button></td></tr>';}).join('')+'</tbody>';}
+function openDive(k){S.diveKey=k;S.diveTab='deals';renderChart();const m=S.mo[k];const wr=m.deals.length?Math.round(m.won/m.deals.length*100):0;const{mon,y}=mParts(k);$('dive-title').innerHTML='<i>'+mon+'</i> '+y;$('dive-stats').innerHTML='<div class="ds"><div class="ds-num p">'+m.deals.length+'</div><div class="ds-lbl">New Deals</div></div><div class="ds"><div class="ds-num g">'+m.leads.length+'</div><div class="ds-lbl">New Leads</div></div><div class="ds"><div class="ds-num a">'+m.won+'</div><div class="ds-lbl">Won</div></div><div class="ds"><div class="ds-num p">'+wr+'%</div><div class="ds-lbl">Win Rate</div></div><div class="ds"><div class="ds-num g sm">'+fmtC(m.val,S.currency)+'</div><div class="ds-lbl">Open + Won Value</div></div>';$('t-deals').classList.add('on');$('t-leads').classList.remove('on');renderDiveTbl();const dv=$('dive');dv.style.display='block';setTimeout(()=>dv.scrollIntoView({behavior:'smooth',block:'start'}),40);}
+function closeDive(){S.diveKey=null;$('dive').style.display='none';renderChart();}
+function switchTab(tab){S.diveTab=tab;$('t-deals').classList.toggle('on',tab==='deals');$('t-leads').classList.toggle('on',tab==='leads');renderDiveTbl();}
+function renderDiveTbl(){const m=S.mo[S.diveKey];const isD=S.diveTab==='deals';const items=[...(isD?m.deals:m.leads)].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No '+(isD?'deals':'leads')+' found for this month.</div>';return;}if(isD){$('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Contact / Org</th><th>Stage</th><th>Value</th><th>Status</th><th>Created</th></tr></thead><tbody>'+items.map(d=>'<tr><td>'+esc(d.title)+'</td><td class="tdm">'+esc(d.person_name||d.org_name||'--')+'</td><td class="tdm">'+esc(d.stage_name||'--')+'</td><td class="tdm">'+fmtC(d.value,d.currency||S.currency)+'</td><td><span class="pill pill-'+d.status+'">'+d.status+'</span></td><td class="tdm">'+fmtD(d.add_time)+'</td></tr>').join('')+'</tbody></table>';}else{$('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Contact / Org</th><th>Value</th><th>Created</th></tr></thead><tbody>'+items.map(l=>'<tr><td>'+esc(l.title)+'</td><td class="tdm">'+esc(l.person_name||l.organization_name||'--')+'</td><td class="tdm">'+(l.value?fmtC(l.value.amount,l.value.currency||S.currency):'--')+'</td><td class="tdm">'+fmtD(l.add_time)+'</td></tr>').join('')+'</tbody></table>';}}
+async function init(){$('err').style.display='none';$('main').style.display='none';$('spin').style.display='flex';$('dive').style.display='none';S.diveKey=null;try{const since=since12();await fetchCurrency();const[deals,leads]=await Promise.all([fetchDeals(since),fetchLeads(since)]);S.deals=deals;S.leads=leads;S.mo={};buildMonthly();renderStats();renderChart();renderOvTable();$('main').style.display='block';$('ts').textContent='Updated '+new Date().toLocaleTimeString('en-GB');}catch(e){showErr(e.message+' -- verify your API token.');}finally{$('spin').style.display='none';}}
+init();
+</script>
+</body>
+</html>
