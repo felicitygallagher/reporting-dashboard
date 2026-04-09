@@ -544,11 +544,6 @@ function renderOvTable(){
 
   html+='</tbody>';
   $('ov-tbl').innerHTML=html;
-// Attach expand button listeners via delegation (avoids quote escaping issues)
-  document.getElementById('ov-tbl').addEventListener('click', function(e){
-    const btn = e.target.closest('.js-expand');
-    if(btn){ toggleExpand(btn.dataset.key); }
-  });
 }
 
 /* ── Deep dive ── */
@@ -636,6 +631,12 @@ async function init(){
     $('spin').style.display='none';
   }
 }
+
+// Single delegated listener for expand buttons - set up once
+document.addEventListener('click', function(e){
+  const btn = e.target.closest('.js-expand');
+  if(btn){ toggleExpand(btn.dataset.key); }
+});
 
 init();
 </script>
