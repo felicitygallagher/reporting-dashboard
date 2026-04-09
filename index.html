@@ -221,6 +221,7 @@
       <div class="card-hd">
         <h2>Monthly <i>Breakdown</i></h2>
         <div class="card-hd-controls">
+          <div class="pill-group" id="owner-pills"></div>
           <div class="pill-group" id="region-pills"></div>
           <div class="pill-group" id="sector-pills"></div>
           <div class="pill-group" id="year-pills"></div>
@@ -248,6 +249,15 @@
 <script>
 const API_TOKEN       = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
 const EXCLUDED_PIPELINE = 9; // Consultant (not a direct sale)
+const OWNER_MAP = {
+  'Amy':   {id:11318906, name:'Amy Da Costa'},
+  'Fady':  {id:24491424, name:'Fady Angibeaud'},
+  'Matt':  {id:13961650, name:'Matt Garcia'},
+  'Merryn':{id:11302998, name:'Merryn Parks'},
+  'Myron': {id:12822990, name:'Myron Spence'},
+};
+const NAMED_IDS = new Set(Object.values(OWNER_MAP).map(o=>o.id));
+const SALESPEOPLE = ['Amy','Fady','Matt','Merryn','Myron','Other'];
 const LEAD_DATE_FIELD = '7dbac76a365841c9ab9c494fc52b8186849bb742';
 const REGION_FIELD    = '2f8f785f22d986dcf51775b73af98a140a34c5ae';
 const SECTOR_FIELD    = 'cd63d398be9a5c23147344f38f1ae37fb81fc60a';
@@ -271,6 +281,7 @@ const S = {
   currency:'GBP',
   filterRegion: null,
   filterSector: null,
+  filterOwner: null,
   statsOffset: 0  // 0 = last complete month, 1 = 2 months ago, etc.
 };
 const expandedMonths = new Set();
@@ -525,6 +536,10 @@ function renderChart(){
 function getYears(){ return [...new Set(S.allKeys.map(mYear))].sort(); }
 
 function renderFilterPills(){
+  // Owner pills
+  document.getElementById('owner-pills').innerHTML =
+    '<span style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);margin-right:.2rem">Owner:</span>'
+    + SALESPEOPLE.map(n=>'<button class="f-pill'+(S.filterOwner===n?' active':'')+'" data-pill-owner="'+n+'">'+n+'</button>').join('');
   // Year pills
   document.getElementById('year-pills').innerHTML =
     getYears().map(y=>'<button class="f-pill'+(S.yearFilter===y?' active':'')+'" data-pill-year="'+y+'">'+y+'</button>').join('');
@@ -548,12 +563,28 @@ document.addEventListener('click', function(e){
     const r=btn.dataset.pillRegion; S.filterRegion=S.filterRegion===r?null:r;
   } else if(btn.dataset.pillSector){
     const s=btn.dataset.pillSector; S.filterSector=S.filterSector===s?null:s;
+  } else if(btn.dataset.pillOwner){
+    const o=btn.dataset.pillOwner; S.filterOwner=S.filterOwner===o?null:o;
   }
   renderFilterPills();
   renderOvTable();
 });
 
 /* ── Helper: apply region+sector filter to a set of items ── */
+function ownerMatch(item, isLead=false){
+  if(!S.filterOwner) return true;
+  if(S.filterOwner==='Other'){
+    if(isLead) return !NAMED_IDS.has(item.owner_id?.id||item.owner_id);
+    return !Object.values(OWNER_MAP).some(o=>item.owner_name&&item.owner_name.startsWith(o.name.split(' ')[0]));
+  }
+  const ow=OWNER_MAP[S.filterOwner];
+  if(isLead){
+    const lid=item.owner_id?.id||item.owner_id;
+    return lid===ow.id;
+  }
+  return item.owner_name&&item.owner_name.startsWith(ow.name.split(' ')[0]);
+}
+
 function applyFilter(items, isArchived=false){
   return items.filter(item=>{
     if(S.filterRegion){
@@ -565,6 +596,10 @@ function applyFilter(items, isArchived=false){
       const val = isArchived ? (item.sector||'').trim() : String(Number(item[SECTOR_FIELD]));
       const expected = isArchived ? S.filterSector : String(SECTOR_ID[S.filterSector]);
       if(val!==expected) return false;
+    }
+    if(S.filterOwner && !isArchived){
+      // archived leads from Airtable don't have owner_id — skip owner filter for them
+      if(!ownerMatch(item, !!item.owner_id)) return false;
     }
     return true;
   });
@@ -737,11 +772,10 @@ function renderDiveTbl(){
   if(S.diveTab==='deals'){
     const items=[...m.deals].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No new deals this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Stage</th><th>Region</th><th>Sector</th><th>Status</th><th>Created</th></tr></thead><tbody>'
+    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Region</th><th>Sector</th><th>Status</th><th>Created</th></tr></thead><tbody>'
       +items.map(d=>'<tr>'
         +'<td>'+esc(d.title)+'</td>'
         +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
-        +'<td class="tdm">'+esc(d.stage_name||'--')+'</td>'
         +'<td class="tdm">'+esc(Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--')+'</td>'
         +'<td class="tdm">'+esc(Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--')+'</td>'
         +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
@@ -749,15 +783,32 @@ function renderDiveTbl(){
         +'</tr>').join('')+'</tbody></table>';
   } else {
     const items=[
-      ...m.leads.map(l=>({title:l.title,owner:l.person_name||l.organization_name||'--',date:l.add_time,status:'open'})),
-      ...m.archivedL.map(l=>({title:l.title,owner:l.owner||'--',date:l.createdOn,status:'archived'})),
-      ...m.conv.map(d=>({title:d.title,owner:d.owner_name||'--',date:d[LEAD_DATE_FIELD],status:'converted'})),
+      ...m.leads.map(l=>({
+        title:l.title,
+        owner:Object.values(OWNER_MAP).find(o=>o.id===(l.owner_id?.id||l.owner_id))?.name||'--',
+        region:Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(l[REGION_FIELD]))||'--',
+        sector:Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(l[SECTOR_FIELD]))||'--',
+        date:l.add_time, status:'open'
+      })),
+      ...m.archivedL.map(l=>({
+        title:l.title, owner:l.owner||'--',
+        region:l.region||'--', sector:l.sector||'--',
+        date:l.createdOn, status:'archived'
+      })),
+      ...m.conv.map(d=>({
+        title:d.title, owner:d.owner_name||'--',
+        region:Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--',
+        sector:Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--',
+        date:d[LEAD_DATE_FIELD], status:'converted'
+      })),
     ].sort((a,b)=>new Date(b.date)-new Date(a.date));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No leads this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Status</th><th>Lead Created</th></tr></thead><tbody>'
+    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Region</th><th>Sector</th><th>Status</th><th>Lead Created</th></tr></thead><tbody>'
       +items.map(l=>'<tr>'
         +'<td>'+esc(l.title)+'</td>'
         +'<td class="tdm">'+esc(l.owner)+'</td>'
+        +'<td class="tdm">'+esc(l.region)+'</td>'
+        +'<td class="tdm">'+esc(l.sector)+'</td>'
         +'<td><span class="pill pill-'+l.status+'">'+l.status+'</span></td>'
         +'<td class="tdm">'+fmtD(l.date)+'</td>'
         +'</tr>').join('')+'</tbody></table>';
@@ -771,7 +822,7 @@ async function init(){
   $('spin').style.display='flex';
   $('dive').style.display='none';
   $('upload-panel').style.display='none';
-  S.diveKey=null; S.chartOffset=0; S.yearFilter=null; S.filterRegion=null; S.filterSector=null; S.statsOffset=0;
+  S.diveKey=null; S.chartOffset=0; S.yearFilter=null; S.filterRegion=null; S.filterSector=null; S.filterOwner=null; S.statsOffset=0;
   expandedMonths.clear();
 
   try{
