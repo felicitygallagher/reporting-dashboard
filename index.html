@@ -141,6 +141,8 @@
     .dtab{font-family:var(--ff-mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);padding:.6rem 1.1rem;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;transition:color .2s,border-color .2s;margin-bottom:-1px}
     .dtab.on{color:var(--grn);border-bottom-color:var(--grn)}.dtab:hover:not(.on){color:var(--txt2)}
     .tbl-wrap{overflow-x:auto}
+    .tbl-wrap.dive-tbl-wrap{overflow-x:visible}
+    .cell-wrap{white-space:normal;min-width:160px;max-width:280px;word-break:break-word;line-height:1.4}
     table{width:100%;border-collapse:collapse}
     thead th{background:var(--surf2);font-family:var(--ff-mono);font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);padding:.68rem 1rem;text-align:left;white-space:nowrap;font-weight:400}
     tbody tr{border-top:1px solid var(--bord);transition:background .12s}
@@ -196,19 +198,20 @@
     <button class="logic-pill" onclick="toggleLogic()">&#x2139;&#xFE0F; Source classification logic &nbsp;&#x25BC;</button>
     <div class="logic-box" id="logic-box">
       <strong>Deals</strong><br>
-      &bull; <em>Marketplace</em> origin &rarr; Website / Call Booking<br>
-      &bull; <em>ManuallyCreated</em> origin + no Lead Created Date &rarr; Manually Added<br>
-      &bull; <em>ManuallyCreated</em> origin + Lead Created Date set &rarr; Converted from Lead<br>
-      &bull; <em>Chatbot</em> origin &rarr; Chatbot<br>
-      &bull; <em>WebForms</em> origin &rarr; Conference (channel ID = form name)<br>
-      &bull; <em>API</em> origin &rarr; API / Integration<br>
+      &bull; Source origin = <em>Marketplace</em> &rarr; Website / Call Booking<br>
+      &bull; Source origin = <em>ManuallyCreated</em> + no Lead Created Date &rarr; Manually Added<br>
+      &bull; Source origin = <em>ManuallyCreated</em> + Lead Created Date set &rarr; Converted from Lead<br>
+      &bull; Source origin = <em>Chatbot</em> &rarr; Chatbot<br>
+      &bull; Source origin = <em>WebForms</em> &rarr; Conference (Source channel ID = form name)<br>
+      &bull; Source origin = <em>API</em> &rarr; API / Integration<br>
       <br>
-      <strong>Leads</strong> (API active + archived &mdash; same logic for both)<br>
-      &bull; Source channel = <em>Zapier</em> &rarr; Website / Call Booking<br>
-      &bull; Source channel contains <em>chatbot</em> &rarr; Chatbot<br>
-      &bull; Source channel contains <em>surfe</em> &rarr; Surfe / LinkedIn &#x26A0;&#xFE0F;<br>
-      &bull; Source channel = a web form name &rarr; Conference (form name shown)<br>
-      &bull; No source channel &rarr; Manually Added
+      <strong>Leads</strong> (API active + archived &mdash; same logic)<br>
+      &bull; Source origin = <em>Marketplace</em> + Source channel ID = <em>Zapier</em> &rarr; Website / Call Booking<br>
+      &bull; Source origin = <em>Chatbot</em> + Source channel ID = <em>[chatbot name]</em> &rarr; Chatbot<br>
+      &bull; Source origin = <em>Marketplace</em> + Source channel ID = <em>Surfe</em> &rarr; Surfe / LinkedIn &#x26A0;&#xFE0F;<br>
+      &bull; Source origin = <em>WebForms</em> + Source channel ID = <em>[form name]</em> &rarr; Conference<br>
+      &bull; Source origin = <em>API</em> &rarr; Converted from Deal<br>
+      &bull; Source origin = <em>ManuallyCreated</em> &rarr; Manually Added
     </div>
   </div>
   <div class="upload-panel" id="upload-panel">
@@ -294,7 +297,7 @@
         <button class="dtab on" id="t-deals" onclick="switchTab('deals')">New Deals</button>
         <button class="dtab" id="t-leads" onclick="switchTab('leads')">New Leads</button>
       </div>
-      <div class="tbl-wrap" id="dive-tbl"></div>
+      <div class="tbl-wrap dive-tbl-wrap" id="dive-tbl"></div>
     </div>
   </div>
 
@@ -327,15 +330,13 @@ function classifyDeal(d){
 }
 
 function classifyLead(l){
-  // API leads: use channel_id (source_origin not available via API)
+  // API leads: classify using channel_id (source_origin not returned by API)
   const ch = (l.channel_id||'').trim();
   if(!ch) return 'Manually Added';
   if(ch==='Zapier') return 'Website / Call Booking';
   if(ch.toLowerCase().includes('chatbot')) return 'Chatbot';
   if(ch.toLowerCase().includes('surfe')) return 'Surfe / LinkedIn';
-  // Web forms = conference
-  if(ch && ch!=='Zapier' && !ch.toLowerCase().includes('chatbot') && !ch.toLowerCase().includes('surfe')) return 'Conference: '+ch;
-  return 'Manually Added';
+  return 'Conference: '+ch;
 }
 
 function classifyArchivedLead(l){
@@ -864,9 +865,9 @@ function renderDiveTbl(){
   if(S.diveTab==='deals'){
     const items=[...m.deals].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No new deals this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Region</th><th>Sector</th><th>Source</th><th>Status</th><th>Created</th></tr></thead><tbody>'
+    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th>Sector</th><th>Source</th><th>Status</th><th>Created</th></tr></thead><tbody>'
       +items.map(d=>'<tr>'
-        +'<td>'+esc(d.title)+'</td>'
+        +'<td class="cell-wrap">'+esc(d.title)+'</td>'
         +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
         +'<td class="tdm">'+esc(Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--')+'</td>'
         +'<td class="tdm">'+esc(Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--')+'</td>'
@@ -894,14 +895,14 @@ function renderDiveTbl(){
         title:d.title, owner:d.owner_name||'--',
         region:Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--',
         sector:Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--',
-        source:'Converted from Deal',
+        source:classifyLead({channel_id:d.channel_id}),
         date:d[LEAD_DATE_FIELD], status:'converted'
       })),
     ].sort((a,b)=>new Date(b.date)-new Date(a.date));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No leads this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table><thead><tr><th>Title</th><th>Owner</th><th>Region</th><th>Sector</th><th>Source</th><th>Status</th><th>Lead Created</th></tr></thead><tbody>'
+    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th>Sector</th><th>Source</th><th>Status</th><th>Lead Created</th></tr></thead><tbody>'
       +items.map(l=>'<tr>'
-        +'<td>'+esc(l.title)+'</td>'
+        +'<td class="cell-wrap">'+esc(l.title)+'</td>'
         +'<td class="tdm">'+esc(l.owner)+'</td>'
         +'<td class="tdm">'+esc(l.region)+'</td>'
         +'<td class="tdm">'+esc(l.sector)+'</td>'
