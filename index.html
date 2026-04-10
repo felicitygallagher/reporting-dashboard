@@ -307,6 +307,9 @@
 <script>
 const API_TOKEN       = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
 const EXCLUDED_PIPELINE = 9; // Consultant (not a direct sale)
+const ATTR_FIELD   = '6bd83ae8d8f32627e17d8bb7028bbb52082245a8';
+const ATTR_MAP = {1707:'121 Outreach',1736:'AI Research',1491:'Conference',1049:'Google Ads: EM | TT | Alumni UK',1050:'Google Ads: EM | TT | Alumni US',1051:'Google Ads: EM | TT | Brand',1052:'Google Ads: EM | TT | Membership US',1337:'LinkedIn Ads: Global Memberships Re-targeting Document Ad: Oct 2024',1339:'LinkedIn Ads: US Memberships Re-targeting Image Ad: Oct 2024',1738:'Marketing Email',1705:'Previous Sales Prospect',1703:'Referral',1062:'Search Engine',1502:'Software review site (PPC)',1347:'Software review site (PPC):G2 Clicks',1408:'Software review site (PPL) - Gartner',1092:'Software review site:Capterra',1093:'Software review site:G2',1106:'Software review site:General',1094:'Software review site:GetApp',1096:'Software review site:Trust Radius',1097:'Software reviews site:Software Advice',1700:'Sponsorship',1105:'TBC',1338:'Webinar:Educate Plus:Nov2024',1704:'Word of Mouth'};
+function getAttr(val){ return ATTR_MAP[Number(val)]||'--'; }
 const UTM_SOURCE   = '0d56e9a251c55240f417f2517245ec7a6c698645';
 const UTM_MEDIUM   = 'd97cb0e13d4f4bc46fbaf0674ac284cfdf2c1720';
 const UTM_CAMPAIGN = 'f260b8e7c060cab1c44a858c6f2407bc431205d3';
@@ -414,7 +417,7 @@ async function fetchDeals(){
   while(true){
     const d=await pd('/deals?limit=500&start='+start+'&status=all'
       +'&since_timestamp=2024-01-01%2000:00:00'
-      +'&custom_fields[]='+LEAD_DATE_FIELD+'&custom_fields[]='+REGION_FIELD+'&custom_fields[]='+SECTOR_FIELD+'&custom_fields[]='+UTM_SOURCE+'&custom_fields[]='+UTM_MEDIUM+'&custom_fields[]='+UTM_CAMPAIGN
+      +'&custom_fields[]='+LEAD_DATE_FIELD+'&custom_fields[]='+REGION_FIELD+'&custom_fields[]='+SECTOR_FIELD+'&custom_fields[]='+UTM_SOURCE+'&custom_fields[]='+UTM_MEDIUM+'&custom_fields[]='+UTM_CAMPAIGN+'&custom_fields[]='+ATTR_FIELD
       +'&include_fields=origin,channel_id');
     if(!d.success) throw new Error(d.error||'Deals fetch failed');
     all=all.concat((d.data||[]).filter(x=>
@@ -429,7 +432,7 @@ async function fetchDeals(){
 async function fetchLeads(){
   let all=[],start=0;
   while(true){
-    const d=await pd('/leads?limit=500&start='+start+'&created_after=2024-01-01&custom_fields='+UTM_SOURCE+','+UTM_MEDIUM+','+UTM_CAMPAIGN);
+    const d=await pd('/leads?limit=500&start='+start+'&created_after=2024-01-01&custom_fields='+UTM_SOURCE+','+UTM_MEDIUM+','+UTM_CAMPAIGN+','+ATTR_FIELD);
     if(!d.success) throw new Error(d.error||'Leads fetch failed');
     all=all.concat(d.data||[]);
     if(!d.additional_data?.pagination?.more_items_in_collection) break;
@@ -890,13 +893,14 @@ function renderDiveTbl(){
   if(S.diveTab==='deals'){
     const items=[...m.deals].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No new deals this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th>Sector</th><th>Source</th><th>Status</th><th>Created</th></tr></thead><tbody>'
+    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th>Sector</th><th class="cell-wrap">Source</th><th class="cell-wrap">Attribution</th><th>Status</th><th>Created</th></tr></thead><tbody>'
       +items.map(d=>'<tr>'
         +'<td class="cell-wrap"><a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank" style="color:var(--pur);text-decoration:none" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">'+esc(d.title)+'</a></td>'
         +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
         +'<td class="tdm">'+esc(Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--')+'</td>'
         +'<td class="tdm">'+esc(Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--')+'</td>'
-        +'<td class="tdm">'+esc(classifyDeal(d))+'</td>'
+        +'<td class="cell-wrap tdm">'+esc(classifyDeal(d))+'</td>'
+        +'<td class="cell-wrap tdm">'+esc(getAttr(d[ATTR_FIELD]))+'</td>'
         +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
         +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
         +'</tr>').join('')+'</tbody></table>';
@@ -908,6 +912,7 @@ function renderDiveTbl(){
         region:Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(l[REGION_FIELD]))||'--',
         sector:Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(l[SECTOR_FIELD]))||'--',
         source:classifyLead(l),
+        attr:getAttr(l[ATTR_FIELD]),
         date:l.add_time, status:'open',
         url:l.id?'https://toucantech.pipedrive.com/leads/inbox/'+l.id:null
       })),
@@ -915,6 +920,7 @@ function renderDiveTbl(){
         title:l.title, owner:l.owner||'--',
         region:l.region||'--', sector:l.sector||'--',
         source:classifyArchivedLead(l),
+        attr:l.sourceChannelAttr||'--',
         date:l.createdOn, status:'archived', url:null
       })),
       ...m.conv.map(d=>({
@@ -922,18 +928,20 @@ function renderDiveTbl(){
         region:Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--',
         sector:Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--',
         source:classifyLead({channel_id:d.channel_id, [UTM_SOURCE]:d[UTM_SOURCE]}),
+        attr:getAttr(d[ATTR_FIELD]),
         date:d[LEAD_DATE_FIELD], status:'converted',
         url:'https://toucantech.pipedrive.com/deal/'+d.id
       })),
     ].sort((a,b)=>new Date(b.date)-new Date(a.date));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No leads this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th>Sector</th><th>Source</th><th>Status</th><th>Lead Created</th></tr></thead><tbody>'
+    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th>Sector</th><th class="cell-wrap">Source</th><th class="cell-wrap">Attribution</th><th>Status</th><th>Lead Created</th></tr></thead><tbody>'
       +items.map(l=>'<tr>'
         +'<td class="cell-wrap">'+(l.url?'<a href="'+l.url+'" target="_blank" style="color:var(--pur);text-decoration:none" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">'+esc(l.title)+'</a>':esc(l.title))+'</td>'
         +'<td class="tdm">'+esc(l.owner)+'</td>'
         +'<td class="tdm">'+esc(l.region)+'</td>'
         +'<td class="tdm">'+esc(l.sector)+'</td>'
-        +'<td class="tdm">'+esc(l.source||'--')+'</td>'
+        +'<td class="cell-wrap tdm">'+esc(l.source||'--')+'</td>'
+        +'<td class="cell-wrap tdm">'+esc(l.attr||'--')+'</td>'
         +'<td><span class="pill pill-'+l.status+'">'+l.status+'</span></td>'
         +'<td class="tdm">'+fmtD(l.date)+'</td>'
         +'</tr>').join('')+'</tbody></table>';
