@@ -161,6 +161,9 @@
     .dbtn{background:var(--pur-soft);border:1px solid rgba(176,110,243,.22);color:var(--pur);font-family:var(--ff-mono);font-size:.57rem;padding:.2rem .58rem;border-radius:5px;cursor:pointer;letter-spacing:.06em;transition:background .15s,border-color .15s}
     .dbtn:hover{background:var(--pur-mid);border-color:rgba(176,110,243,.4)}
     ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--pur-d)}
+    .sort-btn{background:none;border:none;cursor:pointer;font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);padding:0 0 0 .3rem;vertical-align:middle;transition:color .15s}
+    .sort-btn:hover{color:var(--pur)}
+    .sort-btn.asc,.sort-btn.desc{color:var(--grn)}
     footer{font-family:var(--ff-mono);font-size:.56rem;color:var(--mute);text-align:center;padding-top:1.5rem;letter-spacing:.1em}
   </style>
 </head>
@@ -200,14 +203,14 @@
       <strong>Deals</strong><br>
       &bull; Source origin = <em>Marketplace</em> &rarr; Website / Call Booking<br>
       &bull; Source origin = <em>ManuallyCreated</em> + no Lead Created Date &rarr; Manually Added<br>
-      &bull; Source origin = <em>ManuallyCreated</em> + Lead Created Date set &rarr; Converted from Lead<br>
+      &bull; Source origin = <em>ManuallyCreated</em> + Lead Created Date set &rarr; Converted Lead<br>
       &bull; Source origin = <em>Chatbot</em> &rarr; Chatbot<br>
       &bull; Source origin = <em>WebForms</em> &rarr; Conference (Source channel ID = form name)<br>
       &bull; Source origin = <em>API</em> &rarr; API / Integration<br>
       <br>
       <strong>Leads</strong> (API active + archived &mdash; same logic)<br>
       &bull; Source origin = <em>Marketplace</em> + Source channel ID = <em>Zapier</em> + utm_source = <em>website</em> (or blank) &rarr; Website Booking<br>
-      &bull; Source origin = <em>Marketplace</em> + Source channel ID = <em>Zapier</em> + utm_source = other &rarr; Salesperson Booking<br>
+      &bull; Source origin = <em>Marketplace</em> + Source channel ID = <em>Zapier</em> + utm_source = other &rarr; Personal Link<br>
       &bull; Source origin = <em>Chatbot</em> + Source channel ID = <em>[chatbot name]</em> &rarr; Chatbot<br>
       &bull; Source origin = <em>Marketplace</em> + Source channel ID = <em>Surfe</em> &rarr; Surfe / LinkedIn<br>
       &bull; Source origin = <em>WebForms</em> + Source channel ID = <em>[form name]</em> &rarr; Conference<br>
@@ -287,12 +290,12 @@
             <select class="owner-select" id="source-select" onchange="setSource(this.value)">
               <option value="">All</option>
               <option value="Website Booking">Website Booking</option>
-              <option value="Salesperson Booking">Salesperson Booking</option>
+              <option value="Personal Link">Personal Link</option>
               <option value="Chatbot">Chatbot</option>
               <option value="Conference">Conference</option>
               <option value="Manually Added">Manually Added</option>
               <option value="Surfe / LinkedIn">Surfe / LinkedIn</option>
-              <option value="Converted from Lead">Converted from Lead</option>
+              <option value="Converted Lead">Converted Lead</option>
             </select>
           </div>
           <div class="pill-divider"></div>
@@ -376,12 +379,12 @@
           <select class="owner-select" id="dive-source-select" onchange="setDiveSource(this.value)">
             <option value="">All</option>
             <option value="Website Booking">Website Booking</option>
-            <option value="Salesperson Booking">Salesperson Booking</option>
+            <option value="Personal Link">Personal Link</option>
             <option value="Chatbot">Chatbot</option>
             <option value="Conference">Conference</option>
             <option value="Manually Added">Manually Added</option>
             <option value="Surfe / LinkedIn">Surfe / LinkedIn</option>
-            <option value="Converted from Lead">Converted from Lead</option>
+            <option value="Converted Lead">Converted Lead</option>
           </select>
         </div>
         <div class="pill-divider"></div>
@@ -440,12 +443,12 @@ const SALESPEOPLE = ['Amy','Fady','Matt','Merryn','Myron','Other'];
 
 /* Classify a deal or lead into a human-readable source */
 function classifyDeal(d){
-  if(isConvertedDeal(d)) return 'Converted from Lead';
+  if(isConvertedDeal(d)) return 'Converted Lead';
   const o = d.origin||'';
   if(o==='Marketplace'){
     const utmSrc = (d[UTM_SOURCE]||'').trim().toLowerCase();
     if(!utmSrc || utmSrc==='website') return 'Website Booking';
-    return "Salesperson Booking (​" + (d[UTM_SOURCE]||'') + ")";
+    return "Personal Link (​" + (d[UTM_SOURCE]||'') + ")";
   }
   if(o==='ManuallyCreated') return 'Manually Added';
   if(o==='Chatbot') return 'Chatbot';
@@ -462,7 +465,7 @@ function classifyLead(l){
   if(ch==='Zapier'){
     const utmSrc = (l[UTM_SOURCE]||'').trim().toLowerCase();
     if(!utmSrc || utmSrc==='website') return 'Website Booking';
-    return "Salesperson Booking (​" + (l[UTM_SOURCE]||'') + ")";
+    return "Personal Link (​" + (l[UTM_SOURCE]||'') + ")";
   }
   if(ch.toLowerCase().includes('chatbot')) return 'Chatbot';
   if(ch.toLowerCase().includes('surfe')) return 'Surfe / LinkedIn';
@@ -1012,7 +1015,41 @@ function renderOvTable(){
 
 
 /* ── Deep dive ── */
-const DIVE_SOURCES = ['Website Booking','Salesperson Booking','Chatbot','Conference','Manually Added','Surfe / LinkedIn','Converted from Lead'];
+const diveSort = {col: 'date', dir: 'desc'}; // default sort by created desc
+
+function sortIcon(col){
+  if(diveSort.col !== col) return '<button class="sort-btn" onclick="setSort(&quot;'+col+'&quot;)">&#x21C5;</button>';
+  return diveSort.dir==='asc'
+    ? '<button class="sort-btn asc" onclick="setSort(&quot;'+col+'&quot;)">&#x2191;</button>'
+    : '<button class="sort-btn desc" onclick="setSort(&quot;'+col+'&quot;)">&#x2193;</button>';
+}
+
+function setSort(col){
+  if(diveSort.col===col){ diveSort.dir=diveSort.dir==='asc'?'desc':'asc'; }
+  else { diveSort.col=col; diveSort.dir='asc'; }
+  renderDiveTbl();
+}
+
+function sortItems(items){
+  const col=diveSort.col, dir=diveSort.dir;
+  return [...items].sort((a,b)=>{
+    let av, bv;
+    if(col==='title'){ av=(a.title||a.owner_name||'').toLowerCase(); bv=(b.title||b.owner_name||'').toLowerCase(); }
+    else if(col==='owner'){ av=(a.owner||a.owner_name||'').toLowerCase(); bv=(b.owner||b.owner_name||'').toLowerCase(); }
+    else if(col==='region'){ av=(a.region||Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(a[REGION_FIELD]))||'').toLowerCase(); bv=(b.region||Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(b[REGION_FIELD]))||'').toLowerCase(); }
+    else if(col==='sector'){ av=(a.sector||Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(a[SECTOR_FIELD]))||'').toLowerCase(); bv=(b.sector||Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(b[SECTOR_FIELD]))||'').toLowerCase(); }
+    else if(col==='origin'){ av=(a.source||classifyDeal(a)||'').toLowerCase(); bv=(b.source||classifyDeal(b)||'').toLowerCase(); }
+    else if(col==='source'){ av=(a.attr||getAttr(a[ATTR_FIELD])||'').toLowerCase(); bv=(b.attr||getAttr(b[ATTR_FIELD])||'').toLowerCase(); }
+    else if(col==='status'){ av=(a.status||a.status||'').toLowerCase(); bv=(b.status||b.status||'').toLowerCase(); }
+    else if(col==='date'){ av=new Date(a.date||a.add_time||0); bv=new Date(b.date||b.add_time||0); }
+    else { av=''; bv=''; }
+    if(av<bv) return dir==='asc'?-1:1;
+    if(av>bv) return dir==='asc'?1:-1;
+    return 0;
+  });
+}
+
+const DIVE_SOURCES = ['Website Booking','Personal Link','Chatbot','Conference','Manually Added','Surfe / LinkedIn','Converted Lead'];
 const diveFilters = {owner:null, region:null, sector:null, source:null, attr:null};
 
 function renderDiveFilters(){
@@ -1123,8 +1160,18 @@ function renderDiveTbl(){
   if(S.diveTab==='deals'){
     const items=applyDiveFilter([...m.deals],false,false).sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No new deals this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th>Sector</th><th class="cell-wrap">Origin</th><th class="cell-wrap">Source</th><th>Status</th><th>Created</th></tr></thead><tbody>'
-      +items.map(d=>'<tr>'
+    const sortedDeals=sortItems(items);
+    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr>'
+      +'<th class="cell-wrap">Title'+sortIcon('title')+'</th>'
+      +'<th>Owner'+sortIcon('owner')+'</th>'
+      +'<th>Region'+sortIcon('region')+'</th>'
+      +'<th class="cell-wrap">Sector'+sortIcon('sector')+'</th>'
+      +'<th class="cell-wrap">Origin'+sortIcon('origin')+'</th>'
+      +'<th class="cell-wrap">Source'+sortIcon('source')+'</th>'
+      +'<th>Status'+sortIcon('status')+'</th>'
+      +'<th>Created'+sortIcon('date')+'</th>'
+      +'</tr></thead><tbody>'
+      +sortedDeals.map(d=>'<tr>'
         +'<td class="cell-wrap"><a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank" style="color:var(--pur);text-decoration:none" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">'+esc(d.title)+'</a></td>'
         +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
         +'<td class="tdm">'+esc(Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--')+'</td>'
@@ -1172,8 +1219,18 @@ function renderDiveTbl(){
       return true;
     }).sort((a,b)=>new Date(b.date)-new Date(a.date));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No leads this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th>Sector</th><th class="cell-wrap">Origin</th><th class="cell-wrap">Source</th><th>Status</th><th>Lead Created</th></tr></thead><tbody>'
-      +items.map(l=>'<tr>'
+    const sortedLeads=sortItems(items);
+    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr>'
+      +'<th class="cell-wrap">Title'+sortIcon('title')+'</th>'
+      +'<th>Owner'+sortIcon('owner')+'</th>'
+      +'<th>Region'+sortIcon('region')+'</th>'
+      +'<th class="cell-wrap">Sector'+sortIcon('sector')+'</th>'
+      +'<th class="cell-wrap">Origin'+sortIcon('origin')+'</th>'
+      +'<th class="cell-wrap">Source'+sortIcon('source')+'</th>'
+      +'<th>Status'+sortIcon('status')+'</th>'
+      +'<th>Lead Created'+sortIcon('date')+'</th>'
+      +'</tr></thead><tbody>'
+      +sortedLeads.map(l=>'<tr>'
         +'<td class="cell-wrap">'+(l.url?'<a href="'+l.url+'" target="_blank" style="color:var(--pur);text-decoration:none" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">'+esc(l.title)+'</a>':esc(l.title))+'</td>'
         +'<td class="tdm">'+esc(l.owner)+'</td>'
         +'<td class="tdm">'+esc(l.region)+'</td>'
