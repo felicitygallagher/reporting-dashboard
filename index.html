@@ -178,8 +178,8 @@
       <div class="hdr-btns">
         <button class="btn-hdr grn" onclick="toggleUpload()">&#x2191; Update Archived Leads</button>
         <button class="btn-hdr" onclick="init()">&#x21BA; Refresh</button>
-        <p class="ts" id="sync-ts" style="text-align:right"></p>
       </div>
+      <p class="ts" id="sync-ts" style="text-align:right"></p>
     </div>
   </header>
 
@@ -921,7 +921,7 @@ function renderDiveTbl(){
         title:d.title, owner:d.owner_name||'--',
         region:Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--',
         sector:Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--',
-        source:classifyLead({channel_id:d.channel_id}),
+        source:classifyLead({channel_id:d.channel_id, [UTM_SOURCE]:d[UTM_SOURCE]}),
         date:d[LEAD_DATE_FIELD], status:'converted',
         url:'https://toucantech.pipedrive.com/deal/'+d.id
       })),
