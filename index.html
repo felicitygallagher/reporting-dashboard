@@ -280,7 +280,7 @@
           </div>
           <div class="pill-divider"></div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
-            <span class="pill-label">Source</span>
+            <span class="pill-label">Origin</span>
             <select class="owner-select" id="source-select" onchange="setSource(this.value)">
               <option value="">All</option>
               <option value="Website Booking">Website Booking</option>
@@ -290,6 +290,39 @@
               <option value="Manually Added">Manually Added</option>
               <option value="Surfe / LinkedIn">Surfe / LinkedIn</option>
               <option value="Converted from Lead">Converted from Lead</option>
+            </select>
+          </div>
+          <div class="pill-divider"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
+            <span class="pill-label">Source</span>
+            <select class="owner-select" id="attr-select" onchange="setAttr(this.value)">
+              <option value="">All</option>
+              <option value="121 Outreach">121 Outreach</option>
+              <option value="AI Research">AI Research</option>
+              <option value="Conference">Conference</option>
+              <option value="Google Ads: EM | TT | Alumni UK">Google Ads: Alumni UK</option>
+              <option value="Google Ads: EM | TT | Alumni US">Google Ads: Alumni US</option>
+              <option value="Google Ads: EM | TT | Brand">Google Ads: Brand</option>
+              <option value="Google Ads: EM | TT | Membership US">Google Ads: Membership US</option>
+              <option value="LinkedIn Ads: Global Memberships Re-targeting Document Ad: Oct 2024">LinkedIn Ads: Global Memberships</option>
+              <option value="LinkedIn Ads: US Memberships Re-targeting Image Ad: Oct 2024">LinkedIn Ads: US Memberships</option>
+              <option value="Marketing Email">Marketing Email</option>
+              <option value="Previous Sales Prospect">Previous Sales Prospect</option>
+              <option value="Referral">Referral</option>
+              <option value="Search Engine">Search Engine</option>
+              <option value="Software review site (PPC)">Software Review (PPC)</option>
+              <option value="Software review site (PPC):G2 Clicks">Software Review: G2 Clicks</option>
+              <option value="Software review site (PPL) - Gartner">Software Review: Gartner</option>
+              <option value="Software review site:Capterra">Software Review: Capterra</option>
+              <option value="Software review site:G2">Software Review: G2</option>
+              <option value="Software review site:General">Software Review: General</option>
+              <option value="Software review site:GetApp">Software Review: GetApp</option>
+              <option value="Software review site:Trust Radius">Software Review: Trust Radius</option>
+              <option value="Software reviews site:Software Advice">Software Review: Software Advice</option>
+              <option value="Sponsorship">Sponsorship</option>
+              <option value="TBC">TBC</option>
+              <option value="Webinar:Educate Plus:Nov2024">Webinar: Educate Plus</option>
+              <option value="Word of Mouth">Word of Mouth</option>
             </select>
           </div>
           <div class="pill-divider"></div>
@@ -341,7 +374,7 @@
         </div>
         <div class="pill-divider"></div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
-          <span class="pill-label">Source</span>
+          <span class="pill-label">Origin</span>
           <select class="owner-select" id="dive-source-select" onchange="setDiveSource(this.value)">
             <option value="">All</option>
             <option value="Website Booking">Website Booking</option>
@@ -351,6 +384,34 @@
             <option value="Manually Added">Manually Added</option>
             <option value="Surfe / LinkedIn">Surfe / LinkedIn</option>
             <option value="Converted from Lead">Converted from Lead</option>
+          </select>
+        </div>
+        <div class="pill-divider"></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
+          <span class="pill-label">Source</span>
+          <select class="owner-select" id="dive-attr-select" onchange="setDiveAttr(this.value)">
+            <option value="">All</option>
+            <option value="121 Outreach">121 Outreach</option>
+            <option value="AI Research">AI Research</option>
+            <option value="Conference">Conference</option>
+            <option value="Google Ads: EM | TT | Alumni UK">Google Ads: Alumni UK</option>
+            <option value="Google Ads: EM | TT | Alumni US">Google Ads: Alumni US</option>
+            <option value="Google Ads: EM | TT | Brand">Google Ads: Brand</option>
+            <option value="Google Ads: EM | TT | Membership US">Google Ads: Membership US</option>
+            <option value="LinkedIn Ads: Global Memberships Re-targeting Document Ad: Oct 2024">LinkedIn Ads: Global Memberships</option>
+            <option value="LinkedIn Ads: US Memberships Re-targeting Image Ad: Oct 2024">LinkedIn Ads: US Memberships</option>
+            <option value="Marketing Email">Marketing Email</option>
+            <option value="Previous Sales Prospect">Previous Sales Prospect</option>
+            <option value="Referral">Referral</option>
+            <option value="Search Engine">Search Engine</option>
+            <option value="Software review site (PPC)">Software Review (PPC)</option>
+            <option value="Software review site:Capterra">Software Review: Capterra</option>
+            <option value="Software review site:G2">Software Review: G2</option>
+            <option value="Software review site:General">Software Review: General</option>
+            <option value="Software review site:GetApp">Software Review: GetApp</option>
+            <option value="Sponsorship">Sponsorship</option>
+            <option value="TBC">TBC</option>
+            <option value="Word of Mouth">Word of Mouth</option>
           </select>
         </div>
       </div>
@@ -446,6 +507,7 @@ const S = {
   filterSector: null,
   filterOwner: null,
   filterSource: null,
+  filterAttr: null,
   statsOffset: 0  // 0 = last complete month, 1 = 2 months ago, etc.
 };
 const expandedMonths = new Set();
@@ -713,6 +775,13 @@ function renderChart(){
 /* ── Filter pills: year, region, sector ── */
 function getYears(){ return [...new Set(S.allKeys.map(mYear))].sort(); }
 
+function setAttr(val){
+  S.filterAttr=val||null;
+  const sel=document.getElementById('attr-select');
+  if(sel){ sel.className='owner-select'+(S.filterAttr?' active':''); }
+  renderOvTable();
+}
+
 function setSource(val){
   S.filterSource=val||null;
   const sel=document.getElementById('source-select');
@@ -788,6 +857,12 @@ function applyFilter(items, isArchived=false){
     if(S.filterSource){
       const src = isArchived ? classifyArchivedLead(item) : (item.owner_id ? classifyLead(item) : classifyDeal(item));
       if(!src.startsWith(S.filterSource)) return false;
+    }
+    if(S.filterAttr){
+      const attrVal = isArchived
+        ? (item.sourceChannelAttr||'')
+        : getAttr(item[ATTR_FIELD]);
+      if(attrVal!==S.filterAttr) return false;
     }
     return true;
   });
@@ -935,7 +1010,7 @@ function renderOvTable(){
 
 /* ── Deep dive ── */
 const DIVE_SOURCES = ['Website Booking','Salesperson Booking','Chatbot','Conference','Manually Added','Surfe / LinkedIn','Converted from Lead'];
-const diveFilters = {owner:null, region:null, sector:null, source:null};
+const diveFilters = {owner:null, region:null, sector:null, source:null, attr:null};
 
 function renderDiveFilters(){
   const rp=document.getElementById('dive-region-pills');
@@ -947,10 +1022,13 @@ function renderDiveFilters(){
   if(os){ os.value=diveFilters.owner||''; os.className='owner-select'+(diveFilters.owner?' active':''); }
   const ss=document.getElementById('dive-source-select');
   if(ss){ ss.value=diveFilters.source||''; ss.className='owner-select'+(diveFilters.source?' active':''); }
+  const as=document.getElementById('dive-attr-select');
+  if(as){ as.value=diveFilters.attr||''; as.className='owner-select'+(diveFilters.attr?' active':''); }
 }
 
 function setDiveOwner(val){ diveFilters.owner=val||null; renderDiveFilters(); renderDiveTbl(); }
 function setDiveSource(val){ diveFilters.source=val||null; renderDiveFilters(); renderDiveTbl(); }
+function setDiveAttr(val){ diveFilters.attr=val||null; renderDiveFilters(); renderDiveTbl(); }
 
 document.addEventListener('click', function(e){
   const btn = e.target.closest('[data-dive-owner],[data-dive-region],[data-dive-sector],[data-dive-source]');
@@ -986,6 +1064,10 @@ function applyDiveFilter(items, isLead, isArchived){
       var src = isArchived ? classifyArchivedLead(item) : (isLead ? classifyLead(item) : classifyDeal(item));
       if(!src.startsWith(diveFilters.source)) return false;
     }
+    if(diveFilters.attr){
+      var attrVal = isArchived ? (item.attr||'--') : getAttr(item[ATTR_FIELD]);
+      if(attrVal!==diveFilters.attr) return false;
+    }
     return true;
   });
 }
@@ -1001,9 +1083,6 @@ function shiftDive(dir){
 
 function openDive(k){
   S.diveKey=k; S.diveTab='deals';
-  diveFilters.owner=null; diveFilters.region=null; diveFilters.sector=null; diveFilters.source=null;
-  const dos=document.getElementById('dive-owner-select'); if(dos) dos.value='';
-  const dss=document.getElementById('dive-source-select'); if(dss) dss.value='';
   renderChart();
   const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
   const tl=m.leads.length+m.archivedL.length+m.conv.length;
@@ -1024,7 +1103,7 @@ function openDive(k){
   const dv=$('dive'); dv.style.display='block';
   setTimeout(()=>dv.scrollIntoView({behavior:'smooth',block:'start'}),40);
 }
-function closeDive(){ S.diveKey=null; $('dive').style.display='none'; renderChart(); }
+function closeDive(){ S.diveKey=null; $('dive').style.display='none'; diveFilters.owner=null; diveFilters.region=null; diveFilters.sector=null; diveFilters.source=null; diveFilters.attr=null; const dos=$('dive-owner-select'); if(dos) dos.value=''; const dss=$('dive-source-select'); if(dss) dss.value=''; const das=$('dive-attr-select'); if(das) das.value=''; renderChart(); }
 function switchTab(tab){
   S.diveTab=tab;
   ['deals','leads'].forEach(t=>$('t-'+t).classList.toggle('on',t===tab));
@@ -1080,6 +1159,7 @@ function renderDiveTbl(){
       if(diveFilters.region && item.region!==diveFilters.region) return false;
       if(diveFilters.sector && item.sector!==diveFilters.sector) return false;
       if(diveFilters.source && !item.source.startsWith(diveFilters.source)) return false;
+      if(diveFilters.attr && (item.attr||'--')!==diveFilters.attr) return false;
       return true;
     }).sort((a,b)=>new Date(b.date)-new Date(a.date));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No leads this month.</div>';return;}
@@ -1109,11 +1189,13 @@ async function init(){
   $('spin').style.display='flex';
   $('dive').style.display='none';
   $('upload-panel').style.display='none';
-  S.diveKey=null; S.chartOffset=0; S.yearFilter=null; S.filterRegion=null; S.filterSector=null; S.filterOwner=null; S.filterSource=null; S.statsOffset=0;
+  S.diveKey=null; S.chartOffset=0; S.yearFilter=null; S.filterRegion=null; S.filterSector=null; S.filterOwner=null; S.filterSource=null; S.filterAttr=null; S.statsOffset=0;
   const ownerSel=document.getElementById('owner-select');
   if(ownerSel) ownerSel.value='';
   const srcSel=document.getElementById('source-select');
   if(srcSel) srcSel.value='';
+  const attrSel=document.getElementById('attr-select');
+  if(attrSel) attrSel.value='';
   expandedMonths.clear();
 
   try{
