@@ -256,8 +256,8 @@
       <div class="card-hd">
         <h2>Monthly <i>Breakdown</i></h2>
         <div class="card-hd-controls" style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
-          <div style="display:flex;align-items:center;gap:.4rem">
-            <span class="pill-label">Owner:</span>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
+            <span class="pill-label">Owner</span>
             <select class="owner-select" id="owner-select" onchange="setOwner(this.value)">
               <option value="">All</option>
               <option value="Amy">Amy</option>
@@ -280,6 +280,20 @@
           </div>
           <div class="pill-divider"></div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
+            <span class="pill-label">Origin</span>
+            <select class="owner-select" id="source-select" onchange="setSource(this.value)">
+              <option value="">All</option>
+              <option value="Website Booking">Website Booking</option>
+              <option value="Salesperson Booking">Salesperson Booking</option>
+              <option value="Chatbot">Chatbot</option>
+              <option value="Conference">Conference</option>
+              <option value="Manually Added">Manually Added</option>
+              <option value="Surfe / LinkedIn">Surfe / LinkedIn</option>
+              <option value="Converted from Lead">Converted from Lead</option>
+            </select>
+          </div>
+          <div class="pill-divider"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
             <span class="pill-label">Year</span>
             <div class="pill-group" id="year-pills"></div>
           </div>
@@ -297,6 +311,15 @@
       <div class="dive-tabs">
         <button class="dtab on" id="t-deals" onclick="switchTab('deals')">New Deals</button>
         <button class="dtab" id="t-leads" onclick="switchTab('leads')">New Leads</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.75rem 0;border-bottom:1px solid var(--bord);margin-bottom:.75rem">
+        <div id="dive-owner-pills" style="display:flex;align-items:center;gap:.4rem"></div>
+        <div class="pill-divider"></div>
+        <div id="dive-region-pills" style="display:flex;align-items:center;gap:.4rem"></div>
+        <div class="pill-divider"></div>
+        <div id="dive-sector-pills" style="display:flex;align-items:center;gap:.4rem"></div>
+        <div class="pill-divider"></div>
+        <div id="dive-source-pills" style="display:flex;align-items:center;gap:.4rem"></div>
       </div>
       <div class="tbl-wrap dive-tbl-wrap" id="dive-tbl"></div>
     </div>
@@ -389,6 +412,7 @@ const S = {
   filterRegion: null,
   filterSector: null,
   filterOwner: null,
+  filterSource: null,
   statsOffset: 0  // 0 = last complete month, 1 = 2 months ago, etc.
 };
 const expandedMonths = new Set();
@@ -656,6 +680,13 @@ function renderChart(){
 /* ── Filter pills: year, region, sector ── */
 function getYears(){ return [...new Set(S.allKeys.map(mYear))].sort(); }
 
+function setSource(val){
+  S.filterSource=val||null;
+  const sel=document.getElementById('source-select');
+  if(sel){ sel.className='owner-select'+(S.filterSource?' active':''); }
+  renderOvTable();
+}
+
 function setOwner(val){
   S.filterOwner=val||null;
   // Update select styling
@@ -719,8 +750,11 @@ function applyFilter(items, isArchived=false){
       if(val!==expected) return false;
     }
     if(S.filterOwner && !isArchived){
-      // archived leads from Airtable don't have owner_id — skip owner filter for them
       if(!ownerMatch(item, !!item.owner_id)) return false;
+    }
+    if(S.filterSource){
+      const src = isArchived ? classifyArchivedLead(item) : (item.owner_id ? classifyLead(item) : classifyDeal(item));
+      if(!src.startsWith(S.filterSource)) return false;
     }
     return true;
   });
@@ -867,8 +901,67 @@ function renderOvTable(){
 
 
 /* ── Deep dive ── */
+const DIVE_SOURCES = ['Website Booking','Salesperson Booking','Chatbot','Conference','Manually Added','Surfe / LinkedIn','Converted from Lead'];
+const diveFilters = {owner:null, region:null, sector:null, source:null};
+
+function renderDiveFilters(){
+  if(!document.getElementById('dive-owner-pills')) return;
+  document.getElementById('dive-owner-pills').innerHTML =
+    '<span class="pill-label" style="margin-right:.3rem">Owner</span>'
+    + SALESPEOPLE.map(n=>'<button class="f-pill'+(diveFilters.owner===n?' active':'')+'" data-dive-owner="'+n+'">'+n+'</button>').join('');
+  document.getElementById('dive-region-pills').innerHTML =
+    '<span class="pill-label" style="margin-right:.3rem">Region</span>'
+    + REGIONS.map(r=>'<button class="f-pill'+(diveFilters.region===r?' active':'')+'" data-dive-region="'+r+'">'+r+'</button>').join('');
+  document.getElementById('dive-sector-pills').innerHTML =
+    '<span class="pill-label" style="margin-right:.3rem">Sector</span>'
+    + SECTORS.map(s=>'<button class="f-pill'+(diveFilters.sector===s?' active':'')+'" data-dive-sector="'+s+'">'+s+'</button>').join('');
+  document.getElementById('dive-source-pills').innerHTML =
+    '<span class="pill-label" style="margin-right:.3rem">Origin</span>'
+    + DIVE_SOURCES.map(s=>'<button class="f-pill'+(diveFilters.source===s?' active':'')+'" data-dive-source="'+s+'">'+s+'</button>').join('');
+}
+
+document.addEventListener('click', function(e){
+  const btn = e.target.closest('[data-dive-owner],[data-dive-region],[data-dive-sector],[data-dive-source]');
+  if(!btn) return;
+  if(btn.dataset.diveOwner){ const v=btn.dataset.diveOwner; diveFilters.owner=diveFilters.owner===v?null:v; }
+  else if(btn.dataset.diveRegion){ const v=btn.dataset.diveRegion; diveFilters.region=diveFilters.region===v?null:v; }
+  else if(btn.dataset.diveSector){ const v=btn.dataset.diveSector; diveFilters.sector=diveFilters.sector===v?null:v; }
+  else if(btn.dataset.diveSource){ const v=btn.dataset.diveSource; diveFilters.source=diveFilters.source===v?null:v; }
+  else return;
+  renderDiveFilters();
+  renderDiveTbl();
+});
+
+function applyDiveFilter(items, isLead, isArchived){
+  return items.filter(function(item){
+    if(diveFilters.owner){
+      var name = isArchived ? (item.owner||'') : (isLead ? (Object.values(OWNER_MAP).find(function(o){return o.id===(item.owner_id&&item.owner_id.id||item.owner_id);})||{name:''}).name : (item.owner_name||''));
+      if(diveFilters.owner==='Other'){
+        if(Object.values(OWNER_MAP).some(function(o){return name.startsWith(o.name.split(' ')[0]);})) return false;
+      } else {
+        if(!name.startsWith(diveFilters.owner)) return false;
+      }
+    }
+    if(diveFilters.region){
+      var rval = isArchived ? (item.region||'') : (Object.keys(REGION_ID).find(function(r){return REGION_ID[r]===Number(item[REGION_FIELD]);})||'');
+      if(rval!==diveFilters.region) return false;
+    }
+    if(diveFilters.sector){
+      var sval = isArchived ? (item.sector||'') : (Object.keys(SECTOR_ID).find(function(s){return SECTOR_ID[s]===Number(item[SECTOR_FIELD]);})||'');
+      if(sval!==diveFilters.sector) return false;
+    }
+    if(diveFilters.source){
+      var src = isArchived ? classifyArchivedLead(item) : (isLead ? classifyLead(item) : classifyDeal(item));
+      if(!src.startsWith(diveFilters.source)) return false;
+    }
+    return true;
+  });
+}
+
 function openDive(k){
-  S.diveKey=k; S.diveTab='deals'; renderChart();
+  S.diveKey=k; S.diveTab='deals';
+  diveFilters.owner=null; diveFilters.region=null; diveFilters.sector=null; diveFilters.source=null;
+  renderChart();
   const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
   const tl=m.leads.length+m.archivedL.length+m.conv.length;
   const{mon,y}=mParts(k);
@@ -878,6 +971,7 @@ function openDive(k){
    +'<div class="ds"><div class="ds-num p">'+m.deals.length+'</div><div class="ds-lbl">New Deals</div></div>'
    +'<div class="ds"><div class="ds-num p">'+tl+'</div><div class="ds-lbl">New Leads</div></div>';
   $('t-deals').classList.add('on'); $('t-leads').classList.remove('on');
+  renderDiveFilters();
   renderDiveTbl();
   const dv=$('dive'); dv.style.display='block';
   setTimeout(()=>dv.scrollIntoView({behavior:'smooth',block:'start'}),40);
@@ -891,21 +985,21 @@ function switchTab(tab){
 function renderDiveTbl(){
   const m=S.mo[S.diveKey]||{deals:[],leads:[],archivedL:[],conv:[]};
   if(S.diveTab==='deals'){
-    const items=[...m.deals].sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
+    const items=applyDiveFilter([...m.deals],false,false).sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No new deals this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th>Sector</th><th class="cell-wrap">Source</th><th class="cell-wrap">Attribution</th><th>Status</th><th>Created</th></tr></thead><tbody>'
+    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th>Sector</th><th class="cell-wrap">Origin</th><th class="cell-wrap">Source</th><th>Status</th><th>Created</th></tr></thead><tbody>'
       +items.map(d=>'<tr>'
         +'<td class="cell-wrap"><a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank" style="color:var(--pur);text-decoration:none" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">'+esc(d.title)+'</a></td>'
         +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
         +'<td class="tdm">'+esc(Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--')+'</td>'
-        +'<td class="tdm">'+esc(Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--')+'</td>'
+        +'<td class="cell-wrap tdm">'+esc(Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--')+'</td>'
         +'<td class="cell-wrap tdm">'+esc(classifyDeal(d))+'</td>'
         +'<td class="cell-wrap tdm">'+esc(getAttr(d[ATTR_FIELD]))+'</td>'
         +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
         +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
         +'</tr>').join('')+'</tbody></table>';
   } else {
-    const items=[
+    const rawItems=[
       ...m.leads.map(l=>({
         title:l.title,
         owner:Object.values(OWNER_MAP).find(o=>o.id===(l.owner_id?.id||l.owner_id))?.name||'--',
@@ -932,14 +1026,21 @@ function renderDiveTbl(){
         date:d[LEAD_DATE_FIELD], status:'converted',
         url:'https://toucantech.pipedrive.com/deal/'+d.id
       })),
-    ].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    ];
+    const items=rawItems.filter(function(item){
+      if(diveFilters.owner){ var nm=item.owner||''; if(diveFilters.owner==='Other'){ if(Object.values(OWNER_MAP).some(function(o){return nm.startsWith(o.name.split(' ')[0]);})) return false; } else if(!nm.startsWith(diveFilters.owner)) return false; }
+      if(diveFilters.region && item.region!==diveFilters.region) return false;
+      if(diveFilters.sector && item.sector!==diveFilters.sector) return false;
+      if(diveFilters.source && !item.source.startsWith(diveFilters.source)) return false;
+      return true;
+    }).sort((a,b)=>new Date(b.date)-new Date(a.date));
     if(!items.length){$('dive-tbl').innerHTML='<div class="empty">No leads this month.</div>';return;}
-    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th>Sector</th><th class="cell-wrap">Source</th><th class="cell-wrap">Attribution</th><th>Status</th><th>Lead Created</th></tr></thead><tbody>'
+    $('dive-tbl').innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th>Sector</th><th class="cell-wrap">Origin</th><th class="cell-wrap">Source</th><th>Status</th><th>Lead Created</th></tr></thead><tbody>'
       +items.map(l=>'<tr>'
         +'<td class="cell-wrap">'+(l.url?'<a href="'+l.url+'" target="_blank" style="color:var(--pur);text-decoration:none" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">'+esc(l.title)+'</a>':esc(l.title))+'</td>'
         +'<td class="tdm">'+esc(l.owner)+'</td>'
         +'<td class="tdm">'+esc(l.region)+'</td>'
-        +'<td class="tdm">'+esc(l.sector)+'</td>'
+        +'<td class="cell-wrap tdm">'+esc(l.sector)+'</td>'
         +'<td class="cell-wrap tdm">'+esc(l.source||'--')+'</td>'
         +'<td class="cell-wrap tdm">'+esc(l.attr||'--')+'</td>'
         +'<td><span class="pill pill-'+l.status+'">'+l.status+'</span></td>'
@@ -960,9 +1061,11 @@ async function init(){
   $('spin').style.display='flex';
   $('dive').style.display='none';
   $('upload-panel').style.display='none';
-  S.diveKey=null; S.chartOffset=0; S.yearFilter=null; S.filterRegion=null; S.filterSector=null; S.filterOwner=null; S.statsOffset=0;
+  S.diveKey=null; S.chartOffset=0; S.yearFilter=null; S.filterRegion=null; S.filterSector=null; S.filterOwner=null; S.filterSource=null; S.statsOffset=0;
   const ownerSel=document.getElementById('owner-select');
   if(ownerSel) ownerSel.value='';
+  const srcSel=document.getElementById('source-select');
+  if(srcSel) srcSel.value='';
   expandedMonths.clear();
 
   try{
