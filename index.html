@@ -280,7 +280,7 @@
           </div>
           <div class="pill-divider"></div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
-            <span class="pill-label">Origin</span>
+            <span class="pill-label">Source</span>
             <select class="owner-select" id="source-select" onchange="setSource(this.value)">
               <option value="">All</option>
               <option value="Website Booking">Website Booking</option>
@@ -304,7 +304,11 @@
 
     <div class="dive" id="dive">
       <div class="dive-hd">
-        <h2 id="dive-title"></h2>
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <button class="nav-btn" id="dive-prev" onclick="shiftDive(-1)">&#x2190;</button>
+          <h2 id="dive-title"></h2>
+          <button class="nav-btn" id="dive-next" onclick="shiftDive(1)">&#x2192;</button>
+        </div>
         <button class="btn-close" onclick="closeDive()">&#x2715; CLOSE</button>
       </div>
       <div class="dive-stats" id="dive-stats"></div>
@@ -312,14 +316,43 @@
         <button class="dtab on" id="t-deals" onclick="switchTab('deals')">New Deals</button>
         <button class="dtab" id="t-leads" onclick="switchTab('leads')">New Leads</button>
       </div>
-      <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.75rem 0;border-bottom:1px solid var(--bord);margin-bottom:.75rem">
-        <div id="dive-owner-pills" style="display:flex;align-items:center;gap:.4rem"></div>
+      <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;padding:.75rem 0;border-bottom:1px solid var(--bord);margin-bottom:.75rem">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
+          <span class="pill-label">Owner</span>
+          <select class="owner-select" id="dive-owner-select" onchange="setDiveOwner(this.value)">
+            <option value="">All</option>
+            <option value="Amy">Amy</option>
+            <option value="Fady">Fady</option>
+            <option value="Matt">Matt</option>
+            <option value="Merryn">Merryn</option>
+            <option value="Myron">Myron</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
         <div class="pill-divider"></div>
-        <div id="dive-region-pills" style="display:flex;align-items:center;gap:.4rem"></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
+          <span class="pill-label">Region</span>
+          <div id="dive-region-pills" class="pill-group"></div>
+        </div>
         <div class="pill-divider"></div>
-        <div id="dive-sector-pills" style="display:flex;align-items:center;gap:.4rem"></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
+          <span class="pill-label">Sector</span>
+          <div id="dive-sector-pills" class="pill-group"></div>
+        </div>
         <div class="pill-divider"></div>
-        <div id="dive-source-pills" style="display:flex;align-items:center;gap:.4rem"></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem">
+          <span class="pill-label">Source</span>
+          <select class="owner-select" id="dive-source-select" onchange="setDiveSource(this.value)">
+            <option value="">All</option>
+            <option value="Website Booking">Website Booking</option>
+            <option value="Salesperson Booking">Salesperson Booking</option>
+            <option value="Chatbot">Chatbot</option>
+            <option value="Conference">Conference</option>
+            <option value="Manually Added">Manually Added</option>
+            <option value="Surfe / LinkedIn">Surfe / LinkedIn</option>
+            <option value="Converted from Lead">Converted from Lead</option>
+          </select>
+        </div>
       </div>
       <div class="tbl-wrap dive-tbl-wrap" id="dive-tbl"></div>
     </div>
@@ -905,20 +938,19 @@ const DIVE_SOURCES = ['Website Booking','Salesperson Booking','Chatbot','Confere
 const diveFilters = {owner:null, region:null, sector:null, source:null};
 
 function renderDiveFilters(){
-  if(!document.getElementById('dive-owner-pills')) return;
-  document.getElementById('dive-owner-pills').innerHTML =
-    '<span class="pill-label" style="margin-right:.3rem">Owner</span>'
-    + SALESPEOPLE.map(n=>'<button class="f-pill'+(diveFilters.owner===n?' active':'')+'" data-dive-owner="'+n+'">'+n+'</button>').join('');
-  document.getElementById('dive-region-pills').innerHTML =
-    '<span class="pill-label" style="margin-right:.3rem">Region</span>'
-    + REGIONS.map(r=>'<button class="f-pill'+(diveFilters.region===r?' active':'')+'" data-dive-region="'+r+'">'+r+'</button>').join('');
-  document.getElementById('dive-sector-pills').innerHTML =
-    '<span class="pill-label" style="margin-right:.3rem">Sector</span>'
-    + SECTORS.map(s=>'<button class="f-pill'+(diveFilters.sector===s?' active':'')+'" data-dive-sector="'+s+'">'+s+'</button>').join('');
-  document.getElementById('dive-source-pills').innerHTML =
-    '<span class="pill-label" style="margin-right:.3rem">Origin</span>'
-    + DIVE_SOURCES.map(s=>'<button class="f-pill'+(diveFilters.source===s?' active':'')+'" data-dive-source="'+s+'">'+s+'</button>').join('');
+  const rp=document.getElementById('dive-region-pills');
+  const sp=document.getElementById('dive-sector-pills');
+  if(!rp) return;
+  rp.innerHTML = REGIONS.map(r=>'<button class="f-pill'+(diveFilters.region===r?' active':'')+'" data-dive-region="'+r+'">'+r+'</button>').join('');
+  sp.innerHTML = SECTORS.map(s=>'<button class="f-pill'+(diveFilters.sector===s?' active':'')+'" data-dive-sector="'+s+'">'+s+'</button>').join('');
+  const os=document.getElementById('dive-owner-select');
+  if(os){ os.value=diveFilters.owner||''; os.className='owner-select'+(diveFilters.owner?' active':''); }
+  const ss=document.getElementById('dive-source-select');
+  if(ss){ ss.value=diveFilters.source||''; ss.className='owner-select'+(diveFilters.source?' active':''); }
 }
+
+function setDiveOwner(val){ diveFilters.owner=val||null; renderDiveFilters(); renderDiveTbl(); }
+function setDiveSource(val){ diveFilters.source=val||null; renderDiveFilters(); renderDiveTbl(); }
 
 document.addEventListener('click', function(e){
   const btn = e.target.closest('[data-dive-owner],[data-dive-region],[data-dive-sector],[data-dive-source]');
@@ -958,9 +990,20 @@ function applyDiveFilter(items, isLead, isArchived){
   });
 }
 
+function shiftDive(dir){
+  // dir: -1 = older month, +1 = newer month
+  const idx = S.allKeys.indexOf(S.diveKey);
+  const newIdx = idx + dir;
+  if(newIdx >= 0 && newIdx < S.allKeys.length){
+    openDive(S.allKeys[newIdx]);
+  }
+}
+
 function openDive(k){
   S.diveKey=k; S.diveTab='deals';
   diveFilters.owner=null; diveFilters.region=null; diveFilters.sector=null; diveFilters.source=null;
+  const dos=document.getElementById('dive-owner-select'); if(dos) dos.value='';
+  const dss=document.getElementById('dive-source-select'); if(dss) dss.value='';
   renderChart();
   const m=S.mo[k]||{deals:[],leads:[],archivedL:[],conv:[],opps:0};
   const tl=m.leads.length+m.archivedL.length+m.conv.length;
@@ -971,6 +1014,11 @@ function openDive(k){
    +'<div class="ds"><div class="ds-num p">'+m.deals.length+'</div><div class="ds-lbl">New Deals</div></div>'
    +'<div class="ds"><div class="ds-num p">'+tl+'</div><div class="ds-lbl">New Leads</div></div>';
   $('t-deals').classList.add('on'); $('t-leads').classList.remove('on');
+  // Update nav button states
+  const dIdx=S.allKeys.indexOf(k);
+  const prevBtn=$('dive-prev'), nextBtn=$('dive-next');
+  if(prevBtn) prevBtn.disabled=(dIdx<=0);
+  if(nextBtn) nextBtn.disabled=(dIdx>=S.allKeys.length-1);
   renderDiveFilters();
   renderDiveTbl();
   const dv=$('dive'); dv.style.display='block';
