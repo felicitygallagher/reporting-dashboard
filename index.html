@@ -414,7 +414,7 @@ async function fetchDeals(){
   while(true){
     const d=await pd('/deals?limit=500&start='+start+'&status=all'
       +'&since_timestamp=2024-01-01%2000:00:00'
-      +'&custom_fields='+LEAD_DATE_FIELD+','+REGION_FIELD+','+SECTOR_FIELD+','+UTM_SOURCE+','+UTM_MEDIUM+','+UTM_CAMPAIGN
+      +'&custom_fields[]='+LEAD_DATE_FIELD+'&custom_fields[]='+REGION_FIELD+'&custom_fields[]='+SECTOR_FIELD+'&custom_fields[]='+UTM_SOURCE+'&custom_fields[]='+UTM_MEDIUM+'&custom_fields[]='+UTM_CAMPAIGN
       +'&include_fields=origin,channel_id');
     if(!d.success) throw new Error(d.error||'Deals fetch failed');
     all=all.concat((d.data||[]).filter(x=>
@@ -429,7 +429,7 @@ async function fetchDeals(){
 async function fetchLeads(){
   let all=[],start=0;
   while(true){
-    const d=await pd('/leads?limit=500&start='+start+'&created_after=2024-01-01');
+    const d=await pd('/leads?limit=500&start='+start+'&created_after=2024-01-01&custom_fields='+UTM_SOURCE+','+UTM_MEDIUM+','+UTM_CAMPAIGN);
     if(!d.success) throw new Error(d.error||'Leads fetch failed');
     all=all.concat(d.data||[]);
     if(!d.additional_data?.pagination?.more_items_in_collection) break;
