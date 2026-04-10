@@ -99,7 +99,7 @@
     .blbl{font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;transition:color .2s}
     .bg.sel .blbl{color:var(--pur);font-weight:500}
     .chart-hint{font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);text-align:center;margin-top:.75rem;letter-spacing:.05em}
-    .ov-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden;margin-bottom:1.5rem;opacity:0;transform:translateY(18px);animation:fup .55s .33s forwards}
+    .ov-card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);overflow:visible;margin-bottom:1.5rem;opacity:0;transform:translateY(18px);animation:fup .55s .33s forwards}
     .card-hd{padding:1.2rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bord);flex-wrap:wrap;gap:.75rem}
     .card-hd h2{font-family:var(--ff-head);font-size:1.2rem;font-weight:700}
     .card-hd h2 i{font-style:italic;color:var(--grn);font-weight:300}
@@ -255,7 +255,7 @@
     <div class="ov-card">
       <div class="card-hd" style="flex-direction:column;align-items:flex-start;gap:.75rem">
         <h2>Monthly <i>Breakdown</i></h2>
-        <div style="display:flex;align-items:flex-start;gap:.6rem;flex-wrap:nowrap;width:100%">
+        <div style="display:flex;align-items:flex-start;gap:.6rem;flex-wrap:wrap;width:100%">
           <div style="display:flex;flex-direction:column;align-items:center;gap:.3rem;flex-shrink:0">
             <span class="pill-label">Owner</span>
             <select class="owner-select" id="owner-select" onchange="setOwner(this.value)">
