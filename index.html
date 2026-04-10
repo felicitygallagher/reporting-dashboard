@@ -253,9 +253,12 @@
     </div>
 
     <div class="ov-card">
-      <div class="card-hd" style="flex-wrap:nowrap;align-items:center;gap:.75rem;padding:1rem 1.5rem">
-        <h2 style="flex-shrink:0">Monthly <i>Breakdown</i></h2>
-        <div style="display:flex;align-items:center;gap:.5rem;flex:1;justify-content:flex-end;flex-wrap:nowrap;overflow-x:auto">
+      <div class="card-hd" style="flex-direction:column;align-items:stretch;gap:.6rem;padding:1rem 1.5rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem">
+          <h2>Monthly <i>Breakdown</i></h2>
+          <div class="pill-group" id="year-pills"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:nowrap;overflow-x:auto">
           <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
             <span class="pill-label">Owner</span>
             <select class="owner-select" id="owner-select" onchange="setOwner(this.value)">
@@ -325,10 +328,9 @@
               <option value="Word of Mouth">Word of Mouth</option>
             </select>
           </div>
-          <div class="pill-divider"></div>
-          <div class="pill-group" id="year-pills"></div>
         </div>
-      </div>lass="tbl-wrap"><table id="ov-tbl"></table></div>
+      </div>
+      <div class="tbl-wrap"><table id="ov-tbl"></table></div>
     </div>
 
     <div class="dive" id="dive">
