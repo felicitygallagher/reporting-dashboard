@@ -791,8 +791,10 @@ function renderFilterPills(){
   // Sector pills
   document.getElementById('sector-pills').innerHTML =
     '<div style="display:flex;gap:.4rem;flex-wrap:nowrap">'
-    + ['Education','Charity','Company'].map(s=>'<button class="f-pill'+(S.filterSector===s?' active':'')+'" data-pill-sector="'+s+'">'+s+'</button>').join('')
-    + '<button class="f-pill'+(S.filterSector==='Membership Associations'?' active':'')+'" data-pill-sector="Membership Associations">Memberships</button>'
+    + ['Education','Membership Associations','Charity','Company'].map(function(s){
+        var label=s==='Membership Associations'?'Memberships':s;
+        return '<button class="f-pill'+(S.filterSector===s?' active':'')+'" data-pill-sector="'+s+'">'+label+'</button>';
+      }).join('')
     + '</div>';
 }
 
@@ -1040,11 +1042,10 @@ function renderDiveFilters(){
   rp.innerHTML = REGIONS.map(r=>'<button class="f-pill'+(diveFilters.region===r?' active':'')+'" data-dive-region="'+r+'">'+r+'</button>').join('');
   sp.innerHTML =
     '<div style="display:flex;gap:.4rem;flex-wrap:nowrap">'
-    + ['Education','Charity','Company'].map(s=>'<button class="f-pill'+(diveFilters.sector===s?' active':'')+'" data-dive-sector="'+s+'">'+s+'</button>').join('')
-    + '<button class="f-pill'+(diveFilters.sector==='Membership Associations'?' active':'')+'" data-dive-sector="Membership Associations">Memberships</button>'
-    + '</div>'
-    + '<div style="display:flex;gap:.4rem;margin-top:.3rem">'
-    + '<button class="f-pill'+(diveFilters.sector==='Membership Associations'?' active':'')+'" data-dive-sector="Membership Associations">Membership Associations</button>'
+    + ['Education','Membership Associations','Charity','Company'].map(function(s){
+        var label = s==='Membership Associations'?'Memberships':s;
+        return '<button class="f-pill'+(diveFilters.sector===s?' active':'')+'" data-dive-sector="'+s+'">'+label+'</button>';
+      }).join('')
     + '</div>';
   const os=document.getElementById('dive-owner-select');
   if(os){ os.value=diveFilters.owner||''; os.className='owner-select'+(diveFilters.owner?' active':''); }
