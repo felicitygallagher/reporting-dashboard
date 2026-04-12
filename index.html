@@ -306,6 +306,7 @@
               <option value="121 Outreach">121 Outreach</option>
               <option value="Advertising">Advertising</option>
               <option value="AI Research">AI Research</option>
+              <option value="Chatbot">Chatbot</option>
               <option value="Conference">Conference</option>
               <option value="Marketing Email">Marketing Email</option>
               <option value="Previous Sales Prospect">Previous Sales Prospect</option>
@@ -318,7 +319,7 @@
               <option value="TBC">TBC</option>
               <option value="Webinar">Webinar</option>
               <option value="Word of Mouth">Word of Mouth</option>
-            </select>
+              </select>
           </div>
         </div>
       </div>
@@ -384,6 +385,7 @@
             <option value="121 Outreach">121 Outreach</option>
             <option value="Advertising">Advertising</option>
             <option value="AI Research">AI Research</option>
+            <option value="Chatbot">Chatbot</option>
             <option value="Conference">Conference</option>
             <option value="Marketing Email">Marketing Email</option>
             <option value="Previous Sales Prospect">Previous Sales Prospect</option>
@@ -409,7 +411,7 @@
 const API_TOKEN       = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
 const EXCLUDED_PIPELINE = 9; // Consultant (not a direct sale)
 const ATTR_FIELD   = '6bd83ae8d8f32627e17d8bb7028bbb52082245a8';
-const ATTR_MAP = {1707:'121 Outreach',1781:'Advertising',1736:'AI Research',1491:'Conference',1738:'Marketing Email',1705:'Previous Sales Prospect',1703:'Referral',1062:'Search Engine',1794:'Software review site',1502:'Software review site (PPC)',1408:'Software review site (PPL)',1700:'Sponsorship',1105:'TBC',1797:'Webinar',1704:'Word of Mouth'};
+const ATTR_MAP = {1707:'121 Outreach',1781:'Advertising',1736:'AI Research',1798:'Chatbot',1491:'Conference',1738:'Marketing Email',1705:'Previous Sales Prospect',1703:'Referral',1062:'Search Engine',1794:'Software review site',1502:'Software review site (PPC)',1408:'Software review site (PPL)',1700:'Sponsorship',1105:'TBC',1797:'Webinar',1704:'Word of Mouth'};
 function getAttr(val){ return ATTR_MAP[Number(val)]||'--'; }
 const UTM_SOURCE   = '0d56e9a251c55240f417f2517245ec7a6c698645';
 const UTM_MEDIUM   = 'd97cb0e13d4f4bc46fbaf0674ac284cfdf2c1720';
