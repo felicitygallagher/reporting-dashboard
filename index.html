@@ -406,12 +406,17 @@
             <option value="Referral">Referral</option>
             <option value="Search Engine">Search Engine</option>
             <option value="Software review site (PPC)">Software Review (PPC)</option>
+            <option value="Software review site (PPC):G2 Clicks">Software Review: G2 Clicks</option>
+            <option value="Software review site (PPL) - Gartner">Software Review: Gartner</option>
             <option value="Software review site:Capterra">Software Review: Capterra</option>
             <option value="Software review site:G2">Software Review: G2</option>
             <option value="Software review site:General">Software Review: General</option>
             <option value="Software review site:GetApp">Software Review: GetApp</option>
+            <option value="Software review site:Trust Radius">Software Review: Trust Radius</option>
+            <option value="Software reviews site:Software Advice">Software Review: Software Advice</option>
             <option value="Sponsorship">Sponsorship</option>
             <option value="TBC">TBC</option>
+            <option value="Webinar:Educate Plus:Nov2024">Webinar: Educate Plus</option>
             <option value="Word of Mouth">Word of Mouth</option>
           </select>
         </div>
@@ -448,7 +453,7 @@ function classifyDeal(d){
   if(o==='Marketplace'){
     const utmSrc = (d[UTM_SOURCE]||'').trim().toLowerCase();
     if(!utmSrc || utmSrc==='website') return 'Website Booking';
-    return "Personal Link (​" + (d[UTM_SOURCE]||'') + ")";
+    return "Personal Link|(" + (d[UTM_SOURCE]||'') + ")";
   }
   if(o==='ManuallyCreated') return 'Manually Added';
   if(o==='Chatbot') return 'Chatbot';
@@ -465,7 +470,7 @@ function classifyLead(l){
   if(ch==='Zapier'){
     const utmSrc = (l[UTM_SOURCE]||'').trim().toLowerCase();
     if(!utmSrc || utmSrc==='website') return 'Website Booking';
-    return "Personal Link (​" + (l[UTM_SOURCE]||'') + ")";
+    return "Personal Link|(" + (l[UTM_SOURCE]||'') + ")";
   }
   if(ch.toLowerCase().includes('chatbot')) return 'Chatbot';
   if(ch.toLowerCase().includes('surfe')) return 'Surfe / LinkedIn';
@@ -1176,7 +1181,7 @@ function renderDiveTbl(){
         +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
         +'<td class="tdm">'+esc(Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--')+'</td>'
         +'<td class="cell-wrap tdm">'+esc(Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--')+'</td>'
-        +'<td class="cell-wrap tdm">'+esc(classifyDeal(d))+'</td>'
+        +'<td class="cell-wrap tdm">'+classifyDeal(d).split('|').map(esc).join('<br>')+'</td>'
         +'<td class="cell-wrap tdm">'+esc(getAttr(d[ATTR_FIELD]))+'</td>'
         +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
         +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
@@ -1235,7 +1240,7 @@ function renderDiveTbl(){
         +'<td class="tdm">'+esc(l.owner)+'</td>'
         +'<td class="tdm">'+esc(l.region)+'</td>'
         +'<td class="cell-wrap tdm">'+esc(l.sector)+'</td>'
-        +'<td class="cell-wrap tdm">'+esc(l.source||'--')+'</td>'
+        +'<td class="cell-wrap tdm">'+(l.source||'--').split('|').map(esc).join('<br>')+'</td>'
         +'<td class="cell-wrap tdm">'+esc(l.attr||'--')+'</td>'
         +'<td><span class="pill pill-'+l.status+'">'+l.status+'</span></td>'
         +'<td class="tdm">'+fmtD(l.date)+'</td>'
