@@ -414,6 +414,24 @@ const ATTR_FIELD   = '6bd83ae8d8f32627e17d8bb7028bbb52082245a8';
 const ATTR_MAP = {1707:'121 Outreach',1781:'Advertising',1736:'AI Research',1798:'Chatbot',1491:'Conference',1738:'Marketing Email',1705:'Previous Sales Prospect',1703:'Referral',1062:'Search Engine',1794:'Software review site',1502:'Software review site (PPC)',1408:'Software review site (PPL)',1700:'Sponsorship',1105:'TBC',1797:'Webinar',1704:'Word of Mouth'};
 function getAttr(val){ return ATTR_MAP[Number(val)]||'--'; }
 const UTM_SOURCE   = '0d56e9a251c55240f417f2517245ec7a6c698645';
+const ATTR_DETAIL = {
+  'Advertising':              'fe720b116bedc6ef911cd535d7957a09dbec355f',
+  'Conference':               '8e5548ae0219873e1d86c3ed13b06844793abe01',
+  'Webinar':                  '8e5548ae0219873e1d86c3ed13b06844793abe01',
+  'Marketing Email':          '24dd14a8da3bd4a5e75afdf6bd5b58ae22d4ff94',
+  'Software review site':     '2fe3213363eb616db230e76c78d20c28d772ae4a',
+  'Software review site (PPC)': 'dc1ff60a066bf368faf632ed3379bff02051e217',
+  'Software review site (PPL)': 'dc1ff60a066bf368faf632ed3379bff02051e217',
+  'Referral':                 '9c321e8b32cf5748e74e45b285f4bc96f364243f',
+  'Sponsorship':              '75a1a400a093a0f80f6eee330539ddc29da3e276',
+};
+
+function getAttrDetail(deal){
+  const attrLabel = getAttr(deal[ATTR_FIELD]);
+  const fieldKey = ATTR_DETAIL[attrLabel];
+  if(!fieldKey) return null;
+  return deal[fieldKey]||null;
+}
 const UTM_MEDIUM   = 'd97cb0e13d4f4bc46fbaf0674ac284cfdf2c1720';
 const UTM_CAMPAIGN = 'f260b8e7c060cab1c44a858c6f2407bc431205d3';
 const OWNER_MAP = {
@@ -522,7 +540,7 @@ async function fetchDeals(){
   while(true){
     const d=await pd('/deals?limit=500&start='+start+'&status=all'
       +'&since_timestamp=2024-01-01%2000:00:00'
-      +'&custom_fields[]='+LEAD_DATE_FIELD+'&custom_fields[]='+REGION_FIELD+'&custom_fields[]='+SECTOR_FIELD+'&custom_fields[]='+UTM_SOURCE+'&custom_fields[]='+UTM_MEDIUM+'&custom_fields[]='+UTM_CAMPAIGN+'&custom_fields[]='+ATTR_FIELD
+      +'&custom_fields[]='+LEAD_DATE_FIELD+'&custom_fields[]='+REGION_FIELD+'&custom_fields[]='+SECTOR_FIELD+'&custom_fields[]='+UTM_SOURCE+'&custom_fields[]='+UTM_MEDIUM+'&custom_fields[]='+UTM_CAMPAIGN+'&custom_fields[]='+ATTR_FIELD+'&custom_fields[]=fe720b116bedc6ef911cd535d7957a09dbec355f'+'&custom_fields[]=8e5548ae0219873e1d86c3ed13b06844793abe01'+'&custom_fields[]=24dd14a8da3bd4a5e75afdf6bd5b58ae22d4ff94'+'&custom_fields[]=dc1ff60a066bf368faf632ed3379bff02051e217'+'&custom_fields[]=9c321e8b32cf5748e74e45b285f4bc96f364243f'+'&custom_fields[]=2fe3213363eb616db230e76c78d20c28d772ae4a'+'&custom_fields[]=75a1a400a093a0f80f6eee330539ddc29da3e276'
       +'&include_fields=origin,channel_id');
     if(!d.success) throw new Error(d.error||'Deals fetch failed');
     all=all.concat((d.data||[]).filter(x=>
@@ -1162,7 +1180,11 @@ function renderDiveTbl(){
         +'<td class="tdm">'+esc(Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--')+'</td>'
         +'<td class="cell-wrap tdm">'+esc(Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--')+'</td>'
         +'<td class="cell-wrap tdm">'+classifyDeal(d).split('|').map(esc).join('<br>')+'</td>'
-        +'<td class="cell-wrap tdm">'+esc(getAttr(d[ATTR_FIELD]))+'</td>'
+        +(function(){
+        var label=getAttr(d[ATTR_FIELD]);
+        var detail=getAttrDetail(d);
+        return '<td class="cell-wrap tdm">'+esc(label)+(detail?'<br><span style="color:var(--mute)">'+esc(detail)+'</span>':'')+'</td>';
+      })()
         +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
         +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
         +'</tr>').join('')+'</tbody></table>';
@@ -1175,6 +1197,7 @@ function renderDiveTbl(){
         sector:Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(l[SECTOR_FIELD]))||'--',
         source:classifyLead(l),
         attr:getAttr(l[ATTR_FIELD]),
+        attrDetail:(function(){var lbl=getAttr(l[ATTR_FIELD]);var k=ATTR_DETAIL[lbl];return k&&l[k]?l[k]:null;})(),
         date:l.add_time, status:'open',
         url:l.id?'https://toucantech.pipedrive.com/leads/inbox/'+l.id:null
       })),
@@ -1183,6 +1206,7 @@ function renderDiveTbl(){
         region:l.region||'--', sector:l.sector||'--',
         source:classifyArchivedLead(l),
         attr:l.sourceChannelAttr||'--',
+        attrDetail:null,
         date:l.createdOn, status:'archived', url:null
       })),
       ...m.conv.map(d=>({
@@ -1191,6 +1215,7 @@ function renderDiveTbl(){
         sector:Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--',
         source:classifyLead({channel_id:d.channel_id, [UTM_SOURCE]:d[UTM_SOURCE]}),
         attr:getAttr(d[ATTR_FIELD]),
+        attrDetail:getAttrDetail(d)||null,
         date:d[LEAD_DATE_FIELD], status:'converted',
         url:'https://toucantech.pipedrive.com/deal/'+d.id
       })),
@@ -1221,7 +1246,11 @@ function renderDiveTbl(){
         +'<td class="tdm">'+esc(l.region)+'</td>'
         +'<td class="cell-wrap tdm">'+esc(l.sector)+'</td>'
         +'<td class="cell-wrap tdm">'+(l.source||'--').split('|').map(esc).join('<br>')+'</td>'
-        +'<td class="cell-wrap tdm">'+esc(l.attr||'--')+'</td>'
+        +(function(){
+        var label=l.attr||'--';
+        var detail=l.attrDetail;
+        return '<td class="cell-wrap tdm">'+esc(label)+(detail?'<br><span style="color:var(--mute)">'+esc(detail)+'</span>':'')+'</td>';
+      })()
         +'<td><span class="pill pill-'+l.status+'">'+l.status+'</span></td>'
         +'<td class="tdm">'+fmtD(l.date)+'</td>'
         +'</tr>').join('')+'</tbody></table>';
