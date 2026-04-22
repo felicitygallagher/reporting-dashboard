@@ -1199,11 +1199,7 @@ function renderDiveTbl(){
         +'<td class="tdm">'+esc(Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--')+'</td>'
         +'<td class="cell-wrap tdm">'+esc(Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--')+'</td>'
         +'<td class="cell-wrap tdm">'+classifyDeal(d).split('|').map(esc).join('<br>')+'</td>'
-        +(function(){
-        var label=getAttr(d[ATTR_FIELD]);
-        var detail=getAttrDetail(d);
-        return '<td class="cell-wrap tdm">'+esc(label)+(detail?'<br><span style="color:var(--mute)">'+esc(detail)+'</span>':'')+'</td>';
-      })()
+        +'<td class="cell-wrap tdm">'+esc(getAttr(d[ATTR_FIELD]))+(getAttrDetail(d)?'<br><span style="color:var(--mute)">'+esc(getAttrDetail(d))+'</span>':'')+'</td>'
         +'<td class="cell-wrap tdm">'+esc(d[SRC_DETAIL_FIELD]||'--')+'</td>'
         +'<td><span class="pill pill-'+d.status+'">'+d.status+'</span></td>'
         +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
@@ -1276,11 +1272,7 @@ function renderDiveTbl(){
         +'<td class="tdm">'+esc(l.region)+'</td>'
         +'<td class="cell-wrap tdm">'+esc(l.sector)+'</td>'
         +'<td class="cell-wrap tdm">'+(l.source||'--').split('|').map(esc).join('<br>')+'</td>'
-        +(function(){
-        var label=l.attr||'--';
-        var detail=l.attrDetail;
-        return '<td class="cell-wrap tdm">'+esc(label)+(detail?'<br><span style="color:var(--mute)">'+esc(detail)+'</span>':'')+'</td>';
-      })()
+        +'<td class="cell-wrap tdm">'+esc(l.attr||'--')+(l.attrDetail?'<br><span style="color:var(--mute)">'+esc(l.attrDetail)+'</span>':'')+'</td>'
         +'<td class="cell-wrap tdm">'+esc(l.srcDetail||'--')+'</td>'
         +'<td><span class="pill pill-'+l.status+'">'+l.status+'</span></td>'
         +'<td class="tdm">'+fmtD(l.date)+'</td>'
