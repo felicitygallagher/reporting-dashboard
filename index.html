@@ -415,6 +415,26 @@ const ATTR_MAP = {1707:'121 Outreach',1781:'Advertising',1736:'AI Research',1798
 function getAttr(val){ return ATTR_MAP[Number(val)]||'--'; }
 const SRC_DETAIL_FIELD = 'bfedadd6c4e6c2e5af96384d7b5b2c4065737c69';
 const UTM_SOURCE   = '0d56e9a251c55240f417f2517245ec7a6c698645';
+const ATTR_DETAIL_MAPS = {
+  'fe720b116bedc6ef911cd535d7957a09dbec355f': {1778:'Google Ads: EM | TT | Brand',1779:'Google Ads: EM | TT | Alumni UK',1780:'LinkedIn Ads: US Memberships Re-targeting Image Ad: Oct 2024',1782:'Google Ads: EM | TT | Alumni US',1783:'Google Ads: EM | TT | Membership US',1784:'LinkedIn Ads: Global Memberships Re-targeting Document Ad: Oct 2024',1785:'LinkedIn Ads: US Memberships Re-targeting Image Ad: Oct 2024'},
+  '8e5548ae0219873e1d86c3ed13b06844793abe01': {1459:'AAE:Dec2024',1766:'AAE:Dec2025',1492:'AAE:July2025',1458:'AAE:Jun2024',1460:'ACE:Nov2024',1461:'AFP:Oct2022',1462:'AMS Fest:July2025',1464:'AMS:Jun2024',1463:'AMS:Nov2023',1465:'AMS:Nov2024',1709:'AMSFest',1467:'ASAE:Aug2024',1468:'ASAE:Aug2025',1466:'ASAE:May2024',1469:'Associations Executives:Jun2024',1714:'Associations Forum: 2025',1470:'Associations Forum:Apr2024',1478:'CASE/ NAIS:Jan2024',1479:'CASE/ NAIS:Jan2025',1767:'CASE/ NAIS:Jan2026',1735:'CASE:APAC:May2025',1471:'CASE:APACAnnual:May2024',1712:'CASE:Birmingham:Nov2025',1472:'CASE:Europe:Aug2024',1473:'CASE:Leeds:Mar2025',1713:'CASE:NOLA:Oct2025',1475:'CASE:Nov2024',1476:'CASE:NYC:July2025',1477:'CASE:OnlineProductShowcase:Jun2024',1711:'CEAC:2025',1480:'CEAC:Aug2024',1481:'COBIS:Feb2025',1493:'COBIS:May2024',1482:'CSAE:Nov2024',1742:'EAPC:2021',1483:'EducatePlus:2023',1485:'EducatePlus:July2025',1706:'EducatePlus:NSWSummit2025',1484:'EducatePlus:Sep2024',1745:'IDPE/HMC:Jan2020',1768:'IDPE/HMC:Jan2026',1743:'IDPE:2018',1744:'IDPE:2019',1710:'IDPE:2022',1486:'IDPE:2023',1487:'IDPE:Annual:May2024',1488:'IDPE:Annual:May2025',1489:'iSAMS:Mar2024',1490:'Memberwise:Nov2024',1734:'Memberwise:Nov2025',1733:'TAF:Sep2025',1796:'Webinar:Educate Plus:Nov2024'},
+  '24dd14a8da3bd4a5e75afdf6bd5b58ae22d4ff94': {1739:'Lemlist',1740:'Mailshake/Klenty',1746:'Pipedrive Newsletter',1741:'Sopro'},
+  'dc1ff60a066bf368faf632ed3379bff02051e217': {1624:'Capterra - Alumni Management - Australia',1623:'Capterra - Alumni Management - Australlia',1622:'Capterra - Alumni Management - Azerbaijan',1621:'Capterra - Alumni Management - Bangladesh',1620:'Capterra - Alumni Management - Belgium',1619:'Capterra - Alumni Management - Canada',1618:'Capterra - Alumni Management - France',1617:'Capterra - Alumni Management - Germany',1616:'Capterra - Alumni Management - Ghana',1615:'Capterra - Alumni Management - India',1614:'Capterra - Alumni Management - Kazakhstan',1613:'Capterra - Alumni Management - Malaysia',1612:'Capterra - Alumni Management - New Zealand',1611:'Capterra - Alumni Management - Qatar',1610:'Capterra - Alumni Management - South Africa',1609:'Capterra - Alumni Management - United Kingdom',1608:'Capterra - Alumni Management - United States',1607:'Capterra - Alumni Management United Kingdom',1606:'Capterra - Association Management - Australia',1605:'Capterra - Association Management - Canada',1604:'Capterra - Association Management - New Zealand',1603:'Capterra - Association Management - South Africa',1602:'Capterra - Association Management - United Kingdom',1601:'Capterra - Association Management - United States',1600:'Capterra - Association Managment - United States',1599:'Capterra - Church Management - Australia',1598:'Capterra - Church Management - United States',1597:'Capterra - Community - Australia',1596:'Capterra - Community - Austria',1595:'Capterra - Community - Bangladesh',1594:'Capterra - Community - Belgium',1593:'Capterra - Community - Brazil',1592:'Capterra - Community - Canada',1591:'Capterra - Community - Ethiopia',1590:'Capterra - Community - France',1589:'Capterra - Community - Germany',1588:'Capterra - Community - Ghana',1587:'Capterra - Community - Ireland',1586:'Capterra - Community - Malaysia',1585:'Capterra - Community - Netherlands',1584:'Capterra - Community - Poland',1583:'Capterra - Community - South Africa',1582:'Capterra - Community - Spain',1581:'Capterra - Community - Sweden',1580:'Capterra - Community - United Kingdom',1579:'Capterra - Community - United States',1578:'Capterra - Donation Management - Morocco',1577:'Capterra - Donation Management - Spain',1576:'Capterra - Donation Management - United States',1575:'Capterra - Fundraising - Belgium',1574:'Capterra - Fundraising - Canada',1573:'Capterra - Fundraising - Chile',1572:'Capterra - Fundraising - Colombia',1571:'Capterra - Fundraising - Dominican Republic',1570:'Capterra - Fundraising - Greece',1569:'Capterra - Fundraising - Italy',1568:'Capterra - Fundraising - South Africa',1567:'Capterra - Fundraising - Switzerland',1566:'Capterra - Fundraising - United Kingdom',1565:'Capterra - Fundraising - United States',1564:'Capterra - Fundraising - Virgin Islands, U.S.',1563:'Capterra - Membership Management - Australia',1562:'Capterra - Membership Management - Canada',1561:'Capterra - Membership Management - Ireland',1560:'Capterra - Membership Management - Tanzania',1559:'Capterra - Membership Management - United Kingdom',1558:'Capterra - Membership Management - United States',1795:'G2 Clicks',1557:'Get App - Membership Management - United States',1556:'GetApp - Alumni Management - Australia',1555:'GetApp - Alumni Management - Canada',1554:'GetApp - Alumni Management - Chile',1553:'GetApp - Alumni Management - France',1552:'GetApp - Alumni Management - Malta',1551:'GetApp - Alumni Management - Turkey',1550:'GetApp - Alumni Management - United Kingdom',1549:'GetApp - Alumni Management - United States',1548:'GetApp - Association Management - South Africa',1547:'GetApp - Association Management - United Kingdom',1546:'GetApp - Association Management - United States',1545:'GetApp - Church Management - Canada',1544:'GetApp - Church Management - United Kingdom',1543:'GetApp - Church Management - United States',1542:'GetApp - Community - Australia',1541:'GetApp - Community - Brazil',1540:'GetApp - Community - Canada',1539:'GetApp - Community - France',1538:'GetApp - Community - Germany',1537:'GetApp - Community - India',1536:'GetApp - Community - Ireland',1535:'GetApp - Community - Israel',1534:'GetApp - Community - Luxembourg',1533:'GetApp - Community - New Zealand',1532:'GetApp - Community - Singapore',1531:'GetApp - Community - Spain',1530:'GetApp - Community - Sweden',1529:'GetApp - Community - Switzerland',1528:'GetApp - Community - United Kingdom',1527:'GetApp - Community - United States',1526:'GetApp - Donation Management - United Kingdom',1525:'GetApp - Donation Management - United States',1524:'GetApp - Fundraising - Armenia',1523:'GetApp - Fundraising - Israel',1522:'GetApp - Fundraising - Spain',1521:'GetApp - Fundraising - United States',1520:'GetApp - Membership Management',1519:'GetApp - Membership Management - Australia',1518:'GetApp - Membership Management - Canada',1517:'GetApp - Membership Management - Norway',1516:'GetApp - Membership Management - South Africa',1515:'GetApp - Membership Management - United Arab Emirates',1514:'GetApp - Membership Management - United Kingdom',1513:'GetApp - Membership Management - United States',1512:'GetApp - Membership Membership - United States',1511:'Software Advice - Alumni Management - Australia',1510:'Software Advice - Alumni Management - United Kingdom',1509:'Software Advice - Association Management - Australia',1508:'Software Advice - Community - Australia',1507:'Software Advice - Community - Nigeria',1506:'Software Advice - Community - South Africa',1505:'Software Advice - Donation Management - United Kingdom',1503:'Software Advice - Fundraising - New Zealand',1504:'Software Advice - Membership Management - United States'},
+  '9c321e8b32cf5748e74e45b285f4bc96f364243f': {1688:'Consultant/Partner',1689:'Customer',1690:'Customer Indirect',1691:'Employee',1692:'Former TT User',1693:'Sales Prospect'},
+  '2fe3213363eb616db230e76c78d20c28d772ae4a': {1786:'Capterra',1787:'G2',1789:'Gartner (PPL)',1790:'General/Unknown',1791:'GetApp',1792:'Software Advice',1793:'Trust Radius'},
+  '75a1a400a093a0f80f6eee330539ddc29da3e276': {1695:'Associations Forum',1696:'AusAE',1702:'CASE',1701:'COBIS',1697:'Educate Plus',1698:'IDPE',1699:'Memberwise',1708:'NZSAE'},
+};
+
+function decodeAttrDetail(deal){
+  const attrLabel = getAttr(deal[ATTR_FIELD]);
+  const fieldKey = ATTR_DETAIL[attrLabel];
+  if(!fieldKey) return null;
+  const rawVal = deal[fieldKey];
+  if(!rawVal) return null;
+  const map = ATTR_DETAIL_MAPS[fieldKey];
+  return map ? (map[Number(rawVal)] || String(rawVal)) : String(rawVal);
+}
+
 const ATTR_DETAIL = {
   'Advertising':              'fe720b116bedc6ef911cd535d7957a09dbec355f',
   'Conference':               '8e5548ae0219873e1d86c3ed13b06844793abe01',
@@ -428,10 +448,7 @@ const ATTR_DETAIL = {
 };
 
 function getAttrDetail(deal){
-  const attrLabel = getAttr(deal[ATTR_FIELD]);
-  const fieldKey = ATTR_DETAIL[attrLabel];
-  if(!fieldKey) return null;
-  return deal[fieldKey]||null;
+  return decodeAttrDetail(deal);
 }
 const UTM_MEDIUM   = 'd97cb0e13d4f4bc46fbaf0674ac284cfdf2c1720';
 const UTM_CAMPAIGN = 'f260b8e7c060cab1c44a858c6f2407bc431205d3';
@@ -1200,7 +1217,13 @@ function renderDiveTbl(){
         sector:Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(l[SECTOR_FIELD]))||'--',
         source:classifyLead(l),
         attr:getAttr(l[ATTR_FIELD]),
-        attrDetail:(function(){var lbl=getAttr(l[ATTR_FIELD]);var k=ATTR_DETAIL[lbl];return k&&l[k]?l[k]:null;})(),
+        attrDetail:(function(){
+          var lbl=getAttr(l[ATTR_FIELD]);
+          var k=ATTR_DETAIL[lbl];
+          if(!k||!l[k]) return null;
+          var map=ATTR_DETAIL_MAPS[k];
+          return map?(map[Number(l[k])]||String(l[k])):String(l[k]);
+        })(),
         srcDetail:l[SRC_DETAIL_FIELD]||null,
         date:l.add_time, status:'open',
         url:l.id?'https://toucantech.pipedrive.com/leads/inbox/'+l.id:null
