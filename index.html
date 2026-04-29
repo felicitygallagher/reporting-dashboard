@@ -108,6 +108,15 @@
     .f-pill{font-family:var(--ff-mono);font-size:.62rem;padding:.25rem .75rem;border-radius:100px;border:1px solid var(--bord2);color:var(--mute);background:none;cursor:pointer;transition:all .2s;letter-spacing:.06em}
     .f-pill.active{background:var(--pur-soft);border-color:rgba(176,110,243,.4);color:var(--pur)}
     .mode-toggle{display:flex;gap:0;border:1px solid var(--bord2);border-radius:10px;overflow:hidden;flex-shrink:0}
+    .star-btn{font-family:var(--ff-head);font-size:.85rem;font-weight:700;letter-spacing:.06em;padding:.45rem 1.25rem;border:2px solid #f8c247;border-radius:10px;background:rgba(248,194,71,.08);color:#f8c247;cursor:pointer;transition:all .2s;flex-shrink:0;display:none}
+    .star-btn:hover{background:rgba(248,194,71,.18);box-shadow:0 0 18px rgba(248,194,71,.35)}
+    .star-btn.on{background:#f8c247;color:#08060f;box-shadow:0 0 24px rgba(248,194,71,.6),0 0 48px rgba(248,194,71,.3)}
+    /* Star burst animation */
+    @keyframes starBurst{0%{transform:scale(1)}20%{transform:scale(1.18)}40%{transform:scale(.94)}60%{transform:scale(1.08)}80%{transform:scale(.98)}100%{transform:scale(1)}}
+    @keyframes starParticle{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)}}
+    @keyframes starParticleIn{0%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)}70%{opacity:1}100%{opacity:0;transform:translate(0,0) scale(1.2)}}
+    .star-particle{position:fixed;pointer-events:none;font-size:1.2rem;z-index:9999;animation:starParticle .8s ease-out forwards}
+    .star-particle.reverse{animation:starParticleIn .7s ease-in forwards}
     .mode-btn{font-family:var(--ff-mono);font-size:.65rem;padding:.38rem 1rem;border:none;background:none;color:var(--mute);cursor:pointer;letter-spacing:.06em;transition:background .2s,color .2s;white-space:nowrap}
     .mode-btn.active{background:var(--pur-soft);color:var(--pur)}
     .mode-btn:hover:not(.active){color:var(--txt2)}
@@ -444,7 +453,10 @@
   </div>
 
   <div id="pipeline-view" style="display:none">
-    <div class="sec-lbl">currently open — live snapshot</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.75rem">
+      <div class="sec-lbl" style="margin-bottom:0;flex:1">currently open — live snapshot</div>
+      <button class="star-btn" id="star-btn" onclick="toggleStar()">&#x2B50; STAR Mode</button>
+    </div>
     <p style="font-family:var(--ff-mono);font-size:.62rem;color:var(--mute);margin-bottom:1rem;line-height:1.6">Click the <span style="color:var(--pur)">Open Deals</span> or <span style="color:var(--grn)">Open Leads</span> card to see all open items &mdash; or click any salesperson&rsquo;s name in the tables below to drill into their pipeline.</p>
     <div class="pipeline-totals" id="pipeline-totals"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem">
@@ -534,6 +546,10 @@
 <script>
 const API_TOKEN       = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
 const EXCLUDED_PIPELINE = 9;
+const STAR_LABEL_ID = 1368;
+function isStarDeal(d){ return d.label===STAR_LABEL_ID || String(d.label)===String(STAR_LABEL_ID) || (d.title&&d.title.startsWith('***')); }
+function isStarLead(l){ return l.title&&l.title.startsWith('***'); }
+let starMode = false;
 const STAGE_MAP = {54:'Qualified',55:'Demo Booked',58:'Demo Done',56:'S Proposal',59:'F Proposal',57:'Negotiation',60:'Awaiting Contract'};
 const STAGE_ORDER = [54,55,58,56,59,57,60]; // display order
 function stageName(deal){ return STAGE_MAP[deal.stage_id]||'Unknown'; } // Consultant (not a direct sale)
@@ -1441,12 +1457,45 @@ function toggleLogic(){
 ═══════════════════════════════════════ */
 let S_MODE = 'opps'; // 'opps' or 'pipeline'
 
+function spawnStars(btn, reverse){
+  const rect = btn.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  const emojis = ['⭐','🌟','✨','💫','⭐','🌟'];
+  emojis.forEach((e,i)=>{
+    const el = document.createElement('div');
+    el.className = 'star-particle' + (reverse?' reverse':'');
+    el.textContent = e;
+    const angle = (i/emojis.length)*360;
+    const dist = 60 + Math.random()*60;
+    const tx = Math.cos(angle*Math.PI/180)*dist + 'px';
+    const ty = Math.sin(angle*Math.PI/180)*dist + 'px';
+    el.style.cssText = 'left:'+cx+'px;top:'+cy+'px;--tx:'+tx+';--ty:'+ty;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 900);
+  });
+  btn.style.animation='starBurst .5s ease-out';
+  setTimeout(()=>btn.style.animation='', 500);
+}
+
+function toggleStar(){
+  starMode = !starMode;
+  const btn = document.getElementById('star-btn');
+  btn.classList.toggle('on', starMode);
+  btn.textContent = starMode ? '⭐ STAR Mode ON' : '⭐ STAR Mode';
+  spawnStars(btn, !starMode);
+  renderPipeline();
+  if(document.getElementById('pl-expanded').style.display!=='none') renderPlDiveTbl();
+}
+
 function setMode(m){
   S_MODE = m;
   document.getElementById('mode-opps').classList.toggle('active', m==='opps');
   document.getElementById('mode-pipeline').classList.toggle('active', m==='pipeline');
   document.getElementById('main').style.display = m==='opps' ? 'block' : 'none';
   document.getElementById('pipeline-view').style.display = m==='pipeline' ? 'block' : 'none';
+  const sb=document.getElementById('star-btn'); if(sb) sb.style.display=m==='pipeline'?'':'none';
+  if(m==='opps'){ starMode=false; const sbtn=document.getElementById('star-btn'); if(sbtn){sbtn.classList.remove('on');sbtn.textContent='⭐ STAR Mode';} }
   // Hide data-limitation banners in pipeline mode
   const banners = ['at-status', 'logic-box-wrap'];
   document.querySelectorAll('.warn-bar, #at-status, .logic-pill, .logic-box').forEach(el=>{
@@ -1457,13 +1506,12 @@ function setMode(m){
 
 /* All open items (fetched already) */
 function getOpenDeals(){
-  // Use dedicated open deals fetch if available, otherwise fall back to S.deals
-  if(S.openDeals) return S.openDeals;
-  return S.deals.filter(d=>d.status==='open' && !isConvertedDeal(d));
+  const base = S.openDeals || S.deals.filter(d=>d.status==='open' && !isConvertedDeal(d));
+  return starMode ? base.filter(isStarDeal) : base;
 }
 function getOpenLeads(){
-  // Active API leads only
-  return S.leads.filter(l=>!l.is_archived);
+  const base = S.leads.filter(l=>!l.is_archived);
+  return starMode ? base.filter(isStarLead) : base;
 }
 
 function ownerLabel(deal){
