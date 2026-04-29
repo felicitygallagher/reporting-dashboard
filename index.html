@@ -465,6 +465,13 @@
           <button class="dtab" id="plt-leads" onclick="switchPlTab('leads')">Leads</button>
         </div>
         <div style="display:flex;align-items:flex-start;gap:.6rem;flex-wrap:nowrap;overflow-x:auto;padding:.75rem 0;border-bottom:1px solid var(--bord);margin-bottom:.75rem">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0" id="pl-stage-wrap">
+            <span class="pill-label">Stage</span>
+            <select class="owner-select" id="pl-stage-select" onchange="renderPlDiveTbl()">
+              <option value="">All</option>
+            </select>
+          </div>
+          <div class="pill-divider" id="pl-stage-divider"></div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
             <span class="pill-label">Region</span>
             <div id="pl-region-pills" class="pill-group"></div>
@@ -511,13 +518,7 @@
               <option value="Word of Mouth">Word of Mouth</option>
             </select>
           </div>
-          <div class="pill-divider" id="pl-stage-divider"></div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0" id="pl-stage-wrap">
-            <span class="pill-label">Stage</span>
-            <select class="owner-select" id="pl-stage-select" onchange="renderPlDiveTbl()">
-              <option value="">All</option>
-            </select>
-          </div>
+
         </div>
         <div class="tbl-wrap" id="pl-dive-tbl"></div>
       </div>
@@ -1466,29 +1467,33 @@ function renderPipeline(){
   const leadOwners = [...new Set(openLeads.map(leadOwnerLabel))].sort();
 
   // Deal summary table
+  // Get all unique stages from open deals for column headers
+  const allStages = [...new Set(getOpenDeals().map(d=>d.stage_name||'Unknown'))].sort();
   document.getElementById('pl-deal-summary').innerHTML =
-    '<thead><tr><th>Salesperson</th><th>Deals</th><th>EMEA</th><th>AMER</th><th>APAC</th><th>Edu</th><th>Memb</th><th>Char</th><th>Co</th></tr></thead><tbody>'
+    '<thead><tr><th>Salesperson</th><th>Deals</th>'+allStages.map(s=>'<th>'+esc(s)+'</th>').join('')+'</tr></thead><tbody>'
     + dealOwners.map(owner=>{
         const items = openDeals.filter(d=>ownerLabel(d)===owner);
         return '<tr style="cursor:pointer" onclick="openPlDive(&quot;deal&quot;,&quot;'+owner+'&quot;)">'
           +'<td style="color:var(--pur);font-family:var(--ff-mono);font-size:.75rem">'+esc(owner)+'</td>'
           +'<td class="tdf-p">'+items.length+'</td>'
-          +REGIONS.map(r=>'<td class="tdm">'+items.filter(d=>rg(d)===r).length+'</td>').join('')
-          +SECTORS.map(s=>'<td class="tdm">'+items.filter(d=>sg(d)===s).length+'</td>').join('')
+          +allStages.map(s=>'<td class="tdm">'+items.filter(d=>(d.stage_name||'Unknown')===s).length+'</td>').join('')
           +'</tr>';
       }).join('')
     +'</tbody>';
 
   // Lead summary table
   document.getElementById('pl-lead-summary').innerHTML =
-    '<thead><tr><th>Salesperson</th><th>Leads</th><th>EMEA</th><th>AMER</th><th>APAC</th><th>Edu</th><th>Memb</th><th>Char</th><th>Co</th></tr></thead><tbody>'
+    '<thead><tr><th>Salesperson</th><th>Leads</th><th>EMEA</th><th>AMER</th><th>APAC</th><th style="border-left:2px solid var(--bord2)">Edu</th><th>Memb</th><th>Char</th><th>Co</th></tr></thead><tbody>'
     + leadOwners.map(owner=>{
         const items = openLeads.filter(l=>leadOwnerLabel(l)===owner);
         return '<tr style="cursor:pointer" onclick="openPlDive(&quot;lead&quot;,&quot;'+owner+'&quot;)">'
           +'<td style="color:var(--grn);font-family:var(--ff-mono);font-size:.75rem">'+esc(owner)+'</td>'
           +'<td class="tdf">'+items.length+'</td>'
           +REGIONS.map(r=>'<td class="tdm">'+items.filter(l=>lgr(l)===r).length+'</td>').join('')
-          +SECTORS.map(s=>'<td class="tdm">'+items.filter(l=>lgs(l)===s).length+'</td>').join('')
+          +'<td class="tdm" style="border-left:2px solid var(--bord2)">'+items.filter(l=>lgs(l)==='Education').length+'</td>'
+          +'<td class="tdm">'+items.filter(l=>lgs(l)==='Membership Associations').length+'</td>'
+          +'<td class="tdm">'+items.filter(l=>lgs(l)==='Charity').length+'</td>'
+          +'<td class="tdm">'+items.filter(l=>lgs(l)==='Company').length+'</td>'
           +'</tr>';
       }).join('')
     +'</tbody>';
@@ -1509,7 +1514,7 @@ function openPlDive(type, owner){
   const dealStages = [...new Set(getOpenDeals().filter(d=>ownerLabel(d)===owner).map(d=>d.stage_name||'--'))].sort();
   const stageSelect = document.getElementById('pl-stage-select');
   stageSelect.innerHTML = '<option value="">All</option>' + dealStages.map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join('');
-  switchPlTab(type);
+  switchPlTab(type==='deal'?'deals':'leads');
   setTimeout(()=>document.getElementById('pl-expanded').scrollIntoView({behavior:'smooth',block:'start'}),40);
 }
 
