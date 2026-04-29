@@ -529,7 +529,10 @@
 </div>
 <script>
 const API_TOKEN       = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
-const EXCLUDED_PIPELINE = 9; // Consultant (not a direct sale)
+const EXCLUDED_PIPELINE = 9;
+const STAGE_MAP = {54:'Qualified',55:'Demo Booked',58:'Demo Done',56:'S Proposal Made',59:'F Proposal Made',57:'Negotiation',60:'Awaiting Contract'};
+const STAGE_ORDER = [54,55,58,56,59,57,60]; // display order
+function stageName(deal){ return STAGE_MAP[deal.stage_id]||'Unknown'; } // Consultant (not a direct sale)
 const ATTR_FIELD   = '6bd83ae8d8f32627e17d8bb7028bbb52082245a8';
 const ATTR_MAP = {1707:'121 Outreach',1781:'Advertising',1736:'AI Research',1798:'Chatbot',1491:'Conference',1738:'Marketing Email',1705:'Previous Sales Prospect',1703:'Referral',1062:'Search Engine',1794:'Software review site',1502:'Software review site (PPC)',1408:'Software review site (PPL)',1700:'Sponsorship',1105:'TBC',1797:'Webinar',1704:'Word of Mouth'};
 function getAttr(val){ return ATTR_MAP[Number(val)]||'--'; }
@@ -1468,7 +1471,7 @@ function renderPipeline(){
 
   // Deal summary table
   // Get all unique stages from open deals for column headers
-  const allStages = [...new Set(getOpenDeals().map(d=>d.stage_name||'Unknown'))].sort();
+  const allStages = STAGE_ORDER.map(id=>STAGE_MAP[id]).filter(Boolean);
   document.getElementById('pl-deal-summary').innerHTML =
     '<thead><tr><th>Salesperson</th><th>Deals</th>'+allStages.map(s=>'<th>'+esc(s)+'</th>').join('')+'</tr></thead><tbody>'
     + dealOwners.map(owner=>{
@@ -1476,7 +1479,7 @@ function renderPipeline(){
         return '<tr style="cursor:pointer" onclick="openPlDive(&quot;deal&quot;,&quot;'+owner+'&quot;)">'
           +'<td style="color:var(--pur);font-family:var(--ff-mono);font-size:.75rem">'+esc(owner)+'</td>'
           +'<td class="tdf-p">'+items.length+'</td>'
-          +allStages.map(s=>'<td class="tdm">'+items.filter(d=>(d.stage_name||'Unknown')===s).length+'</td>').join('')
+          +allStages.map(s=>'<td class="tdm">'+items.filter(d=>stageName(d)===s).length+'</td>').join('')
           +'</tr>';
       }).join('')
     +'</tbody>';
@@ -1511,7 +1514,7 @@ function openPlDive(type, owner){
   document.getElementById('pl-expanded').style.display='block';
   document.getElementById('pl-dive-title').innerHTML = '<i>'+esc(owner)+'</i>';
   // Populate stage options from this owner's deals
-  const dealStages = [...new Set(getOpenDeals().filter(d=>ownerLabel(d)===owner).map(d=>d.stage_name||'--'))].sort();
+  const dealStages = STAGE_ORDER.map(id=>STAGE_MAP[id]).filter(s=>getOpenDeals().filter(d=>ownerLabel(d)===owner).some(d=>stageName(d)===s));
   const stageSelect = document.getElementById('pl-stage-select');
   stageSelect.innerHTML = '<option value="">All</option>' + dealStages.map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join('');
   switchPlTab(type==='deal'?'deals':'leads');
@@ -1574,7 +1577,7 @@ function renderPlDiveTbl(){
     if(filterSector) items=items.filter(d=>sg(d)===filterSector);
     if(filterOrigin) items=items.filter(d=>classifyDeal(d).startsWith(filterOrigin));
     if(filterSource) items=items.filter(d=>getAttr(d[ATTR_FIELD])===filterSource);
-    if(filterStage)  items=items.filter(d=>(d.stage_name||'--')===filterStage);
+    if(filterStage)  items=items.filter(d=>(stageName(d))===filterStage);
     items.sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
     document.getElementById('pl-dive-stats').innerHTML =
       '<div class="ds"><div class="ds-num p">'+items.length+'</div><div class="ds-lbl">Open Deals</div></div>'
@@ -1588,7 +1591,7 @@ function renderPlDiveTbl(){
         +'<td class="cell-wrap"><a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank" style="color:var(--pur);text-decoration:none">'+esc(d.title)+'</a></td>'
         +'<td class="tdm">'+esc(rg(d))+'</td>'
         +'<td class="cell-wrap tdm">'+esc(sg(d))+'</td>'
-        +'<td class="tdm">'+esc(d.stage_name||'--')+'</td>'
+        +'<td class="tdm">'+esc(stageName(d))+'</td>'
         +'<td class="cell-wrap tdm">'+esc(classifyDeal(d))+'</td>'
         +'<td class="cell-wrap tdm">'+esc(getAttr(d[ATTR_FIELD]))+(getAttrDetail(d)?'<br><span style="color:var(--mute)">'+esc(getAttrDetail(d))+'</span>':'')+'</td>'
         +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
