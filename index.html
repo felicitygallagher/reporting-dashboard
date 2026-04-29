@@ -107,6 +107,38 @@
     .pill-group{display:flex;gap:.4rem}
     .f-pill{font-family:var(--ff-mono);font-size:.62rem;padding:.25rem .75rem;border-radius:100px;border:1px solid var(--bord2);color:var(--mute);background:none;cursor:pointer;transition:all .2s;letter-spacing:.06em}
     .f-pill.active{background:var(--pur-soft);border-color:rgba(176,110,243,.4);color:var(--pur)}
+    .mode-toggle{display:flex;gap:0;border:1px solid var(--bord2);border-radius:10px;overflow:hidden;flex-shrink:0}
+    .mode-btn{font-family:var(--ff-mono);font-size:.65rem;padding:.38rem 1rem;border:none;background:none;color:var(--mute);cursor:pointer;letter-spacing:.06em;transition:background .2s,color .2s;white-space:nowrap}
+    .mode-btn.active{background:var(--pur-soft);color:var(--pur)}
+    .mode-btn:hover:not(.active){color:var(--txt2)}
+    /* pipeline mode */
+    .pipeline-section{margin-bottom:1.5rem;opacity:0;transform:translateY(18px);animation:fup .45s forwards}
+    .pipeline-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem;margin-bottom:1.5rem}
+    .pc{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);overflow:hidden}
+    .pc-hd{padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bord);cursor:pointer;transition:background .15s;gap:.75rem}
+    .pc-hd:hover{background:var(--surf2)}
+    .pc-name{font-family:var(--ff-head);font-size:1.15rem;font-weight:700;letter-spacing:-.02em}
+    .pc-counts{display:flex;gap:.75rem;align-items:center}
+    .pc-count{display:flex;flex-direction:column;align-items:center}
+    .pc-num{font-family:var(--ff-head);font-size:1.6rem;font-weight:700;letter-spacing:-.03em;line-height:1}
+    .pc-num.p{color:var(--pur)}.pc-num.g{color:var(--grn)}
+    .pc-lbl{font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);text-transform:uppercase;letter-spacing:.1em}
+    .pc-chevron{font-family:var(--ff-mono);font-size:.7rem;color:var(--mute);transition:transform .2s;flex-shrink:0}
+    .pc-chevron.open{transform:rotate(180deg)}
+    .pc-body{display:none;padding:1rem 1.25rem}
+    .pc-body.open{display:block}
+    .pc-tabs{display:flex;border-bottom:1px solid var(--bord);margin-bottom:.75rem}
+    .pc-tab{font-family:var(--ff-mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);padding:.5rem .9rem;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;transition:color .2s,border-color .2s;margin-bottom:-1px}
+    .pc-tab.on{color:var(--grn);border-bottom-color:var(--grn)}
+    .pc-tab:hover:not(.on){color:var(--txt2)}
+    .pc-list{display:flex;flex-direction:column;gap:.4rem;max-height:320px;overflow-y:auto}
+    .pc-item{display:flex;align-items:flex-start;gap:.6rem;padding:.5rem .6rem;border-radius:8px;transition:background .12s;font-size:.78rem}
+    .pc-item:hover{background:var(--surf2)}
+    .pc-item a{color:var(--pur);text-decoration:none;flex:1;line-height:1.35}
+    .pc-item a:hover{text-decoration:underline}
+    .pc-item-meta{font-family:var(--ff-mono);font-size:.6rem;color:var(--mute);white-space:nowrap;margin-top:.1rem}
+    .pc-empty{font-family:var(--ff-mono);font-size:.65rem;color:var(--mute);padding:.5rem;text-align:center}
+    .pipeline-totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.5rem}
     .pill-divider{width:1px;background:var(--bord2);align-self:stretch;margin:0 .25rem}
     .pill-label{font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);white-space:nowrap}
     .owner-select{font-family:var(--ff-mono);font-size:.65rem;background:var(--surf2);border:1px solid var(--bord2);color:var(--txt2);padding:.28rem .6rem;border-radius:8px;cursor:pointer;outline:none;transition:border-color .2s;min-width:120px}
@@ -174,6 +206,10 @@
     <div class="hdr-l">
       <h1>Opportunities <i>Analysis</i></h1>
       <p class="hdr-sub">// Leads &amp; Deals Analysis</p>
+    </div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-opps" onclick="setMode('opps')">&#x1F4CA; New Opportunities</button>
+      <button class="mode-btn" id="mode-pipeline" onclick="setMode('pipeline')">&#x1F7E2; Open Pipeline</button>
     </div>
     <div class="hdr-r">
       <div class="badge-live"><span class="dot-live"></span>LIVE DATA</div>
@@ -403,6 +439,13 @@
       </div>
       <div class="tbl-wrap dive-tbl-wrap" id="dive-tbl"></div>
     </div>
+  </div>
+
+  <div id="pipeline-view" style="display:none">
+    <div class="sec-lbl">currently open — live snapshot</div>
+    <div class="pipeline-totals" id="pipeline-totals"></div>
+    <div class="pipeline-cards" id="pipeline-deal-cards"></div>
+    <div class="pipeline-cards" id="pipeline-lead-cards"></div>
   </div>
 
   <footer>PIPEDRIVE DASHBOARD &middot; MAIN PIPELINE &middot; DATA &copy; PIPEDRIVE &middot; CONFIDENTIAL</footer>
@@ -1284,6 +1327,139 @@ function renderDiveTbl(){
 function toggleLogic(){
   const box=$('logic-box');
   box.style.display=box.style.display==='block'?'none':'block';
+}
+
+/* ═══════════════════════════════════════
+   PIPELINE MODE
+═══════════════════════════════════════ */
+let S_MODE = 'opps'; // 'opps' or 'pipeline'
+
+function setMode(m){
+  S_MODE = m;
+  document.getElementById('mode-opps').classList.toggle('active', m==='opps');
+  document.getElementById('mode-pipeline').classList.toggle('active', m==='pipeline');
+  document.getElementById('main').style.display = m==='opps' ? 'block' : 'none';
+  document.getElementById('pipeline-view').style.display = m==='pipeline' ? 'block' : 'none';
+  if(m==='pipeline') renderPipeline();
+}
+
+/* All open items (fetched already) */
+function getOpenDeals(){
+  // Open deals in non-consultant pipelines
+  return S.deals.filter(d=>d.status==='open' && !isConvertedDeal(d));
+}
+function getOpenLeads(){
+  // Active API leads only
+  return S.leads.filter(l=>!l.is_archived);
+}
+
+function ownerLabel(deal){
+  return deal.owner_name||'--';
+}
+function leadOwnerLabel(lead){
+  const ow = Object.values(OWNER_MAP).find(o=>o.id===(lead.owner_id?.id||lead.owner_id));
+  return ow ? ow.name : 'Other';
+}
+
+function renderPipeline(){
+  const openDeals = getOpenDeals();
+  const openLeads = getOpenLeads();
+
+  // Totals row
+  const rg = r => Object.keys(REGION_ID).find(x=>REGION_ID[x]===Number(r[REGION_FIELD]))||'--';
+  const sg = d => Object.keys(SECTOR_ID).find(x=>SECTOR_ID[x]===Number(d[SECTOR_FIELD]))||'--';
+
+  document.getElementById('pipeline-totals').innerHTML = [
+    {c:'p', ico:'&#x1F4CB;', n:openDeals.length, l:'Open Deals', s:''},
+    {c:'g', ico:'&#x1F331;', n:openLeads.length, l:'Open Leads', s:''},
+  ].map(x=>'<div class="sc '+x.c+'" style="animation-delay:0s"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div><div class="sc-sub">'+x.s+'</div></div>').join('');
+
+  // Build per-owner cards
+  const dealOwners = [...new Set(openDeals.map(ownerLabel))].sort();
+  const leadOwners = [...new Set(openLeads.map(leadOwnerLabel))].sort();
+
+  // Deal cards
+  document.getElementById('pipeline-deal-cards').innerHTML = dealOwners.map(owner=>{
+    const items = openDeals.filter(d=>ownerLabel(d)===owner);
+    const byRegion = {};
+    REGIONS.forEach(r=>{ const n=items.filter(d=>rg(d)===r).length; if(n>0) byRegion[r]=n; });
+    const bySector = {};
+    SECTORS.forEach(s=>{ const n=items.filter(d=>sg(d)===s).length; if(n>0) bySector[s]=n; });
+    const regionStr = Object.entries(byRegion).map(([r,n])=>'<span style="color:var(--pur)">'+r+'</span> '+n).join(' &nbsp;');
+    const sectorStr = Object.entries(bySector).map(([s,n])=>'<span style="color:var(--grn)">'+s.split(' ')[0]+'</span> '+n).join(' &nbsp;');
+    const cardId = 'dc-'+owner.split(' ').join('_');
+    return '<div class="pc">'
+      +'<div class="pc-hd" onclick="togglePcCard(&quot;'+cardId+'&quot;)">'
+        +'<span class="pc-name">'+esc(owner)+'</span>'
+        +'<div class="pc-counts">'
+          +'<div class="pc-count"><div class="pc-num p">'+items.length+'</div><div class="pc-lbl">Deals</div></div>'
+        +'</div>'
+        +'<span class="pc-chevron" id="chev-'+cardId+'">&#x25BC;</span>'
+      +'</div>'
+      +'<div class="pc-body" id="'+cardId+'">'
+        +(regionStr?'<div style="font-family:var(--ff-mono);font-size:.62rem;margin-bottom:.4rem">'+regionStr+'</div>':'')
+        +(sectorStr?'<div style="font-family:var(--ff-mono);font-size:.62rem;margin-bottom:.75rem">'+sectorStr+'</div>':'')
+        +'<div class="pc-list">'
+        +items.sort((a,b)=>new Date(b.add_time)-new Date(a.add_time)).map(d=>
+          '<div class="pc-item">'
+            +'<div style="flex:1">'
+              +'<a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank">'+esc(d.title)+'</a>'
+              +'<div class="pc-item-meta">'
+                +[rg(d),sg(d)].filter(x=>x!=='--').join(' &middot; ')
+              +'</div>'
+            +'</div>'
+          +'</div>'
+        ).join('')
+        +'</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+
+  // Lead cards
+  document.getElementById('pipeline-lead-cards').innerHTML = leadOwners.map(owner=>{
+    const items = openLeads.filter(l=>leadOwnerLabel(l)===owner);
+    const byRegion = {};
+    REGIONS.forEach(r=>{ const n=items.filter(l=>(Object.keys(REGION_ID).find(x=>REGION_ID[x]===Number(l[REGION_FIELD]))||'--')===r).length; if(n>0) byRegion[r]=n; });
+    const bySector = {};
+    SECTORS.forEach(s=>{ const n=items.filter(l=>(Object.keys(SECTOR_ID).find(x=>SECTOR_ID[x]===Number(l[SECTOR_FIELD]))||'--')===s).length; if(n>0) bySector[s]=n; });
+    const regionStr = Object.entries(byRegion).map(([r,n])=>'<span style="color:var(--pur)">'+r+'</span> '+n).join(' &nbsp;');
+    const sectorStr = Object.entries(bySector).map(([s,n])=>'<span style="color:var(--grn)">'+s.split(' ')[0]+'</span> '+n).join(' &nbsp;');
+    const cardId = 'lc-'+owner.split(' ').join('_');
+    return '<div class="pc">'
+      +'<div class="pc-hd" onclick="togglePcCard(&quot;'+cardId+'&quot;)">'
+        +'<span class="pc-name">'+esc(owner)+'</span>'
+        +'<div class="pc-counts">'
+          +'<div class="pc-count"><div class="pc-num g">'+items.length+'</div><div class="pc-lbl">Leads</div></div>'
+        +'</div>'
+        +'<span class="pc-chevron" id="chev-'+cardId+'">&#x25BC;</span>'
+      +'</div>'
+      +'<div class="pc-body" id="'+cardId+'">'
+        +(regionStr?'<div style="font-family:var(--ff-mono);font-size:.62rem;margin-bottom:.4rem">'+regionStr+'</div>':'')
+        +(sectorStr?'<div style="font-family:var(--ff-mono);font-size:.62rem;margin-bottom:.75rem">'+sectorStr+'</div>':'')
+        +'<div class="pc-list">'
+        +items.sort((a,b)=>new Date(b.add_time)-new Date(a.add_time)).map(l=>
+          '<div class="pc-item">'
+            +'<div style="flex:1">'
+              +'<a href="https://toucantech.pipedrive.com/leads/inbox/'+l.id+'" target="_blank">'+esc(l.title)+'</a>'
+              +'<div class="pc-item-meta">'
+                +[(Object.keys(REGION_ID).find(x=>REGION_ID[x]===Number(l[REGION_FIELD]))||'--'),(Object.keys(SECTOR_ID).find(x=>SECTOR_ID[x]===Number(l[SECTOR_FIELD]))||'--')].filter(x=>x!=='--').join(' &middot; ')
+              +'</div>'
+            +'</div>'
+          +'</div>'
+        ).join('')
+        +'</div>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+function togglePcCard(id){
+  const body = document.getElementById(id);
+  const chev = document.getElementById('chev-'+id);
+  if(!body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if(chev) chev.classList.toggle('open', !isOpen);
 }
 
 async function init(){
