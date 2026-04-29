@@ -207,10 +207,6 @@
       <h1>Opportunities <i>Analysis</i></h1>
       <p class="hdr-sub">// Leads &amp; Deals Analysis</p>
     </div>
-    <div class="mode-toggle">
-      <button class="mode-btn active" id="mode-opps" onclick="setMode('opps')">&#x1F4CA; New Opportunities</button>
-      <button class="mode-btn" id="mode-pipeline" onclick="setMode('pipeline')">&#x1F7E2; Open Pipeline</button>
-    </div>
     <div class="hdr-r">
       <div class="badge-live"><span class="dot-live"></span>LIVE DATA</div>
       <p class="ts" id="ts"></p>
@@ -221,6 +217,10 @@
       <p class="ts" id="sync-ts" style="text-align:right"></p>
     </div>
   </header>
+  <div class="mode-toggle" style="margin-bottom:1.5rem;display:inline-flex">
+    <button class="mode-btn active" id="mode-opps" onclick="setMode('opps')">&#x1F4CA; New Opportunities</button>
+    <button class="mode-btn" id="mode-pipeline" onclick="setMode('pipeline')">&#x1F7E2; Open Pipeline</button>
+  </div>
 
   <div class="warn-bar">
     <span class="warn-icon">&#x26A0;&#xFE0F;</span>
@@ -444,8 +444,26 @@
   <div id="pipeline-view" style="display:none">
     <div class="sec-lbl">currently open — live snapshot</div>
     <div class="pipeline-totals" id="pipeline-totals"></div>
-    <div class="pipeline-cards" id="pipeline-deal-cards"></div>
-    <div class="pipeline-cards" id="pipeline-lead-cards"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem">
+      <div class="ov-card" style="animation:none">
+        <div class="card-hd"><h2>Open <i>Deals</i></h2><span id="pl-deal-total" class="tdf" style="font-size:1.5rem"></span></div>
+        <div class="tbl-wrap"><table id="pl-deal-summary"></table></div>
+      </div>
+      <div class="ov-card" style="animation:none">
+        <div class="card-hd"><h2>Open <i>Leads</i></h2><span id="pl-lead-total" class="tdf-p" style="font-size:1.5rem"></span></div>
+        <div class="tbl-wrap"><table id="pl-lead-summary"></table></div>
+      </div>
+    </div>
+    <div id="pl-expanded" style="display:none">
+      <div class="dive" id="pl-dive" style="display:block">
+        <div class="dive-hd">
+          <h2 id="pl-dive-title"></h2>
+          <button class="btn-close" onclick="closePlDive()">&#x2715; CLOSE</button>
+        </div>
+        <div class="dive-stats" id="pl-dive-stats"></div>
+        <div class="tbl-wrap" id="pl-dive-tbl"></div>
+      </div>
+    </div>
   </div>
 
   <footer>PIPEDRIVE DASHBOARD &middot; MAIN PIPELINE &middot; DATA &copy; PIPEDRIVE &middot; CONFIDENTIAL</footer>
@@ -1364,103 +1382,101 @@ function leadOwnerLabel(lead){
 function renderPipeline(){
   const openDeals = getOpenDeals();
   const openLeads = getOpenLeads();
-
-  // Totals row
-  const rg = r => Object.keys(REGION_ID).find(x=>REGION_ID[x]===Number(r[REGION_FIELD]))||'--';
+  const rg = d => Object.keys(REGION_ID).find(x=>REGION_ID[x]===Number(d[REGION_FIELD]))||'--';
   const sg = d => Object.keys(SECTOR_ID).find(x=>SECTOR_ID[x]===Number(d[SECTOR_FIELD]))||'--';
+  const lgr = l => Object.keys(REGION_ID).find(x=>REGION_ID[x]===Number(l[REGION_FIELD]))||'--';
+  const lgs = l => Object.keys(SECTOR_ID).find(x=>SECTOR_ID[x]===Number(l[SECTOR_FIELD]))||'--';
 
+  // Totals
   document.getElementById('pipeline-totals').innerHTML = [
     {c:'p', ico:'&#x1F4CB;', n:openDeals.length, l:'Open Deals', s:''},
     {c:'g', ico:'&#x1F331;', n:openLeads.length, l:'Open Leads', s:''},
-  ].map(x=>'<div class="sc '+x.c+'" style="animation-delay:0s"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div><div class="sc-sub">'+x.s+'</div></div>').join('');
+  ].map(x=>'<div class="sc '+x.c+'" style="animation-delay:0s"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div></div>').join('');
+  document.getElementById('pl-deal-total').textContent = openDeals.length;
+  document.getElementById('pl-lead-total').textContent = openLeads.length;
 
-  // Build per-owner cards
+  // Get sorted unique owners
   const dealOwners = [...new Set(openDeals.map(ownerLabel))].sort();
   const leadOwners = [...new Set(openLeads.map(leadOwnerLabel))].sort();
 
-  // Deal cards
-  document.getElementById('pipeline-deal-cards').innerHTML = dealOwners.map(owner=>{
-    const items = openDeals.filter(d=>ownerLabel(d)===owner);
-    const byRegion = {};
-    REGIONS.forEach(r=>{ const n=items.filter(d=>rg(d)===r).length; if(n>0) byRegion[r]=n; });
-    const bySector = {};
-    SECTORS.forEach(s=>{ const n=items.filter(d=>sg(d)===s).length; if(n>0) bySector[s]=n; });
-    const regionStr = Object.entries(byRegion).map(([r,n])=>'<span style="color:var(--pur)">'+r+'</span> '+n).join(' &nbsp;');
-    const sectorStr = Object.entries(bySector).map(([s,n])=>'<span style="color:var(--grn)">'+s.split(' ')[0]+'</span> '+n).join(' &nbsp;');
-    const cardId = 'dc-'+owner.split(' ').join('_');
-    return '<div class="pc">'
-      +'<div class="pc-hd" onclick="togglePcCard(&quot;'+cardId+'&quot;)">'
-        +'<span class="pc-name">'+esc(owner)+'</span>'
-        +'<div class="pc-counts">'
-          +'<div class="pc-count"><div class="pc-num p">'+items.length+'</div><div class="pc-lbl">Deals</div></div>'
-        +'</div>'
-        +'<span class="pc-chevron" id="chev-'+cardId+'">&#x25BC;</span>'
-      +'</div>'
-      +'<div class="pc-body" id="'+cardId+'">'
-        +(regionStr?'<div style="font-family:var(--ff-mono);font-size:.62rem;margin-bottom:.4rem">'+regionStr+'</div>':'')
-        +(sectorStr?'<div style="font-family:var(--ff-mono);font-size:.62rem;margin-bottom:.75rem">'+sectorStr+'</div>':'')
-        +'<div class="pc-list">'
-        +items.sort((a,b)=>new Date(b.add_time)-new Date(a.add_time)).map(d=>
-          '<div class="pc-item">'
-            +'<div style="flex:1">'
-              +'<a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank">'+esc(d.title)+'</a>'
-              +'<div class="pc-item-meta">'
-                +[rg(d),sg(d)].filter(x=>x!=='--').join(' &middot; ')
-              +'</div>'
-            +'</div>'
-          +'</div>'
-        ).join('')
-        +'</div>'
-      +'</div>'
-    +'</div>';
-  }).join('');
+  // Deal summary table
+  document.getElementById('pl-deal-summary').innerHTML =
+    '<thead><tr><th>Salesperson</th><th>Deals</th><th>EMEA</th><th>AMER</th><th>APAC</th><th>Edu</th><th>Memb</th><th>Char</th><th>Co</th></tr></thead><tbody>'
+    + dealOwners.map(owner=>{
+        const items = openDeals.filter(d=>ownerLabel(d)===owner);
+        return '<tr style="cursor:pointer" onclick="openPlDive(&quot;deal&quot;,&quot;'+owner+'&quot;)">'
+          +'<td style="color:var(--pur);font-family:var(--ff-mono);font-size:.75rem">'+esc(owner)+'</td>'
+          +'<td class="tdf-p">'+items.length+'</td>'
+          +REGIONS.map(r=>'<td class="tdm">'+items.filter(d=>rg(d)===r).length+'</td>').join('')
+          +SECTORS.map(s=>'<td class="tdm">'+items.filter(d=>sg(d)===s).length+'</td>').join('')
+          +'</tr>';
+      }).join('')
+    +'</tbody>';
 
-  // Lead cards
-  document.getElementById('pipeline-lead-cards').innerHTML = leadOwners.map(owner=>{
-    const items = openLeads.filter(l=>leadOwnerLabel(l)===owner);
-    const byRegion = {};
-    REGIONS.forEach(r=>{ const n=items.filter(l=>(Object.keys(REGION_ID).find(x=>REGION_ID[x]===Number(l[REGION_FIELD]))||'--')===r).length; if(n>0) byRegion[r]=n; });
-    const bySector = {};
-    SECTORS.forEach(s=>{ const n=items.filter(l=>(Object.keys(SECTOR_ID).find(x=>SECTOR_ID[x]===Number(l[SECTOR_FIELD]))||'--')===s).length; if(n>0) bySector[s]=n; });
-    const regionStr = Object.entries(byRegion).map(([r,n])=>'<span style="color:var(--pur)">'+r+'</span> '+n).join(' &nbsp;');
-    const sectorStr = Object.entries(bySector).map(([s,n])=>'<span style="color:var(--grn)">'+s.split(' ')[0]+'</span> '+n).join(' &nbsp;');
-    const cardId = 'lc-'+owner.split(' ').join('_');
-    return '<div class="pc">'
-      +'<div class="pc-hd" onclick="togglePcCard(&quot;'+cardId+'&quot;)">'
-        +'<span class="pc-name">'+esc(owner)+'</span>'
-        +'<div class="pc-counts">'
-          +'<div class="pc-count"><div class="pc-num g">'+items.length+'</div><div class="pc-lbl">Leads</div></div>'
-        +'</div>'
-        +'<span class="pc-chevron" id="chev-'+cardId+'">&#x25BC;</span>'
-      +'</div>'
-      +'<div class="pc-body" id="'+cardId+'">'
-        +(regionStr?'<div style="font-family:var(--ff-mono);font-size:.62rem;margin-bottom:.4rem">'+regionStr+'</div>':'')
-        +(sectorStr?'<div style="font-family:var(--ff-mono);font-size:.62rem;margin-bottom:.75rem">'+sectorStr+'</div>':'')
-        +'<div class="pc-list">'
-        +items.sort((a,b)=>new Date(b.add_time)-new Date(a.add_time)).map(l=>
-          '<div class="pc-item">'
-            +'<div style="flex:1">'
-              +'<a href="https://toucantech.pipedrive.com/leads/inbox/'+l.id+'" target="_blank">'+esc(l.title)+'</a>'
-              +'<div class="pc-item-meta">'
-                +[(Object.keys(REGION_ID).find(x=>REGION_ID[x]===Number(l[REGION_FIELD]))||'--'),(Object.keys(SECTOR_ID).find(x=>SECTOR_ID[x]===Number(l[SECTOR_FIELD]))||'--')].filter(x=>x!=='--').join(' &middot; ')
-              +'</div>'
-            +'</div>'
-          +'</div>'
-        ).join('')
-        +'</div>'
-      +'</div>'
-    +'</div>';
-  }).join('');
+  // Lead summary table
+  document.getElementById('pl-lead-summary').innerHTML =
+    '<thead><tr><th>Salesperson</th><th>Leads</th><th>EMEA</th><th>AMER</th><th>APAC</th><th>Edu</th><th>Memb</th><th>Char</th><th>Co</th></tr></thead><tbody>'
+    + leadOwners.map(owner=>{
+        const items = openLeads.filter(l=>leadOwnerLabel(l)===owner);
+        return '<tr style="cursor:pointer" onclick="openPlDive(&quot;lead&quot;,&quot;'+owner+'&quot;)">'
+          +'<td style="color:var(--grn);font-family:var(--ff-mono);font-size:.75rem">'+esc(owner)+'</td>'
+          +'<td class="tdf">'+items.length+'</td>'
+          +REGIONS.map(r=>'<td class="tdm">'+items.filter(l=>lgr(l)===r).length+'</td>').join('')
+          +SECTORS.map(s=>'<td class="tdm">'+items.filter(l=>lgs(l)===s).length+'</td>').join('')
+          +'</tr>';
+      }).join('')
+    +'</tbody>';
 }
 
-function togglePcCard(id){
-  const body = document.getElementById(id);
-  const chev = document.getElementById('chev-'+id);
-  if(!body) return;
-  const isOpen = body.classList.contains('open');
-  body.classList.toggle('open', !isOpen);
-  if(chev) chev.classList.toggle('open', !isOpen);
+function openPlDive(type, owner){
+  const openDeals = getOpenDeals();
+  const openLeads = getOpenLeads();
+  const rg = d => Object.keys(REGION_ID).find(x=>REGION_ID[x]===Number(d[REGION_FIELD]))||'--';
+  const sg = d => Object.keys(SECTOR_ID).find(x=>SECTOR_ID[x]===Number(d[SECTOR_FIELD]))||'--';
+
+  document.getElementById('pl-expanded').style.display='block';
+  document.getElementById('pl-dive-title').innerHTML = '<i>'+esc(owner)+'</i>';
+
+  if(type==='deal'){
+    const items = openDeals.filter(d=>ownerLabel(d)===owner).sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
+    document.getElementById('pl-dive-stats').innerHTML =
+      '<div class="ds"><div class="ds-num p">'+items.length+'</div><div class="ds-lbl">Open Deals</div></div>'
+      +REGIONS.map(r=>'<div class="ds"><div class="ds-num p">'+items.filter(d=>rg(d)===r).length+'</div><div class="ds-lbl">'+r+'</div></div>').join('');
+    document.getElementById('pl-dive-tbl').innerHTML =
+      '<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Region</th><th class="cell-wrap">Sector</th><th>Stage</th><th>Created</th></tr></thead><tbody>'
+      +items.map(d=>'<tr>'
+        +'<td class="cell-wrap"><a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank" style="color:var(--pur);text-decoration:none">'+esc(d.title)+'</a></td>'
+        +'<td class="tdm">'+esc(rg(d))+'</td>'
+        +'<td class="cell-wrap tdm">'+esc(sg(d))+'</td>'
+        +'<td class="tdm">'+esc(d.stage_name||'--')+'</td>'
+        +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
+        +'</tr>').join('')
+      +'</tbody></table>';
+  } else {
+    const items = openLeads.filter(l=>leadOwnerLabel(l)===owner).sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
+    const lgr = l => Object.keys(REGION_ID).find(x=>REGION_ID[x]===Number(l[REGION_FIELD]))||'--';
+    const lgs = l => Object.keys(SECTOR_ID).find(x=>SECTOR_ID[x]===Number(l[SECTOR_FIELD]))||'--';
+    document.getElementById('pl-dive-stats').innerHTML =
+      '<div class="ds"><div class="ds-num g">'+items.length+'</div><div class="ds-lbl">Open Leads</div></div>'
+      +REGIONS.map(r=>'<div class="ds"><div class="ds-num g">'+items.filter(l=>lgr(l)===r).length+'</div><div class="ds-lbl">'+r+'</div></div>').join('');
+    document.getElementById('pl-dive-tbl').innerHTML =
+      '<table style="table-layout:fixed;width:100%"><thead><tr><th class="cell-wrap">Title</th><th>Region</th><th class="cell-wrap">Sector</th><th>Created</th></tr></thead><tbody>'
+      +items.map(l=>'<tr>'
+        +'<td class="cell-wrap"><a href="https://toucantech.pipedrive.com/leads/inbox/'+l.id+'" target="_blank" style="color:var(--grn);text-decoration:none">'+esc(l.title)+'</a></td>'
+        +'<td class="tdm">'+esc(lgr(l))+'</td>'
+        +'<td class="cell-wrap tdm">'+esc(lgs(l))+'</td>'
+        +'<td class="tdm">'+fmtD(l.add_time)+'</td>'
+        +'</tr>').join('')
+      +'</tbody></table>';
+  }
+  setTimeout(()=>document.getElementById('pl-expanded').scrollIntoView({behavior:'smooth',block:'start'}),40);
 }
+
+function closePlDive(){
+  document.getElementById('pl-expanded').style.display='none';
+}
+
+
 
 async function init(){
   $('err').style.display='none';
