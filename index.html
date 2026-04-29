@@ -444,11 +444,11 @@
     <div class="sec-lbl">currently open — live snapshot</div>
     <div class="pipeline-totals" id="pipeline-totals"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem">
-      <div class="ov-card" style="animation:none;overflow:hidden">
+      <div class="ov-card" style="animation:none;overflow:hidden;opacity:1;transform:none">
         <div class="card-hd"><h2>Open <i>Deals</i></h2><span id="pl-deal-total" class="tdf" style="font-size:1.5rem"></span></div>
         <div class="tbl-wrap"><table id="pl-deal-summary"></table></div>
       </div>
-      <div class="ov-card" style="animation:none;overflow:hidden">
+      <div class="ov-card" style="animation:none;overflow:hidden;opacity:1;transform:none">
         <div class="card-hd"><h2>Open <i>Leads</i></h2><span id="pl-lead-total" class="tdf-p" style="font-size:1.5rem"></span></div>
         <div class="tbl-wrap"><table id="pl-lead-summary"></table></div>
       </div>
@@ -1457,7 +1457,7 @@ function renderPipeline(){
   document.getElementById('pipeline-totals').innerHTML = [
     {c:'p', ico:'&#x1F4CB;', n:openDeals.length, l:'Open Deals', s:''},
     {c:'g', ico:'&#x1F331;', n:openLeads.length, l:'Open Leads', s:''},
-  ].map(x=>'<div class="sc '+x.c+'" style="animation-delay:0s"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div></div>').join('');
+  ].map(x=>'<div class="sc '+x.c+'" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div></div>').join('');
   document.getElementById('pl-deal-total').textContent = openDeals.length;
   document.getElementById('pl-lead-total').textContent = openLeads.length;
 
