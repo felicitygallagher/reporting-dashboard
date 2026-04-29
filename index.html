@@ -1487,8 +1487,8 @@ function renderPipeline(){
 
   // Totals
   document.getElementById('pipeline-totals').innerHTML = [
-    {c:'p', ico:'&#x1F4CB;', n:openDeals.length, l:'Open Deals', s:'', col:'var(--pur)'},
-    {c:'g', ico:'&#x1F331;', n:openLeads.length, l:'Open Leads', s:'', col:'var(--grn)'},
+    {c:'p', ico:'&#x1F4CB;', n:openDeals.length, l:'Open Deals', s:'', col:'var(--pur)', t:'deal'},
+    {c:'g', ico:'&#x1F331;', n:openLeads.length, l:'Open Leads', s:'', col:'var(--grn)', t:'lead'},
   ].map(x=>'<div class="sc '+x.c+'" style="animation:none;opacity:1;transform:none;cursor:pointer" data-pl-open="'+x.t+'"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num" style="color:'+(x.c==='p'?'var(--pur)':'var(--grn)')+'">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div></div>').join('');
   document.getElementById('pl-deal-total').textContent = openDeals.length;
   document.getElementById('pl-lead-total').textContent = openLeads.length;
@@ -1540,9 +1540,13 @@ function openPlDive(type, owner){
     const el=document.getElementById(id); if(el) el.value='';
   });
   document.getElementById('pl-expanded').style.display='block';
-  document.getElementById('pl-dive-title').innerHTML = owner==='__all__' ? 'All <i>'+(type==='deal'?'Deals':'Leads')+'</i>' : '<i>'+esc(owner)+'</i>';
+  const titleCol = type==='deal' ? 'var(--pur)' : 'var(--grn)';
+  document.getElementById('pl-dive-title').innerHTML = owner==='__all__'
+    ? 'All <i style="color:'+titleCol+'">'+(type==='deal'?'Deals':'Leads')+'</i>'
+    : '<i style="color:'+titleCol+'">'+esc(owner)+'</i>';
   // Populate stage options from this owner's deals
-  const dealStages = STAGE_ORDER.map(id=>STAGE_MAP[id]).filter(s=>getOpenDeals().filter(d=>ownerLabel(d)===owner).some(d=>stageName(d)===s));
+  const _stageDeals = owner==='__all__' ? getOpenDeals() : getOpenDeals().filter(d=>ownerLabel(d)===owner);
+  const dealStages = STAGE_ORDER.map(id=>STAGE_MAP[id]).filter(s=>_stageDeals.some(d=>stageName(d)===s));
   const stageSelect = document.getElementById('pl-stage-select');
   stageSelect.innerHTML = '<option value="">All</option>' + dealStages.map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join('');
   switchPlTab(type==='deal'?'deals':'leads');
@@ -1555,6 +1559,14 @@ function switchPlTab(tab){
   const lBtn=document.getElementById('plt-leads');
   if(dBtn){ dBtn.classList.remove('on'); if(tab==='deals') dBtn.classList.add('on'); }
   if(lBtn){ lBtn.classList.remove('on'); if(tab==='leads') lBtn.classList.add('on'); }
+  // Update title colour when tab changes
+  const _tc2 = tab==='deals' ? 'var(--pur)' : 'var(--grn)';
+  const titleEl = document.getElementById('pl-dive-title');
+  if(titleEl && plDiveState.owner==='__all__'){
+    titleEl.innerHTML = 'All <i style="color:'+_tc2+'">'+( tab==='deals'?'Deals':'Leads')+'</i>';
+  } else if(titleEl && plDiveState.owner){
+    titleEl.innerHTML = '<i style="color:'+_tc2+'">'+esc(plDiveState.owner)+'</i>';
+  }
   // Show/hide stage filter
   const stageParts = ['pl-stage-divider','pl-stage-wrap'];
   stageParts.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display=tab==='deals'?'':'none'; });
