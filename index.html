@@ -1515,8 +1515,10 @@ function openPlDive(type, owner){
 
 function switchPlTab(tab){
   plDiveState.tab = tab;
-  document.getElementById('plt-deals').classList.toggle('on', tab==='deals');
-  document.getElementById('plt-leads').classList.toggle('on', tab==='leads');
+  const dBtn=document.getElementById('plt-deals');
+  const lBtn=document.getElementById('plt-leads');
+  if(dBtn){ dBtn.classList.remove('on'); if(tab==='deals') dBtn.classList.add('on'); }
+  if(lBtn){ lBtn.classList.remove('on'); if(tab==='leads') lBtn.classList.add('on'); }
   // Show/hide stage filter
   const stageParts = ['pl-stage-divider','pl-stage-wrap'];
   stageParts.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display=tab==='deals'?'':'none'; });
@@ -1571,7 +1573,7 @@ function renderPlDiveTbl(){
     items.sort((a,b)=>new Date(b.add_time)-new Date(a.add_time));
     document.getElementById('pl-dive-stats').innerHTML =
       '<div class="ds"><div class="ds-num p">'+items.length+'</div><div class="ds-lbl">Open Deals</div></div>'
-      +REGIONS.map(r=>'<div class="ds"><div class="ds-num p">'+items.filter(d=>rg(d)===r).length+'</div><div class="ds-lbl">'+r+'</div></div>').join('');
+      +SECTORS.map(s=>'<div class="ds"><div class="ds-num p">'+items.filter(d=>sg(d)===s).length+'</div><div class="ds-lbl">'+s.split(' ')[0]+'</div></div>').join('');
     if(!items.length){document.getElementById('pl-dive-tbl').innerHTML='<div class="empty">No deals match these filters.</div>';return;}
     document.getElementById('pl-dive-tbl').innerHTML =
       '<table style="table-layout:fixed;width:100%"><thead><tr>'
@@ -1597,7 +1599,7 @@ function renderPlDiveTbl(){
     const lgs = l => Object.keys(SECTOR_ID).find(x=>SECTOR_ID[x]===Number(l[SECTOR_FIELD]))||'--';
     document.getElementById('pl-dive-stats').innerHTML =
       '<div class="ds"><div class="ds-num g">'+items.length+'</div><div class="ds-lbl">Open Leads</div></div>'
-      +REGIONS.map(r=>'<div class="ds"><div class="ds-num g">'+items.filter(l=>lgr(l)===r).length+'</div><div class="ds-lbl">'+r+'</div></div>').join('');
+      +SECTORS.map(s=>'<div class="ds"><div class="ds-num g">'+items.filter(l=>lgs(l)===s).length+'</div><div class="ds-lbl">'+s.split(' ')[0]+'</div></div>').join('');
     if(!items.length){document.getElementById('pl-dive-tbl').innerHTML='<div class="empty">No leads match these filters.</div>';return;}
     document.getElementById('pl-dive-tbl').innerHTML =
       '<table style="table-layout:fixed;width:100%"><thead><tr>'
