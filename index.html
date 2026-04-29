@@ -646,7 +646,7 @@ const CHART_WINDOW    = 12;
 const EXCLUDED_MONTHS = new Set(['2025-08']); // Aug 2025: mass lead conversion, exclude leads
 
 const S = {
-  deals:[], leads:[], archivedLeads:[],
+  deals:[], leads:[], archivedLeads:[], openDeals:null,
   mo:{}, allKeys:[],
   chartOffset:0, yearFilter:null,
   diveKey:null, diveTab:'deals',
@@ -707,6 +707,29 @@ async function fetchLeads(){
   }
   return all;
 }
+async function fetchOpenDeals(){
+  // Fetch ALL currently open deals with no date filter — for pipeline mode
+  let all=[],start=0;
+  while(true){
+    const d=await pd('/deals?limit=500&start='+start+'&status=open'
+      +'&custom_fields[]='+REGION_FIELD+'&custom_fields[]='+SECTOR_FIELD
+      +'&custom_fields[]='+ATTR_FIELD+'&custom_fields[]='+UTM_SOURCE
+      +'&custom_fields[]=fe720b116bedc6ef911cd535d7957a09dbec355f'
+      +'&custom_fields[]=8e5548ae0219873e1d86c3ed13b06844793abe01'
+      +'&custom_fields[]=24dd14a8da3bd4a5e75afdf6bd5b58ae22d4ff94'
+      +'&custom_fields[]=dc1ff60a066bf368faf632ed3379bff02051e217'
+      +'&custom_fields[]=9c321e8b32cf5748e74e45b285f4bc96f364243f'
+      +'&custom_fields[]=2fe3213363eb616db230e76c78d20c28d772ae4a'
+      +'&custom_fields[]=75a1a400a093a0f80f6eee330539ddc29da3e276'
+      +'&custom_fields[]='+SRC_DETAIL_FIELD);
+    if(!d.success) throw new Error(d.error||'Open deals fetch failed');
+    all=all.concat((d.data||[]).filter(x=>x.pipeline_id !== EXCLUDED_PIPELINE));
+    if(!d.additional_data?.pagination?.more_items_in_collection) break;
+    start+=500;
+  }
+  return all;
+}
+
 async function fetchCurrency(){
   try{ const d=await pd('/currencies?default_currency=1'); const c=d.data?.find(x=>x.default_flag); if(c)S.currency=c.code; }catch(e){}
 }
@@ -1433,7 +1456,8 @@ function setMode(m){
 
 /* All open items (fetched already) */
 function getOpenDeals(){
-  // Open deals in non-consultant pipelines
+  // Use dedicated open deals fetch if available, otherwise fall back to S.deals
+  if(S.openDeals) return S.openDeals;
   return S.deals.filter(d=>d.status==='open' && !isConvertedDeal(d));
 }
 function getOpenLeads(){
@@ -1657,8 +1681,8 @@ async function init(){
 
   try{
     await fetchCurrency();
-    const[deals,leads,archived]=await Promise.all([fetchDeals(),fetchLeads(),fetchArchivedFromAirtable()]);
-    S.deals=deals; S.leads=leads; S.archivedLeads=archived; S.mo={};
+    const[deals,leads,archived,openDeals]=await Promise.all([fetchDeals(),fetchLeads(),fetchArchivedFromAirtable(),fetchOpenDeals()]);
+    S.deals=deals; S.leads=leads; S.archivedLeads=archived; S.openDeals=openDeals; S.mo={};
     buildMonthly();
     renderStats();
     renderChart();
