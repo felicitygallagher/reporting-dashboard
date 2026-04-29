@@ -206,6 +206,10 @@
     <div class="hdr-l">
       <h1>Opportunities <i>Analysis</i></h1>
       <p class="hdr-sub">// Leads &amp; Deals Analysis</p>
+      <div class="mode-toggle" style="margin-top:.85rem;display:inline-flex">
+        <button class="mode-btn active" id="mode-opps" onclick="setMode('opps')">&#x1F4CA; New Opportunities</button>
+        <button class="mode-btn" id="mode-pipeline" onclick="setMode('pipeline')">&#x1F7E2; Open Pipeline</button>
+      </div>
     </div>
     <div class="hdr-r">
       <div class="badge-live"><span class="dot-live"></span>LIVE DATA</div>
@@ -217,11 +221,6 @@
       <p class="ts" id="sync-ts" style="text-align:right"></p>
     </div>
   </header>
-  <div class="mode-toggle" style="margin-bottom:1.5rem;display:inline-flex">
-    <button class="mode-btn active" id="mode-opps" onclick="setMode('opps')">&#x1F4CA; New Opportunities</button>
-    <button class="mode-btn" id="mode-pipeline" onclick="setMode('pipeline')">&#x1F7E2; Open Pipeline</button>
-  </div>
-
   <div class="warn-bar">
     <span class="warn-icon">&#x26A0;&#xFE0F;</span>
     <div class="warn-text"><strong>Known data limitation:</strong> The Pipedrive API does not return archived leads. Export archived leads from Pipedrive&rsquo;s reporting tool and use &ldquo;Update Archived Leads&rdquo; to sync them to Airtable. The dashboard combines these with live API data on every load. <a href="https://toucantech.pipedrive.com/progress/insights/report/5e5efeacb633fb230119784249dedb51" target="_blank" style="color:var(--amb);text-decoration:underline">Download archived leads &rarr;</a></div>
