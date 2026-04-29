@@ -113,10 +113,10 @@
     .star-btn.on{background:#f8c247;color:#08060f;box-shadow:0 0 24px rgba(248,194,71,.6),0 0 48px rgba(248,194,71,.3)}
     /* Star burst animation */
     @keyframes starBurst{0%{transform:scale(1)}20%{transform:scale(1.18)}40%{transform:scale(.94)}60%{transform:scale(1.08)}80%{transform:scale(.98)}100%{transform:scale(1)}}
-    @keyframes starParticle{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)}}
+    @keyframes starParticle{0%{opacity:1;transform:translate(0,0) scale(1)}80%{opacity:.8}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)}}
     @keyframes starParticleIn{0%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0)}70%{opacity:1}100%{opacity:0;transform:translate(0,0) scale(1.2)}}
-    .star-particle{position:fixed;pointer-events:none;font-size:1.2rem;z-index:9999;animation:starParticle .8s ease-out forwards}
-    .star-particle.reverse{animation:starParticleIn .7s ease-in forwards}
+    .star-particle{position:fixed;pointer-events:none;font-size:1.2rem;z-index:9999;animation:starParticle 1.2s ease-out forwards}
+    .star-particle.reverse{animation:starParticleIn 1.1s ease-in forwards}
     .mode-btn{font-family:var(--ff-mono);font-size:.65rem;padding:.38rem 1rem;border:none;background:none;color:var(--mute);cursor:pointer;letter-spacing:.06em;transition:background .2s,color .2s;white-space:nowrap}
     .mode-btn.active{background:var(--pur-soft);color:var(--pur)}
     .mode-btn:hover:not(.active){color:var(--txt2)}
@@ -1461,18 +1461,21 @@ function spawnStars(btn, reverse){
   const rect = btn.getBoundingClientRect();
   const cx = rect.left + rect.width/2;
   const cy = rect.top + rect.height/2;
-  const emojis = ['⭐','🌟','✨','💫','⭐','🌟'];
+  const pool = ['⭐','🌟','✨','💫'];
+  const emojis = Array.from({length:60}, ()=>pool[Math.floor(Math.random()*pool.length)]);
   emojis.forEach((e,i)=>{
     const el = document.createElement('div');
     el.className = 'star-particle' + (reverse?' reverse':'');
+    el.style.fontSize = (1 + Math.random()*2) + 'rem';
     el.textContent = e;
-    const angle = (i/emojis.length)*360;
-    const dist = 60 + Math.random()*60;
-    const tx = Math.cos(angle*Math.PI/180)*dist + 'px';
-    const ty = Math.sin(angle*Math.PI/180)*dist + 'px';
-    el.style.cssText = 'left:'+cx+'px;top:'+cy+'px;--tx:'+tx+';--ty:'+ty;
+    const angle = (i/emojis.length)*360 + Math.random()*18;
+    // Make particles travel far enough to reach screen edges
+    const maxDist = Math.max(window.innerWidth, window.innerHeight) * (0.7 + Math.random()*0.5);
+    const tx = Math.cos(angle*Math.PI/180)*maxDist + 'px';
+    const ty = Math.sin(angle*Math.PI/180)*maxDist + 'px';
+    el.style.cssText += ';left:'+cx+'px;top:'+cy+'px;--tx:'+tx+';--ty:'+ty+';font-size:'+(1+Math.random()*2)+'rem';
     document.body.appendChild(el);
-    setTimeout(()=>el.remove(), 900);
+    setTimeout(()=>el.remove(), 1200);
   });
   btn.style.animation='starBurst .5s ease-out';
   setTimeout(()=>btn.style.animation='', 500);
