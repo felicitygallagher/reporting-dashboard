@@ -108,7 +108,7 @@
     .f-pill{font-family:var(--ff-mono);font-size:.62rem;padding:.25rem .75rem;border-radius:100px;border:1px solid var(--bord2);color:var(--mute);background:none;cursor:pointer;transition:all .2s;letter-spacing:.06em}
     .f-pill.active{background:var(--pur-soft);border-color:rgba(176,110,243,.4);color:var(--pur)}
     .mode-toggle{display:flex;gap:0;border:1px solid var(--bord2);border-radius:10px;overflow:hidden;flex-shrink:0}
-    .star-btn{font-family:var(--ff-head);font-size:.85rem;font-weight:700;letter-spacing:.06em;padding:.45rem 1.25rem;border:2px solid #f8c247;border-radius:10px;background:rgba(248,194,71,.08);color:#f8c247;cursor:pointer;transition:all .2s;flex-shrink:0;display:none}
+    .star-btn{font-family:var(--ff-head);font-size:.85rem;font-weight:700;letter-spacing:.06em;padding:.45rem 1.25rem;border:2px solid #f8c247;border-radius:10px;background:rgba(248,194,71,.08);color:#f8c247;cursor:pointer;transition:all .2s;flex-shrink:0}
     .star-btn:hover{background:rgba(248,194,71,.18);box-shadow:0 0 18px rgba(248,194,71,.35)}
     .star-btn.on{background:#f8c247;color:#08060f;box-shadow:0 0 24px rgba(248,194,71,.6),0 0 48px rgba(248,194,71,.3)}
     /* Star burst animation */
@@ -1494,7 +1494,6 @@ function setMode(m){
   document.getElementById('mode-pipeline').classList.toggle('active', m==='pipeline');
   document.getElementById('main').style.display = m==='opps' ? 'block' : 'none';
   document.getElementById('pipeline-view').style.display = m==='pipeline' ? 'block' : 'none';
-  const sb=document.getElementById('star-btn'); if(sb) sb.style.display=m==='pipeline'?'':'none';
   if(m==='opps'){ starMode=false; const sbtn=document.getElementById('star-btn'); if(sbtn){sbtn.classList.remove('on');sbtn.textContent='⭐ STAR Mode';} }
   // Hide data-limitation banners in pipeline mode
   const banners = ['at-status', 'logic-box-wrap'];
