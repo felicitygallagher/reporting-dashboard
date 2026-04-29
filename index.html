@@ -139,8 +139,8 @@
     .pc-item-meta{font-family:var(--ff-mono);font-size:.6rem;color:var(--mute);white-space:nowrap;margin-top:.1rem}
     .pc-empty{font-family:var(--ff-mono);font-size:.65rem;color:var(--mute);padding:.5rem;text-align:center}
     .pipeline-totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.5rem}
-    #pl-deal-summary th, #pl-lead-summary th{font-size:.52rem;padding:.5rem .4rem;white-space:nowrap}
-    #pl-deal-summary td, #pl-lead-summary td{padding:.6rem .4rem;font-size:.72rem}
+    #pl-deal-summary th, #pl-lead-summary th{white-space:normal;word-break:break-word;padding:.5rem .6rem;line-height:1.3}
+    #pl-deal-summary td, #pl-lead-summary td{padding:.6rem}
     .pill-divider{width:1px;background:var(--bord2);align-self:stretch;margin:0 .25rem}
     .pill-label{font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);white-space:nowrap}
     .owner-select{font-family:var(--ff-mono);font-size:.65rem;background:var(--surf2);border:1px solid var(--bord2);color:var(--txt2);padding:.28rem .6rem;border-radius:8px;cursor:pointer;outline:none;transition:border-color .2s;min-width:120px}
@@ -448,11 +448,11 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem">
       <div class="ov-card" style="animation:none;overflow:hidden;opacity:1;transform:none">
         <div class="card-hd"><h2>Open <i style="color:var(--pur)">Deals</i></h2><span id="pl-deal-total" class="tdf-p" style="font-size:1.5rem"></span></div>
-        <div class="tbl-wrap"><table id="pl-deal-summary" style="font-size:.72rem"></table></div>
+        <div class="tbl-wrap"><table id="pl-deal-summary"></table></div>
       </div>
       <div class="ov-card" style="animation:none;overflow:hidden;opacity:1;transform:none">
         <div class="card-hd"><h2>Open <i style="color:var(--grn)">Leads</i></h2><span id="pl-lead-total" class="tdf" style="font-size:1.5rem"></span></div>
-        <div class="tbl-wrap"><table id="pl-lead-summary" style="font-size:.72rem"></table></div>
+        <div class="tbl-wrap"><table id="pl-lead-summary"></table></div>
       </div>
     </div>
     <div id="pl-expanded" style="display:none">
