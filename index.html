@@ -139,6 +139,8 @@
     .pc-item-meta{font-family:var(--ff-mono);font-size:.6rem;color:var(--mute);white-space:nowrap;margin-top:.1rem}
     .pc-empty{font-family:var(--ff-mono);font-size:.65rem;color:var(--mute);padding:.5rem;text-align:center}
     .pipeline-totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.5rem}
+    #pl-deal-summary th, #pl-lead-summary th{font-size:.52rem;padding:.5rem .4rem;white-space:nowrap}
+    #pl-deal-summary td, #pl-lead-summary td{padding:.6rem .4rem;font-size:.72rem}
     .pill-divider{width:1px;background:var(--bord2);align-self:stretch;margin:0 .25rem}
     .pill-label{font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);white-space:nowrap}
     .owner-select{font-family:var(--ff-mono);font-size:.65rem;background:var(--surf2);border:1px solid var(--bord2);color:var(--txt2);padding:.28rem .6rem;border-radius:8px;cursor:pointer;outline:none;transition:border-color .2s;min-width:120px}
@@ -446,11 +448,11 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem">
       <div class="ov-card" style="animation:none;overflow:hidden;opacity:1;transform:none">
         <div class="card-hd"><h2>Open <i style="color:var(--pur)">Deals</i></h2><span id="pl-deal-total" class="tdf-p" style="font-size:1.5rem"></span></div>
-        <div class="tbl-wrap"><table id="pl-deal-summary"></table></div>
+        <div class="tbl-wrap"><table id="pl-deal-summary" style="font-size:.72rem"></table></div>
       </div>
       <div class="ov-card" style="animation:none;overflow:hidden;opacity:1;transform:none">
         <div class="card-hd"><h2>Open <i style="color:var(--grn)">Leads</i></h2><span id="pl-lead-total" class="tdf" style="font-size:1.5rem"></span></div>
-        <div class="tbl-wrap"><table id="pl-lead-summary"></table></div>
+        <div class="tbl-wrap"><table id="pl-lead-summary" style="font-size:.72rem"></table></div>
       </div>
     </div>
     <div id="pl-expanded" style="display:none">
@@ -530,7 +532,7 @@
 <script>
 const API_TOKEN       = '61d3d6dd5ff041a05ffc62b30b5ea05442382c93';
 const EXCLUDED_PIPELINE = 9;
-const STAGE_MAP = {54:'Qualified',55:'Demo Booked',58:'Demo Done',56:'S Proposal Made',59:'F Proposal Made',57:'Negotiation',60:'Awaiting Contract'};
+const STAGE_MAP = {54:'Qualified',55:'Demo Booked',58:'Demo Done',56:'S Proposal',59:'F Proposal',57:'Negotiation',60:'Awaiting Contract'};
 const STAGE_ORDER = [54,55,58,56,59,57,60]; // display order
 function stageName(deal){ return STAGE_MAP[deal.stage_id]||'Unknown'; } // Consultant (not a direct sale)
 const ATTR_FIELD   = '6bd83ae8d8f32627e17d8bb7028bbb52082245a8';
@@ -1461,7 +1463,7 @@ function renderPipeline(){
   document.getElementById('pipeline-totals').innerHTML = [
     {c:'p', ico:'&#x1F4CB;', n:openDeals.length, l:'Open Deals', s:'', col:'var(--pur)'},
     {c:'g', ico:'&#x1F331;', n:openLeads.length, l:'Open Leads', s:'', col:'var(--grn)'},
-  ].map(x=>'<div class="sc '+x.c+'" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num" style="color:'+(x.c==='p'?'var(--pur)':'var(--grn)')+'">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div></div>').join('');
+  ].map(x=>'<div class="sc '+x.c+'" style="animation:none;opacity:1;transform:none;cursor:pointer" data-pl-open="'+x.t+'"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num" style="color:'+(x.c==='p'?'var(--pur)':'var(--grn)')+'">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div></div>').join('');
   document.getElementById('pl-deal-total').textContent = openDeals.length;
   document.getElementById('pl-lead-total').textContent = openLeads.length;
 
@@ -1512,7 +1514,7 @@ function openPlDive(type, owner){
     const el=document.getElementById(id); if(el) el.value='';
   });
   document.getElementById('pl-expanded').style.display='block';
-  document.getElementById('pl-dive-title').innerHTML = '<i>'+esc(owner)+'</i>';
+  document.getElementById('pl-dive-title').innerHTML = owner==='__all__' ? 'All <i>'+(type==='deal'?'Deals':'Leads')+'</i>' : '<i>'+esc(owner)+'</i>';
   // Populate stage options from this owner's deals
   const dealStages = STAGE_ORDER.map(id=>STAGE_MAP[id]).filter(s=>getOpenDeals().filter(d=>ownerLabel(d)===owner).some(d=>stageName(d)===s));
   const stageSelect = document.getElementById('pl-stage-select');
@@ -1554,6 +1556,8 @@ function renderPlRegionSectorPills(){
 
 // Delegated listener for pipeline dive pills
 document.addEventListener('click', function(e){
+  const openCard = e.target.closest('[data-pl-open]');
+  if(openCard){ openPlDive(openCard.dataset.plOpen, '__all__'); return; }
   const rb = e.target.closest('[data-pl-region]');
   const sb = e.target.closest('[data-pl-sector]');
   if(rb){ window._plRegion = window._plRegion===rb.dataset.plRegion?null:rb.dataset.plRegion; renderPlRegionSectorPills(); renderPlDiveTbl(); }
@@ -1572,7 +1576,7 @@ function renderPlDiveTbl(){
   const sg = d => Object.keys(SECTOR_ID).find(x=>SECTOR_ID[x]===Number(d[SECTOR_FIELD]))||'--';
 
   if(tab==='deals'){
-    let items = getOpenDeals().filter(d=>ownerLabel(d)===owner);
+    let items = owner==='__all__' ? getOpenDeals() : getOpenDeals().filter(d=>ownerLabel(d)===owner);
     if(filterRegion) items=items.filter(d=>rg(d)===filterRegion);
     if(filterSector) items=items.filter(d=>sg(d)===filterSector);
     if(filterOrigin) items=items.filter(d=>classifyDeal(d).startsWith(filterOrigin));
@@ -1585,19 +1589,21 @@ function renderPlDiveTbl(){
     if(!items.length){document.getElementById('pl-dive-tbl').innerHTML='<div class="empty">No deals match these filters.</div>';return;}
     document.getElementById('pl-dive-tbl').innerHTML =
       '<table style="table-layout:fixed;width:100%"><thead><tr>'
-      +'<th class="cell-wrap">Title</th><th>Region</th><th class="cell-wrap">Sector</th><th>Stage</th><th class="cell-wrap">Origin</th><th class="cell-wrap">Source</th><th>Created</th>'
+      +'<th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th class="cell-wrap">Sector</th><th>Stage</th><th class="cell-wrap">Origin</th><th class="cell-wrap">Source</th><th class="cell-wrap">Source Detail</th><th>Created</th>'
       +'</tr></thead><tbody>'
       +items.map(d=>'<tr>'
         +'<td class="cell-wrap"><a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank" style="color:var(--pur);text-decoration:none">'+esc(d.title)+'</a></td>'
+        +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
         +'<td class="tdm">'+esc(rg(d))+'</td>'
         +'<td class="cell-wrap tdm">'+esc(sg(d))+'</td>'
         +'<td class="tdm">'+esc(stageName(d))+'</td>'
         +'<td class="cell-wrap tdm">'+esc(classifyDeal(d))+'</td>'
         +'<td class="cell-wrap tdm">'+esc(getAttr(d[ATTR_FIELD]))+(getAttrDetail(d)?'<br><span style="color:var(--mute)">'+esc(getAttrDetail(d))+'</span>':'')+'</td>'
+        +'<td class="cell-wrap tdm">'+esc(d[SRC_DETAIL_FIELD]||'--')+'</td>'
         +'<td class="tdm">'+fmtD(d.add_time)+'</td>'
         +'</tr>').join('')+'</tbody></table>';
   } else {
-    let items = getOpenLeads().filter(l=>leadOwnerLabel(l)===owner);
+    let items = owner==='__all__' ? getOpenLeads() : getOpenLeads().filter(l=>leadOwnerLabel(l)===owner);
     if(filterRegion) items=items.filter(l=>(Object.keys(REGION_ID).find(x=>REGION_ID[x]===Number(l[REGION_FIELD]))||'--')===filterRegion);
     if(filterSector) items=items.filter(l=>(Object.keys(SECTOR_ID).find(x=>SECTOR_ID[x]===Number(l[SECTOR_FIELD]))||'--')===filterSector);
     if(filterOrigin) items=items.filter(l=>classifyLead(l).startsWith(filterOrigin));
@@ -1611,14 +1617,16 @@ function renderPlDiveTbl(){
     if(!items.length){document.getElementById('pl-dive-tbl').innerHTML='<div class="empty">No leads match these filters.</div>';return;}
     document.getElementById('pl-dive-tbl').innerHTML =
       '<table style="table-layout:fixed;width:100%"><thead><tr>'
-      +'<th class="cell-wrap">Title</th><th>Region</th><th class="cell-wrap">Sector</th><th class="cell-wrap">Origin</th><th class="cell-wrap">Source</th><th>Created</th>'
+      +'<th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th class="cell-wrap">Sector</th><th class="cell-wrap">Origin</th><th class="cell-wrap">Source</th><th class="cell-wrap">Source Detail</th><th>Created</th>'
       +'</tr></thead><tbody>'
       +items.map(l=>'<tr>'
         +'<td class="cell-wrap"><a href="https://toucantech.pipedrive.com/leads/inbox/'+l.id+'" target="_blank" style="color:var(--grn);text-decoration:none">'+esc(l.title)+'</a></td>'
+        +'<td class="tdm">'+esc(leadOwnerLabel(l))+'</td>'
         +'<td class="tdm">'+esc(lgr(l))+'</td>'
         +'<td class="cell-wrap tdm">'+esc(lgs(l))+'</td>'
         +'<td class="cell-wrap tdm">'+esc(classifyLead(l))+'</td>'
         +'<td class="cell-wrap tdm">'+esc(getAttr(l[ATTR_FIELD]))+'</td>'
+        +'<td class="cell-wrap tdm">'+esc(l[SRC_DETAIL_FIELD]||'--')+'</td>'
         +'<td class="tdm">'+fmtD(l.add_time)+'</td>'
         +'</tr>').join('')+'</tbody></table>';
   }
