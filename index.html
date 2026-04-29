@@ -139,8 +139,8 @@
     .pc-item-meta{font-family:var(--ff-mono);font-size:.6rem;color:var(--mute);white-space:nowrap;margin-top:.1rem}
     .pc-empty{font-family:var(--ff-mono);font-size:.65rem;color:var(--mute);padding:.5rem;text-align:center}
     .pipeline-totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.5rem}
-    #pl-deal-summary th, #pl-lead-summary th{white-space:normal;word-break:break-word;padding:.5rem .6rem;line-height:1.3}
-    #pl-deal-summary td, #pl-lead-summary td{padding:.6rem}
+    #pl-deal-summary th, #pl-lead-summary th{white-space:normal;word-break:break-word;padding:.35rem .35rem;line-height:1.3}
+    #pl-deal-summary td, #pl-lead-summary td{padding:.35rem .35rem}
     .pill-divider{width:1px;background:var(--bord2);align-self:stretch;margin:0 .25rem}
     .pill-label{font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);white-space:nowrap}
     .owner-select{font-family:var(--ff-mono);font-size:.65rem;background:var(--surf2);border:1px solid var(--bord2);color:var(--txt2);padding:.28rem .6rem;border-radius:8px;cursor:pointer;outline:none;transition:border-color .2s;min-width:120px}
@@ -1479,7 +1479,7 @@ function renderPipeline(){
     + dealOwners.map(owner=>{
         const items = openDeals.filter(d=>ownerLabel(d)===owner);
         return '<tr style="cursor:pointer" onclick="openPlDive(&quot;deal&quot;,&quot;'+owner+'&quot;)">'
-          +'<td style="color:var(--pur);font-family:var(--ff-mono);font-size:.75rem">'+esc(owner)+'</td>'
+          +'<td style="color:var(--pur);font-family:var(--ff-mono);font-size:.75rem">'+esc(owner.split(' ')[0])+'</td>'
           +'<td class="tdf-p">'+items.length+'</td>'
           +allStages.map(s=>'<td class="tdm">'+items.filter(d=>stageName(d)===s).length+'</td>').join('')
           +'</tr>';
@@ -1492,7 +1492,7 @@ function renderPipeline(){
     + leadOwners.map(owner=>{
         const items = openLeads.filter(l=>leadOwnerLabel(l)===owner);
         return '<tr style="cursor:pointer" onclick="openPlDive(&quot;lead&quot;,&quot;'+owner+'&quot;)">'
-          +'<td style="color:var(--grn);font-family:var(--ff-mono);font-size:.75rem">'+esc(owner)+'</td>'
+          +'<td style="color:var(--grn);font-family:var(--ff-mono);font-size:.75rem">'+esc(owner.split(' ')[0])+'</td>'
           +'<td class="tdf">'+items.length+'</td>'
           +REGIONS.map(r=>'<td class="tdm">'+items.filter(l=>lgr(l)===r).length+'</td>').join('')
           +'<td class="tdm" style="border-left:2px solid var(--bord2)">'+items.filter(l=>lgs(l)==='Education').length+'</td>'
