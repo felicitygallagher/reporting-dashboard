@@ -139,8 +139,9 @@
     .pc-item-meta{font-family:var(--ff-mono);font-size:.6rem;color:var(--mute);white-space:nowrap;margin-top:.1rem}
     .pc-empty{font-family:var(--ff-mono);font-size:.65rem;color:var(--mute);padding:.5rem;text-align:center}
     .pipeline-totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.5rem}
-    #pl-deal-summary th, #pl-lead-summary th{white-space:normal;word-break:break-word;padding:.35rem .35rem;line-height:1.3}
-    #pl-deal-summary td, #pl-lead-summary td{padding:.35rem .35rem}
+    #pl-deal-summary th, #pl-lead-summary th{white-space:normal;overflow-wrap:break-word;padding:.35rem .4rem;line-height:1.3}
+    #pl-deal-summary td, #pl-lead-summary td{padding:.35rem .4rem}
+    #pl-deal-summary th:first-child, #pl-lead-summary th:first-child, #pl-deal-summary td:first-child, #pl-lead-summary td:first-child{min-width:52px;padding-left:.8rem}
     .pill-divider{width:1px;background:var(--bord2);align-self:stretch;margin:0 .25rem}
     .pill-label{font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);white-space:nowrap}
     .owner-select{font-family:var(--ff-mono);font-size:.65rem;background:var(--surf2);border:1px solid var(--bord2);color:var(--txt2);padding:.28rem .6rem;border-radius:8px;cursor:pointer;outline:none;transition:border-color .2s;min-width:120px}
