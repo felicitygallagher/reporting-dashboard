@@ -926,9 +926,10 @@ async function renderLost(){
     +'<span style="font-family:var(--ff-mono);font-size:.52rem;color:var(--mute)">'+esc(d.lbl)+'</span>'
     +'<span style="font-family:var(--ff-mono);font-size:.55rem;color:var(--txt2);margin-left:auto">'+d.n+'</span>'
     +'</div>').join('');
-  document.getElementById('lost-stats').innerHTML=
+  const lostStatsEl=document.getElementById('lost-stats'); if(lostStatsEl) lostStatsEl.style.display='block';
+  lostStatsEl.innerHTML=
     // Row 1: total / region / sector
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem">'
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem">'
     +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x274C;</span><div class="sc-num">'+deals.length+'</div><div class="sc-lbl">Lost Deals</div><div class="sc-sub">'+lostState.year+'</div></div>'
     +'<div class="sc g" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F310;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Region</div>'+regionBreakdown+'</div>'
     +'<div class="sc g" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F3E2;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Sector</div>'+sectorBreakdown+'</div>'
@@ -964,18 +965,19 @@ function renderLostTable(){
   if(!tbl) return;
   if(!items.length){ tbl.innerHTML='<tr><td class="empty" colspan="9">No lost deals match these filters.</td></tr>'; return; }
   tbl.innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr>'
-    +'<th class="cell-wrap" style="width:22%">Title</th>'
-    +'<th style="width:7%">Owner</th>'
-    +'<th style="width:6%">Region</th>'
-    +'<th class="cell-wrap" style="width:10%">Sector</th>'
-    +'<th class="cell-wrap" style="width:10%">Source</th>'
-    +'<th class="cell-wrap" style="width:15%">Lost Reason</th>'
-    +'<th class="cell-wrap" style="width:22%">Comments</th>'
+    +'<th class="cell-wrap" style="width:20%">Title</th>'
+    +'<th style="width:6%">Owner</th>'
+    +'<th style="width:5%">Region</th>'
+    +'<th class="cell-wrap" style="width:9%">Sector</th>'
+    +'<th class="cell-wrap" style="width:9%">Origin</th>'
+    +'<th class="cell-wrap" style="width:9%">Source</th>'
+    +'<th class="cell-wrap" style="width:13%">Lost Reason</th>'
+    +'<th class="cell-wrap" style="width:21%">Comments</th>'
     +'<th style="width:8%">Lost</th>'
     +'</tr></thead><tbody>'
     +items.map(d=>'<tr>'
       +'<td class="cell-wrap"><a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank" style="color:var(--pur);text-decoration:none">'+esc(d.title)+'</a></td>'
-      +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
+      +'<td class="tdm">'+esc((d.owner_name||'--').split(' ')[0])+'</td>'
       +'<td class="tdm">'+esc(rg(d))+'</td>'
       +'<td class="cell-wrap tdm">'+esc(sg(d))+'</td>'
       +'<td class="cell-wrap tdm">'+esc(classifyDeal(d)).split('|').join('<br>')+'</td>'
