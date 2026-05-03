@@ -707,9 +707,18 @@ async function renderSales(){
     document.getElementById('sales-bars').innerHTML = '<div style="font-family:var(--ff-mono);font-size:.7rem;color:var(--mute);margin:auto">Loading customers&hellip;</div>';
     try{
       salesState.customers = await fetchCustomers();
-      // Build deal map from already-fetched S.deals
+      // Build deal map from S.deals + S.openDeals
       salesState.dealMap = {};
       S.deals.forEach(d=>{ salesState.dealMap[String(d.id)]=d; });
+      (S.openDeals||[]).forEach(d=>{ if(!salesState.dealMap[String(d.id)]) salesState.dealMap[String(d.id)]=d; });
+      // Fetch any customer deal IDs not yet in the map
+      const missingIds = [...new Set(salesState.customers.map(c=>String(c.dealId)).filter(id=>id&&id!=='null'&&!salesState.dealMap[id]))];
+      for(const id of missingIds){
+        try{
+          const r = await pd('/deals/'+id+'?custom_fields[]='+REGION_FIELD+'&custom_fields[]='+SECTOR_FIELD+'&custom_fields[]='+ARR_FIELD+'&custom_fields[]='+ATTR_FIELD+'&custom_fields[]='+SRC_DETAIL_FIELD+'&include_fields=origin,channel_id');
+          if(r.success && r.data) salesState.dealMap[id]=r.data;
+        }catch(e){ /* skip */ }
+      }
       salesState.loaded = true;
     }catch(e){
       document.getElementById('sales-bars').innerHTML = '<div style="color:var(--red);font-family:var(--ff-mono);font-size:.7rem;margin:auto">Error loading customers: '+esc(e.message)+'</div>';
@@ -735,9 +744,9 @@ async function renderSales(){
       const gi = items.filter(c=>groupFn(c)===g);
       const arr = gi.reduce((s,c)=>s+getARR(c),0);
       return '<tr>'
-        +'<td style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);padding:.1rem 0;white-space:nowrap">'+esc(g)+'</td>'
-        +'<td style="font-family:var(--ff-mono);font-size:.65rem;color:'+color+';text-align:right;padding:.1rem .4rem">'+gi.length+'</td>'
-        +'<td style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);text-align:right;padding:.1rem 0;white-space:nowrap">'+(arr>0?fmtARR(arr):'')+'</td>'
+        +'<td style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);padding:.1rem .4rem .1rem 0;white-space:nowrap;width:99%">'+esc(g)+'</td>'
+        +'<td style="font-family:var(--ff-mono);font-size:.65rem;color:'+color+';text-align:left;padding:.1rem .5rem .1rem 0;white-space:nowrap">'+gi.length+'</td>'
+        +'<td style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);text-align:left;padding:.1rem 0;white-space:nowrap">'+(arr>0?fmtARR(arr):'')+'</td>'
         +'</tr>';
     }).join('')+'</table>';
   }
@@ -818,6 +827,9 @@ function openSalesDive(owner){
     const sector = sg(d);
     const arr = d ? fmtARR(d[ARR_FIELD]) : '--';
     const ownerName = getCustomerOwner(c);
+    const origin = d ? classifyDeal(d) : '--';
+    const source = d ? getAttr(d[ATTR_FIELD]) : '--';
+    const srcDetail = d ? (d[SRC_DETAIL_FIELD]||'--') : '--';
     const rowStyle = wiped ? 'opacity:.4;' : '';
     const wipedNote = wiped ? ' <span style="font-size:.6rem;color:var(--mute)">(excluded)</span>' : '';
     return '<tr style="'+rowStyle+'">'
@@ -826,6 +838,9 @@ function openSalesDive(owner){
       +'<td class="tdm">'+esc(region)+'</td>'
       +'<td class="cell-wrap tdm">'+esc(sector)+'</td>'
       +'<td class="tdm">'+arr+'</td>'
+      +'<td class="cell-wrap tdm">'+esc(origin).split('|').join('<br>')+'</td>'
+      +'<td class="cell-wrap tdm">'+esc(source)+(getAttrDetail(d)?'<br><span style="color:var(--mute)">'+esc(getAttrDetail(d))+'</span>':'')+'</td>'
+      +'<td class="cell-wrap tdm">'+esc(srcDetail)+'</td>'
       +'<td class="tdm">'+fmtD(c.date)+'</td>'
       +'</tr>';
   }).join('');
@@ -892,7 +907,7 @@ function renderSalesBreakdown(){
       +'<td class="tdm">'+fmtD(c.date)+'</td>'
       +'</tr>';
   }).join('');
-  tbl.innerHTML='<thead><tr><th class="cell-wrap">Customer</th><th>Owner</th><th>Region</th><th class="cell-wrap">Sector</th><th>ARR</th><th>Date</th></tr></thead><tbody>'+rows+'</tbody>';
+  tbl.innerHTML='<thead><tr><th class="cell-wrap">Customer</th><th>Owner</th><th>Region</th><th class="cell-wrap">Sector</th><th>ARR</th><th class="cell-wrap">Origin</th><th class="cell-wrap">Source</th><th class="cell-wrap">Source Detail</th><th>Date</th></tr></thead><tbody>'+rows+'</tbody>';
 }
 const STAGE_MAP = {54:'Qualified',55:'Demo Booked',58:'Demo Done',56:'S Proposal',59:'F Proposal',57:'Negotiation',60:'Awaiting Contract'};
 const STAGE_ORDER = [54,55,58,56,59,57,60]; // display order
