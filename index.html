@@ -909,7 +909,7 @@ function openSalesDive(owner){
   const yr = salesState.year;
   const displayCustomers = salesState.selectedMonth ? getSalesForMonth(yr, salesState.selectedMonth) : getSalesForYear(yr);
   const displayCustomersFiltered = displayCustomers.filter(c=>!isRemoved(c.name));
-  const items = (owner==='__all__' ? displayCustomersFiltered : displayCustomersFiltered.filter(c=>getCustomerOwner(c)===owner)).filter(c=>!isWiped(c.name));
+  const items = owner==='__all__' ? displayCustomersFiltered : displayCustomersFiltered.filter(c=>getCustomerOwner(c)===owner);
   const rg = d => d ? (Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--') : '--';
   const sg = d => d ? (Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--') : '--';
 
@@ -984,7 +984,7 @@ function renderSalesBreakdown(){
   const rg2=d=>d?(Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--'):'--';
   const sg2=d=>d?(Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--'):'--';
   const fo=document.getElementById('sb-owner-select')?.value||'';
-  let items=base.filter(c=>!isWiped(c.name) && !isRemoved(c.name));
+  let items=base.filter(c=>!isRemoved(c.name));
   if(fo) items=items.filter(c=>getCustomerOwner(c)===fo);
   if(sbFilters.region) items=items.filter(c=>rg2(salesState.dealMap[String(c.dealId)])===sbFilters.region);
   if(sbFilters.sector) items=items.filter(c=>sg2(salesState.dealMap[String(c.dealId)])===sbFilters.sector);
