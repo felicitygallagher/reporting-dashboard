@@ -561,7 +561,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem">
       <div class="sec-lbl" style="margin-bottom:0;flex:1">sales — customers by date they joined</div>
       <div class="sales-year-toggle">
-        <button class="sales-yr-btn active" id="sales-yr-2024" onclick="setSalesYear(2024)">2024</button>
+        <button class="sales-yr-btn" id="sales-yr-2024" onclick="setSalesYear(2024)">2024</button>
         <button class="sales-yr-btn" id="sales-yr-2025" onclick="setSalesYear(2025)">2025</button>
         <button class="sales-yr-btn" id="sales-yr-2026" onclick="setSalesYear(2026)">2026</button>
       </div>
@@ -611,7 +611,7 @@ const SALES_NAME_FIELD = 'Customer name';
 const SALES_OWNER_FIELD = 'Main salesperson';
 
 const salesState = {
-  year: 2024,
+  year: new Date().getFullYear(),
   customers: [],    // all Airtable customer records
   dealMap: {},      // pipedrive deal ID -> deal object
   selectedMonth: null,
@@ -682,13 +682,32 @@ async function renderSales(){
   document.getElementById('sales-year-label').textContent = yr;
   document.getElementById('sales-table-label').textContent = yr + (salesState.selectedMonth?' — '+MONTHS[salesState.selectedMonth-1]:'');
 
-  // Stat cards
-  const owners = [...new Set(yearCustomers.map(c=>c.owner))].sort();
-  document.getElementById('sales-stats').innerHTML = [
-    {c:'g', ico:'&#x1F3C6;', n:yearCustomers.length, l:'New Customers', s:yr},
-    {c:'p', ico:'&#x1F4C5;', n:MONTHS.filter((_,i)=>getSalesForMonth(yr,i+1).length>0).length, l:'Active Months', s:'with at least one sale'},
-    {c:'g', ico:'&#x1F464;', n:owners.length, l:'Salespeople', s:'with sales this year'},
-  ].map(x=>'<div class="sc '+x.c+'" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div><div class="sc-sub">'+x.s+'</div></div>').join('');
+  // Stat cards — region and sector breakdowns with ARR
+  const validCustomers = yearCustomers.filter(c=>!isWiped(c.name));
+  const _rg = d => d ? (Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--') : '--';
+  const _sg = d => d ? (Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--') : '--';
+  const getARR = c => { const d=salesState.dealMap[String(c.dealId)]; return (d&&d[ARR_FIELD])||0; };
+  const totalARR = validCustomers.reduce((s,c)=>s+getARR(c),0);
+
+  function scBreakdown(items, groupFn, groups, color){
+    return groups.map(g=>{
+      const gi = items.filter(c=>groupFn(c)===g);
+      const arr = gi.reduce((s,c)=>s+getARR(c),0);
+      return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;margin:.18rem 0">'
+        +'<span style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute)">'+esc(g)+'</span>'
+        +'<span style="font-family:var(--ff-mono);font-size:.62rem;color:'+color+'">'+gi.length+'</span>'
+        +(arr>0?'<span style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute)">'+fmtARR(arr)+'</span>':'')
+        +'</div>';
+    }).join('');
+  }
+
+  const regionBreakdown = scBreakdown(validCustomers, c=>_rg(salesState.dealMap[String(c.dealId)]), REGIONS, 'var(--pur)');
+  const sectorBreakdown = scBreakdown(validCustomers, c=>_sg(salesState.dealMap[String(c.dealId)]), SECTORS, 'var(--grn)');
+
+  document.getElementById('sales-stats').innerHTML =
+    '<div class="sc g" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F3C6;</span><div class="sc-num">'+validCustomers.length+'</div><div class="sc-lbl">New Customers</div><div class="sc-sub">'+fmtARR(totalARR)+' total ARR</div></div>'
+    +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F310;</span><div class="sc-lbl" style="margin-bottom:.5rem">By Region</div>'+regionBreakdown+'</div>'
+    +'<div class="sc g" style="animation:none;opacity:1;transform:none;background:var(--surf2)"><div class="sc-glow"></div><span class="sc-ico">&#x1F3E2;</span><div class="sc-lbl" style="margin-bottom:.5rem">By Sector</div>'+sectorBreakdown+'</div>';
 
   // Bar chart
   const monthlyCounts = MONTHS.map((_,i)=>getSalesForMonth(yr,i+1).length);
@@ -714,7 +733,7 @@ async function renderSales(){
   document.getElementById('sales-summary-tbl').innerHTML =
     '<thead><tr><th>Salesperson</th><th>Sales</th><th>EMEA</th><th>AMER</th><th>APAC</th><th style="border-left:2px solid var(--bord2)">Edu</th><th>Memb</th><th>Char</th><th>Co</th></tr></thead><tbody>'
     +ownerList.map(owner=>{
-      const items = displayCustomers.filter(c=>c.owner===owner);
+      const items = displayCustomers.filter(c=>c.owner===owner && !isWiped(c.name));
       return '<tr style="cursor:pointer" onclick="openSalesDive(&quot;'+owner.replace(/"/g,'')+'&quot;)">'
         +'<td style="color:var(--grn);font-family:var(--ff-mono);font-size:.75rem;padding-left:.8rem">'+esc(owner.split(' ')[0])+'</td>'
         +'<td class="tdf">'+items.length+'</td>'
@@ -736,7 +755,7 @@ function selectSalesMonth(mo){
 function openSalesDive(owner){
   const yr = salesState.year;
   const displayCustomers = salesState.selectedMonth ? getSalesForMonth(yr, salesState.selectedMonth) : getSalesForYear(yr);
-  const items = owner==='__all__' ? displayCustomers : displayCustomers.filter(c=>c.owner===owner);
+  const items = (owner==='__all__' ? displayCustomers : displayCustomers.filter(c=>c.owner===owner)).filter(c=>!isWiped(c.name));
   const rg = d => d ? (Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--') : '--';
   const sg = d => d ? (Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--') : '--';
 
@@ -750,23 +769,26 @@ function openSalesDive(owner){
 
   const rows = items.sort((a,b)=>a.date.localeCompare(b.date)).map(c=>{
     const d = salesState.dealMap[String(c.dealId)];
+    const wiped = isWiped(c.name);
     const region = rg(d);
     const sector = sg(d);
-    const value = d ? (d.value ? new Intl.NumberFormat('en-GB',{style:'currency',currency:d.currency||'GBP',maximumFractionDigits:0}).format(d.value) : '--') : '--';
+    const arr = d ? fmtARR(d[ARR_FIELD]) : '--';
     const ownerName = d ? (d.owner_name||c.owner) : c.owner;
-    return '<tr>'
-      +'<td class="cell-wrap">'+(d?'<a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank" style="color:var(--grn);text-decoration:none">'+esc(c.name)+'</a>':esc(c.name))+'</td>'
+    const rowStyle = wiped ? 'opacity:.4;' : '';
+    const wipedNote = wiped ? ' <span style="font-size:.6rem;color:var(--mute)">(excluded)</span>' : '';
+    return '<tr style="'+rowStyle+'">'
+      +'<td class="cell-wrap">'+(d?'<a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank" style="color:var(--grn);text-decoration:none">'+esc(c.name)+'</a>':esc(c.name))+wipedNote+'</td>'
       +'<td class="tdm">'+esc(ownerName)+'</td>'
       +'<td class="tdm">'+esc(region)+'</td>'
       +'<td class="cell-wrap tdm">'+esc(sector)+'</td>'
-      +'<td class="tdm">'+esc(value)+'</td>'
+      +'<td class="tdm">'+arr+'</td>'
       +'<td class="tdm">'+fmtD(c.date)+'</td>'
       +'</tr>';
   }).join('');
 
   document.getElementById('sales-dive-tbl').innerHTML =
     '<table style="table-layout:fixed;width:100%"><thead><tr>'
-    +'<th class="cell-wrap">Customer</th><th>Owner</th><th>Region</th><th class="cell-wrap">Sector</th><th>Value</th><th>Date</th>'
+    +'<th class="cell-wrap">Customer</th><th>Owner</th><th>Region</th><th class="cell-wrap">Sector</th><th>ARR</th><th>Date</th>'
     +'</tr></thead><tbody>'+rows+'</tbody></table>';
 
   setTimeout(()=>document.getElementById('sales-expanded').scrollIntoView({behavior:'smooth',block:'start'}),40);
@@ -782,6 +804,16 @@ const ATTR_FIELD   = '6bd83ae8d8f32627e17d8bb7028bbb52082245a8';
 const ATTR_MAP = {1707:'121 Outreach',1781:'Advertising',1736:'AI Research',1798:'Chatbot',1491:'Conference',1738:'Marketing Email',1705:'Previous Sales Prospect',1703:'Referral',1062:'Search Engine',1794:'Software review site',1502:'Software review site (PPC)',1408:'Software review site (PPL)',1700:'Sponsorship',1105:'TBC',1797:'Webinar',1704:'Word of Mouth'};
 function getAttr(val){ return ATTR_MAP[Number(val)]||'--'; }
 const SRC_DETAIL_FIELD = 'bfedadd6c4e6c2e5af96384d7b5b2c4065737c69';
+const ARR_FIELD = 'dbccdb389c4165e1826d388769d98d02ebb22144';
+const WIPED_DEALS = new Set([
+  'National Dump Trucking Association (NDTA)',
+  'Steel Erectors Association of America (SEAA)',
+  'Help Exists',
+  'TEAM',
+  'Sunflowers Suicide Support'
+]);
+function isWiped(name){ return WIPED_DEALS.has((name||'').trim()); }
+function fmtARR(val){ if(!val||val===0) return '--'; return '£'+Math.round(val).toLocaleString('en-GB'); }
 const UTM_SOURCE   = '0d56e9a251c55240f417f2517245ec7a6c698645';
 const ATTR_DETAIL_MAPS = {
   'fe720b116bedc6ef911cd535d7957a09dbec355f': {1778:'Google Ads: EM | TT | Brand',1779:'Google Ads: EM | TT | Alumni UK',1780:'LinkedIn Ads: US Memberships Re-targeting Image Ad: Oct 2024',1782:'Google Ads: EM | TT | Alumni US',1783:'Google Ads: EM | TT | Membership US',1784:'LinkedIn Ads: Global Memberships Re-targeting Document Ad: Oct 2024',1785:'LinkedIn Ads: US Memberships Re-targeting Image Ad: Oct 2024'},
@@ -927,6 +959,7 @@ async function fetchDeals(){
     const d=await pd('/deals?limit=500&start='+start+'&status=all'
       +'&since_timestamp=2024-01-01%2000:00:00'
       +'&custom_fields[]='+LEAD_DATE_FIELD+'&custom_fields[]='+REGION_FIELD+'&custom_fields[]='+SECTOR_FIELD+'&custom_fields[]='+UTM_SOURCE+'&custom_fields[]='+UTM_MEDIUM+'&custom_fields[]='+UTM_CAMPAIGN+'&custom_fields[]='+ATTR_FIELD+'&custom_fields[]=fe720b116bedc6ef911cd535d7957a09dbec355f'+'&custom_fields[]=8e5548ae0219873e1d86c3ed13b06844793abe01'+'&custom_fields[]=24dd14a8da3bd4a5e75afdf6bd5b58ae22d4ff94'+'&custom_fields[]=dc1ff60a066bf368faf632ed3379bff02051e217'+'&custom_fields[]=9c321e8b32cf5748e74e45b285f4bc96f364243f'+'&custom_fields[]=2fe3213363eb616db230e76c78d20c28d772ae4a'+'&custom_fields[]=75a1a400a093a0f80f6eee330539ddc29da3e276'+'&custom_fields[]=bfedadd6c4e6c2e5af96384d7b5b2c4065737c69'
+      +'&custom_fields[]=dbccdb389c4165e1826d388769d98d02ebb22144'
       +'&include_fields=origin,channel_id');
     if(!d.success) throw new Error(d.error||'Deals fetch failed');
     all=all.concat((d.data||[]).filter(x=>
@@ -1727,14 +1760,13 @@ function setMode(m){
     el.style.display = (m==='pipeline'||m==='sales') ? 'none' : '';
   });
   document.getElementById('mode-sales').classList.toggle('active', m==='sales');
-  if(m==='sales') renderSales();
+  if(m==='sales'){
+    [2024,2025,2026].forEach(y=>{ const b=document.getElementById('sales-yr-'+y); if(b) b.classList.toggle('active',y===salesState.year); });
+    renderSales();
+  }
   if(m!=='sales'){ salesState.selectedMonth=null; }
   if(m==='opps'){ starMode=false; const sbtn=document.getElementById('star-btn'); if(sbtn){sbtn.classList.remove('on');sbtn.textContent='⭐ STAR Mode';} }
-  // Hide data-limitation banners in pipeline mode
-  const banners = ['at-status', 'logic-box-wrap'];
-  document.querySelectorAll('.warn-bar, #at-status, .logic-pill, .logic-box').forEach(el=>{
-    el.style.display = m==='pipeline' ? 'none' : '';
-  });
+
   if(m==='pipeline') renderPipeline();
 }
 
