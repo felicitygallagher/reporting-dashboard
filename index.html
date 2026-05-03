@@ -147,6 +147,21 @@
     .pc-item a:hover{text-decoration:underline}
     .pc-item-meta{font-family:var(--ff-mono);font-size:.6rem;color:var(--mute);white-space:nowrap;margin-top:.1rem}
     .pc-empty{font-family:var(--ff-mono);font-size:.65rem;color:var(--mute);padding:.5rem;text-align:center}
+    /* Sales mode */
+    .sales-year-toggle{display:flex;gap:0;border:1px solid var(--bord2);border-radius:10px;overflow:hidden;margin-bottom:1.5rem}
+    .sales-yr-btn{font-family:var(--ff-mono);font-size:.7rem;padding:.38rem 1.2rem;border:none;background:none;color:var(--mute);cursor:pointer;letter-spacing:.08em;transition:background .2s,color .2s}
+    .sales-yr-btn.active{background:var(--grn-soft);color:var(--grn)}
+    .sales-chart-wrap{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:1.5rem;margin-bottom:1.5rem}
+    .sales-bars{display:flex;align-items:flex-end;gap:6px;height:220px;width:100%;padding-top:.5rem}
+    .sales-bg{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;min-width:0;cursor:pointer}
+    .sales-bw{display:flex;align-items:flex-end;width:100%;position:relative}
+    .sales-bg:hover .sales-bw{filter:brightness(1.2)}
+    .sales-bg.sel .sales-bw::after{content:"";position:absolute;inset:-3px;border:2px solid var(--grn);border-radius:6px 6px 2px 2px;pointer-events:none}
+    .sales-b{flex:1;border-radius:4px 4px 0 0;min-height:3px;background:linear-gradient(to top,var(--grn-d),var(--grn));box-shadow:0 -3px 16px rgba(31,222,158,.3);transition:height .65s cubic-bezier(.34,1.4,.64,1);position:relative}
+    .sales-tip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--surf2);border:1px solid var(--bord2);color:var(--txt);font-family:var(--ff-mono);font-size:.6rem;padding:.26rem .55rem;border-radius:5px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:20}
+    .sales-b:hover .sales-tip{opacity:1}
+    .sales-blbl{font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);text-align:center;width:100%}
+    .sales-bg.sel .sales-blbl{color:var(--grn);font-weight:500}
     .pipeline-totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.5rem}
     #pl-deal-summary th, #pl-lead-summary th{white-space:normal;overflow-wrap:break-word;padding:.35rem .4rem;line-height:1.3}
     #pl-deal-summary td, #pl-lead-summary td{padding:.35rem .4rem}
@@ -221,6 +236,7 @@
       <div class="mode-toggle" style="margin-top:.85rem;display:inline-flex">
         <button class="mode-btn active" id="mode-opps" onclick="setMode('opps')">&#x1F4CA; New Opportunities</button>
         <button class="mode-btn" id="mode-pipeline" onclick="setMode('pipeline')">&#x1F7E2; Open Opportunities</button>
+        <button class="mode-btn" id="mode-sales" onclick="setMode('sales')">&#x1F4B0; Sales</button>
       </div>
     </div>
     <div class="hdr-r">
@@ -541,6 +557,40 @@
     </div>
   </div>
 
+  <div id="sales-view" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem">
+      <div class="sec-lbl" style="margin-bottom:0;flex:1">sales — customers by date they joined</div>
+      <div class="sales-year-toggle">
+        <button class="sales-yr-btn active" id="sales-yr-2024" onclick="setSalesYear(2024)">2024</button>
+        <button class="sales-yr-btn" id="sales-yr-2025" onclick="setSalesYear(2025)">2025</button>
+        <button class="sales-yr-btn" id="sales-yr-2026" onclick="setSalesYear(2026)">2026</button>
+      </div>
+    </div>
+    <div class="stats" id="sales-stats"></div>
+    <div class="sales-chart-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+        <h2 style="font-family:var(--ff-head);font-size:1.2rem;font-weight:700;letter-spacing:-.02em">New <i style="color:var(--grn)">Customers</i> per Month</h2>
+        <span style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute)" id="sales-year-label"></span>
+      </div>
+      <div class="sales-bars" id="sales-bars"></div>
+      <p style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);text-align:center;margin-top:.75rem">&#x2191; Click any bar to see that month&rsquo;s customers</p>
+    </div>
+    <div class="ov-card" style="opacity:1;transform:none;animation:none;overflow:hidden">
+      <div class="card-hd"><h2>Sales by <i style="color:var(--grn)">Salesperson</i></h2><span id="sales-table-label" style="font-family:var(--ff-mono);font-size:.6rem;color:var(--mute)"></span></div>
+      <div class="tbl-wrap"><table id="sales-summary-tbl"></table></div>
+    </div>
+    <div id="sales-expanded" style="display:none">
+      <div class="dive" style="display:block">
+        <div class="dive-hd">
+          <h2 id="sales-dive-title"></h2>
+          <button class="btn-close" onclick="closeSalesDive()">&#x2715; CLOSE</button>
+        </div>
+        <div class="dive-stats" id="sales-dive-stats"></div>
+        <div class="tbl-wrap" id="sales-dive-tbl"></div>
+      </div>
+    </div>
+  </div>
+
   <footer>PIPEDRIVE DASHBOARD &middot; MAIN PIPELINE &middot; DATA &copy; PIPEDRIVE &middot; CONFIDENTIAL</footer>
 </div>
 <script>
@@ -550,6 +600,181 @@ const STAR_LABEL_ID = 1368;
 function isStarDeal(d){ return d.label===STAR_LABEL_ID || String(d.label)===String(STAR_LABEL_ID) || (d.title&&d.title.startsWith('***')); }
 function isStarLead(l){ return l.title&&l.title.startsWith('***'); }
 let starMode = false;
+
+/* ═══════════════════════════════════════
+   SALES MODE
+═══════════════════════════════════════ */
+const AT_CUSTOMERS_TABLE = 'tblzv9kEKvCAhN451';
+const SALES_CUSTOMER_DATE_FIELD = 'Date they became a customer (based on first core licence start date)';
+const SALES_DEAL_ID_FIELD = 'Pipedrive deal ID';
+const SALES_NAME_FIELD = 'Customer name';
+const SALES_OWNER_FIELD = 'Main salesperson';
+
+const salesState = {
+  year: 2024,
+  customers: [],    // all Airtable customer records
+  dealMap: {},      // pipedrive deal ID -> deal object
+  selectedMonth: null,
+  loaded: false
+};
+
+async function fetchCustomers(){
+  let all=[], offset=null;
+  while(true){
+    let url = `https://api.airtable.com/v0/${AT_BASE}/${AT_CUSTOMERS_TABLE}?pageSize=100`
+      + `&fields[]=${encodeURIComponent(SALES_CUSTOMER_DATE_FIELD)}`
+      + `&fields[]=${encodeURIComponent(SALES_DEAL_ID_FIELD)}`
+      + `&fields[]=${encodeURIComponent(SALES_NAME_FIELD)}`
+      + `&fields[]=${encodeURIComponent(SALES_OWNER_FIELD)}`;
+    if(offset) url += '&offset='+encodeURIComponent(offset);
+    const r = await fetch(url, {headers:{'Authorization':'Bearer '+AT_TOKEN,'Content-Type':'application/json'}});
+    if(!r.ok) throw new Error('Customers fetch failed: '+r.status);
+    const d = await r.json();
+    all = all.concat(d.records||[]);
+    if(!d.offset) break;
+    offset = d.offset;
+  }
+  return all.map(r=>({
+    name: r.fields[SALES_NAME_FIELD]||'',
+    date: r.fields[SALES_CUSTOMER_DATE_FIELD]||null,
+    dealId: r.fields[SALES_DEAL_ID_FIELD]||null,
+    owner: r.fields[SALES_OWNER_FIELD]||'Other'
+  })).filter(c=>c.date); // only records with a date
+}
+
+function setSalesYear(yr){
+  salesState.year = yr;
+  salesState.selectedMonth = null;
+  [2024,2025,2026].forEach(y=>{
+    const btn=document.getElementById('sales-yr-'+y);
+    if(btn) btn.classList.toggle('active', y===yr);
+  });
+  renderSales();
+}
+
+function getSalesForYear(yr){
+  return salesState.customers.filter(c=>c.date && c.date.startsWith(yr+''));
+}
+
+function getSalesForMonth(yr, mo){
+  const prefix = yr+'-'+String(mo).padStart(2,'0');
+  return salesState.customers.filter(c=>c.date && c.date.startsWith(prefix));
+}
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+async function renderSales(){
+  if(!salesState.loaded){
+    document.getElementById('sales-bars').innerHTML = '<div style="font-family:var(--ff-mono);font-size:.7rem;color:var(--mute);margin:auto">Loading customers&hellip;</div>';
+    try{
+      salesState.customers = await fetchCustomers();
+      // Build deal map from already-fetched S.deals
+      salesState.dealMap = {};
+      S.deals.forEach(d=>{ salesState.dealMap[String(d.id)]=d; });
+      salesState.loaded = true;
+    }catch(e){
+      document.getElementById('sales-bars').innerHTML = '<div style="color:var(--red);font-family:var(--ff-mono);font-size:.7rem;margin:auto">Error loading customers: '+esc(e.message)+'</div>';
+      return;
+    }
+  }
+  const yr = salesState.year;
+  const yearCustomers = getSalesForYear(yr);
+  document.getElementById('sales-year-label').textContent = yr;
+  document.getElementById('sales-table-label').textContent = yr + (salesState.selectedMonth?' — '+MONTHS[salesState.selectedMonth-1]:'');
+
+  // Stat cards
+  const owners = [...new Set(yearCustomers.map(c=>c.owner))].sort();
+  document.getElementById('sales-stats').innerHTML = [
+    {c:'g', ico:'&#x1F3C6;', n:yearCustomers.length, l:'New Customers', s:yr},
+    {c:'p', ico:'&#x1F4C5;', n:MONTHS.filter((_,i)=>getSalesForMonth(yr,i+1).length>0).length, l:'Active Months', s:'with at least one sale'},
+    {c:'g', ico:'&#x1F464;', n:owners.length, l:'Salespeople', s:'with sales this year'},
+  ].map(x=>'<div class="sc '+x.c+'" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div><div class="sc-sub">'+x.s+'</div></div>').join('');
+
+  // Bar chart
+  const monthlyCounts = MONTHS.map((_,i)=>getSalesForMonth(yr,i+1).length);
+  const maxCount = Math.max(...monthlyCounts, 1);
+  const mxH = 190;
+  document.getElementById('sales-bars').innerHTML = MONTHS.map((mo,i)=>{
+    const count = monthlyCounts[i];
+    const h = Math.max(count>0?3:0, Math.round(count/maxCount*mxH));
+    const sel = salesState.selectedMonth===(i+1) ? 'sel' : '';
+    const moNum = i+1;
+    return '<div class="sales-bg '+sel+'" onclick="selectSalesMonth('+moNum+')">'
+      +'<div class="sales-bw"><div class="sales-b" style="height:'+h+'px"><div class="sales-tip">'+count+' customer'+(count!==1?'s':'')+'</div></div></div>'
+      +'<div class="sales-blbl">'+mo+'</div>'
+      +'</div>';
+  }).join('');
+
+  // Summary table by salesperson
+  const displayCustomers = salesState.selectedMonth ? getSalesForMonth(yr, salesState.selectedMonth) : yearCustomers;
+  const ownerList = [...new Set(displayCustomers.map(c=>c.owner))].sort();
+  const rg = d => d ? (Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--') : '--';
+  const sg = d => d ? (Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--') : '--';
+
+  document.getElementById('sales-summary-tbl').innerHTML =
+    '<thead><tr><th>Salesperson</th><th>Sales</th><th>EMEA</th><th>AMER</th><th>APAC</th><th style="border-left:2px solid var(--bord2)">Edu</th><th>Memb</th><th>Char</th><th>Co</th></tr></thead><tbody>'
+    +ownerList.map(owner=>{
+      const items = displayCustomers.filter(c=>c.owner===owner);
+      return '<tr style="cursor:pointer" onclick="openSalesDive(&quot;'+owner.replace(/"/g,'')+'&quot;)">'
+        +'<td style="color:var(--grn);font-family:var(--ff-mono);font-size:.75rem;padding-left:.8rem">'+esc(owner.split(' ')[0])+'</td>'
+        +'<td class="tdf">'+items.length+'</td>'
+        +REGIONS.map(r=>'<td class="tdm">'+items.filter(c=>{const d=salesState.dealMap[String(c.dealId)];return rg(d)===r;}).length+'</td>').join('')
+        +'<td class="tdm" style="border-left:2px solid var(--bord2)">'+items.filter(c=>{const d=salesState.dealMap[String(c.dealId)];return sg(d)==='Education';}).length+'</td>'
+        +'<td class="tdm">'+items.filter(c=>{const d=salesState.dealMap[String(c.dealId)];return sg(d)==='Membership Associations';}).length+'</td>'
+        +'<td class="tdm">'+items.filter(c=>{const d=salesState.dealMap[String(c.dealId)];return sg(d)==='Charity';}).length+'</td>'
+        +'<td class="tdm">'+items.filter(c=>{const d=salesState.dealMap[String(c.dealId)];return sg(d)==='Company';}).length+'</td>'
+        +'</tr>';
+    }).join('')+'</tbody>';
+}
+
+function selectSalesMonth(mo){
+  salesState.selectedMonth = salesState.selectedMonth===mo ? null : mo;
+  closeSalesDive();
+  renderSales();
+}
+
+function openSalesDive(owner){
+  const yr = salesState.year;
+  const displayCustomers = salesState.selectedMonth ? getSalesForMonth(yr, salesState.selectedMonth) : getSalesForYear(yr);
+  const items = owner==='__all__' ? displayCustomers : displayCustomers.filter(c=>c.owner===owner);
+  const rg = d => d ? (Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--') : '--';
+  const sg = d => d ? (Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--') : '--';
+
+  document.getElementById('sales-expanded').style.display='block';
+  const title = owner==='__all__' ? 'All <i style="color:var(--grn)">Sales</i>' : '<i style="color:var(--grn)">'+esc(owner)+'</i>';
+  document.getElementById('sales-dive-title').innerHTML = title + (salesState.selectedMonth?' <span style="font-size:1rem;color:var(--mute)">'+MONTHS[salesState.selectedMonth-1]+' '+yr+'</span>':'');
+
+  document.getElementById('sales-dive-stats').innerHTML =
+    '<div class="ds"><div class="ds-num g">'+items.length+'</div><div class="ds-lbl">Customers</div></div>'
+    +REGIONS.map(r=>'<div class="ds"><div class="ds-num g">'+items.filter(c=>{const d=salesState.dealMap[String(c.dealId)];return rg(d)===r;}).length+'</div><div class="ds-lbl">'+r+'</div></div>').join('');
+
+  const rows = items.sort((a,b)=>a.date.localeCompare(b.date)).map(c=>{
+    const d = salesState.dealMap[String(c.dealId)];
+    const region = rg(d);
+    const sector = sg(d);
+    const value = d ? (d.value ? new Intl.NumberFormat('en-GB',{style:'currency',currency:d.currency||'GBP',maximumFractionDigits:0}).format(d.value) : '--') : '--';
+    const ownerName = d ? (d.owner_name||c.owner) : c.owner;
+    return '<tr>'
+      +'<td class="cell-wrap">'+(d?'<a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank" style="color:var(--grn);text-decoration:none">'+esc(c.name)+'</a>':esc(c.name))+'</td>'
+      +'<td class="tdm">'+esc(ownerName)+'</td>'
+      +'<td class="tdm">'+esc(region)+'</td>'
+      +'<td class="cell-wrap tdm">'+esc(sector)+'</td>'
+      +'<td class="tdm">'+esc(value)+'</td>'
+      +'<td class="tdm">'+fmtD(c.date)+'</td>'
+      +'</tr>';
+  }).join('');
+
+  document.getElementById('sales-dive-tbl').innerHTML =
+    '<table style="table-layout:fixed;width:100%"><thead><tr>'
+    +'<th class="cell-wrap">Customer</th><th>Owner</th><th>Region</th><th class="cell-wrap">Sector</th><th>Value</th><th>Date</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>';
+
+  setTimeout(()=>document.getElementById('sales-expanded').scrollIntoView({behavior:'smooth',block:'start'}),40);
+}
+
+function closeSalesDive(){
+  document.getElementById('sales-expanded').style.display='none';
+}
 const STAGE_MAP = {54:'Qualified',55:'Demo Booked',58:'Demo Done',56:'S Proposal',59:'F Proposal',57:'Negotiation',60:'Awaiting Contract'};
 const STAGE_ORDER = [54,55,58,56,59,57,60]; // display order
 function stageName(deal){ return STAGE_MAP[deal.stage_id]||'Unknown'; } // Consultant (not a direct sale)
@@ -1497,6 +1722,13 @@ function setMode(m){
   document.getElementById('mode-pipeline').classList.toggle('active', m==='pipeline');
   document.getElementById('main').style.display = m==='opps' ? 'block' : 'none';
   document.getElementById('pipeline-view').style.display = m==='pipeline' ? 'block' : 'none';
+  document.getElementById('sales-view').style.display = m==='sales' ? 'block' : 'none';
+  document.querySelectorAll('.warn-bar, #at-status').forEach(el=>{
+    el.style.display = (m==='pipeline'||m==='sales') ? 'none' : '';
+  });
+  document.getElementById('mode-sales').classList.toggle('active', m==='sales');
+  if(m==='sales') renderSales();
+  if(m!=='sales'){ salesState.selectedMonth=null; }
   if(m==='opps'){ starMode=false; const sbtn=document.getElementById('star-btn'); if(sbtn){sbtn.classList.remove('on');sbtn.textContent='⭐ STAR Mode';} }
   // Hide data-limitation banners in pipeline mode
   const banners = ['at-status', 'logic-box-wrap'];
