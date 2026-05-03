@@ -727,20 +727,6 @@
           </div>
           <div class="pill-divider"></div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
-            <span class="pill-label">Origin</span>
-            <select class="owner-select" id="lost-origin-select" onchange="renderLostTable()">
-              <option value="">All</option>
-              <option value="Chatbot">Chatbot</option>
-              <option value="Conference">Conference</option>
-              <option value="Converted Lead">Converted Lead</option>
-              <option value="Manually Added">Manually Added</option>
-              <option value="Personal Link">Personal Link</option>
-              <option value="Surfe / LinkedIn">Surfe / LinkedIn</option>
-              <option value="Website Booking">Website Booking</option>
-            </select>
-          </div>
-          <div class="pill-divider"></div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
             <span class="pill-label">Source</span>
             <select class="owner-select" id="lost-source-select" onchange="renderLostTable()">
               <option value="">All</option>
@@ -829,7 +815,7 @@ async function fetchLostDeals(yr){
 function setLostYear(yr){
   lostState.year=yr; lostState.deals=null; lostState.loaded=false;
   lostFilters.region=null; lostFilters.sector=null;
-  ['lost-owner-select','lost-origin-select','lost-source-select','lost-reason-select'].forEach(id=>{
+  ['lost-owner-select','lost-source-select','lost-reason-select'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
   [2025,2026].forEach(y=>{ const b=document.getElementById('lost-yr-'+y); if(b) b.classList.toggle('active',y===yr); });
@@ -872,34 +858,42 @@ async function renderLost(){
   // Stat cards
   const _lrg=d=>Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--';
   const _lsg=d=>Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--';
-  const regionBreakdown = REGIONS.map(r=>{
-    const n=deals.filter(d=>_lrg(d)===r).length;
-    return '<div style="display:flex;align-items:baseline;gap:.5rem">'
-      +'<span style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);min-width:50px">'+r+'</span>'
-      +'<span style="font-family:var(--ff-mono);font-size:.65rem;color:var(--pur)">'+n+'</span>'
-      +'</div>';
-  }).join('');
-  const sectorBreakdown = SECTORS.map(s=>{
-    const lbl=s==='Membership Associations'?'Memberships':s;
-    const n=deals.filter(d=>_lsg(d)===s).length;
-    return '<div style="display:flex;align-items:baseline;gap:.5rem">'
-      +'<span style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);min-width:90px">'+lbl+'</span>'
-      +'<span style="font-family:var(--ff-mono);font-size:.65rem;color:var(--grn)">'+n+'</span>'
-      +'</div>';
-  }).join('');
-  const LOSS_REASONS_DISPLAY = ['Bad fit/ not the right product for prospect','Chose a competitor','Low budget','No budget','Not happy about UX','Not happy with features/ functionality',"Not in market/ shouldn't have been a deal",'Other','Project paused','Too early/not ready','Unresponsive'];
-  const reasonBreakdown = LOSS_REASONS_DISPLAY.map(r=>{
-    // match against full pipedrive reason using startsWith
-    const n=deals.filter(d=>(d.lost_reason||'').startsWith(r.split(' (')[0])).length;
-    if(!n) return '';
-    return '<div style="display:flex;align-items:baseline;gap:.5rem">'
-      +'<span style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px" title="'+esc(r)+'">'+esc(r)+'</span>'
-      +'<span style="font-family:var(--ff-mono);font-size:.65rem;color:var(--pur)">'+n+'</span>'
-      +'</div>';
-  }).filter(Boolean).join('');
+  const regionBreakdown = '<table style="border-collapse:collapse;width:100%">'
+    +REGIONS.map(r=>{
+      const n=deals.filter(d=>_lrg(d)===r).length;
+      return '<tr><td style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);padding:.1rem .5rem .1rem 0;white-space:nowrap">'+r+'</td>'
+        +'<td style="font-family:var(--ff-mono);font-size:.65rem;color:var(--grn);text-align:right">'+n+'</td></tr>';
+    }).join('')+'</table>';
+  const sectorBreakdown = '<table style="border-collapse:collapse;width:100%">'
+    +SECTORS.map(s=>{
+      const lbl=s==='Membership Associations'?'Memberships':s;
+      const n=deals.filter(d=>_lsg(d)===s).length;
+      return '<tr><td style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);padding:.1rem .5rem .1rem 0;white-space:nowrap">'+lbl+'</td>'
+        +'<td style="font-family:var(--ff-mono);font-size:.65rem;color:var(--grn);text-align:right">'+n+'</td></tr>';
+    }).join('')+'</table>';
+  const LOSS_REASONS_DISPLAY = [
+      ['Bad fit/ not the right product for prospect','Bad fit/ not the right product for prospect'],
+      ['Chose a competitor','Chose a competitor (please enter which in lost deal comments)'],
+      ['Low budget','Low budget'],
+      ['No budget','No budget (for those with no budget/thought it was free)'],
+      ['Not happy about UX','Not happy about UX'],
+      ['Not happy with features/ functionality','Not happy with features/ functionality'],
+      ["Not in market/ shouldn't have been a deal","Not in market/ shouldn't have been a deal"],
+      ['Other','Other (please specify in lost deal comments field)'],
+      ['Project paused','Project paused'],
+      ['Too early/not ready','Too early/not ready'],
+      ['Unresponsive','Unresponsive'],
+    ];
+  const reasonBreakdown = '<table style="border-collapse:collapse;width:100%">'
+    +LOSS_REASONS_DISPLAY.map(([lbl,val])=>{
+      const n=deals.filter(d=>(d.lost_reason||'').startsWith(val.split(' (')[0])).length;
+      if(!n) return '';
+      return '<tr><td style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);padding:.1rem .5rem .1rem 0;white-space:nowrap">'+esc(lbl)+'</td>'
+        +'<td style="font-family:var(--ff-mono);font-size:.65rem;color:var(--pur);text-align:right">'+n+'</td></tr>';
+    }).filter(Boolean).join('')+'</table>';
   document.getElementById('lost-stats').innerHTML=
     '<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x274C;</span><div class="sc-num">'+deals.length+'</div><div class="sc-lbl">Lost Deals</div><div class="sc-sub">'+lostState.year+'</div></div>'
-    +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F310;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Region &amp; Sector</div>'+regionBreakdown+'<div style="margin-top:.35rem">'+sectorBreakdown+'</div></div>'
+    +'<div class="sc g" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F310;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Region &amp; Sector</div>'+regionBreakdown+'<div style="margin-top:.35rem">'+sectorBreakdown+'</div></div>'
     +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F4CB;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Reason</div>'+reasonBreakdown+'</div>';
 
   renderLostPills();
@@ -911,7 +905,6 @@ function renderLostTable(){
   const rg=d=>Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--';
   const sg=d=>Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--';
   const fo=document.getElementById('lost-owner-select')?.value||'';
-  const fOrigin=document.getElementById('lost-origin-select')?.value||'';
   const fSource=document.getElementById('lost-source-select')?.value||'';
   const fReason=document.getElementById('lost-reason-select')?.value||'';
 
@@ -919,7 +912,6 @@ function renderLostTable(){
   if(fo) items=items.filter(d=>(d.owner_name||'').startsWith(fo));
   if(lostFilters.region) items=items.filter(d=>rg(d)===lostFilters.region);
   if(lostFilters.sector) items=items.filter(d=>sg(d)===lostFilters.sector);
-  if(fOrigin) items=items.filter(d=>classifyDeal(d).startsWith(fOrigin));
   if(fSource) items=items.filter(d=>getAttr(d[ATTR_FIELD])===fSource);
   if(fReason) items=items.filter(d=>(d.lost_reason||'').startsWith(fReason.split(' (')[0]));
   items.sort((a,b)=>new Date(b.lost_time)-new Date(a.lost_time));
@@ -927,7 +919,7 @@ function renderLostTable(){
   const tbl=document.getElementById('lost-tbl');
   if(!tbl) return;
   if(!items.length){ tbl.innerHTML='<tr><td class="empty" colspan="9">No lost deals match these filters.</td></tr>'; return; }
-  tbl.innerHTML='<thead><tr>'
+  tbl.innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr>'
     +'<th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th class="cell-wrap">Sector</th>'
     +'<th class="cell-wrap">Origin</th><th class="cell-wrap">Source</th>'
     +'<th class="cell-wrap">Lost Reason</th><th class="cell-wrap">Comments</th><th>Lost</th>'
@@ -1090,7 +1082,7 @@ async function renderSales(){
 
   document.getElementById('sales-stats').innerHTML =
     '<div class="sc g" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F3C6;</span><div class="sc-num">'+validCustomers.length+'</div><div class="sc-lbl">New Customers</div><div class="sc-sub">'+fmtARR(totalARR)+' total ARR</div></div>'
-    +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F310;</span><div class="sc-lbl" style="margin-bottom:.5rem">By Region</div>'+regionBreakdown+'</div>'
+    +'<div class="sc g" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F310;</span><div class="sc-lbl" style="margin-bottom:.5rem">By Region</div>'+regionBreakdown+'</div>'
     +'<div class="sc g" style="animation:none;opacity:1;transform:none;background:var(--surf2)"><div class="sc-glow"></div><span class="sc-ico">&#x1F3E2;</span><div class="sc-lbl" style="margin-bottom:.5rem">By Sector</div>'+sectorBreakdown+'</div>';
 
   // Bar chart
