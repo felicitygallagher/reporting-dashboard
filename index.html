@@ -237,6 +237,7 @@
         <button class="mode-btn active" id="mode-opps" onclick="setMode('opps')">&#x1F4CA; New Opportunities</button>
         <button class="mode-btn" id="mode-pipeline" onclick="setMode('pipeline')">&#x1F7E2; Open Opportunities</button>
         <button class="mode-btn" id="mode-sales" onclick="setMode('sales')">&#x1F4B0; Sales</button>
+        <button class="mode-btn" id="mode-lost" onclick="setMode('lost')">&#x274C; Lost Deals</button>
       </div>
     </div>
     <div class="hdr-r">
@@ -686,6 +687,111 @@
     </div>
   </div>
 
+  <div id="lost-view" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.75rem">
+      <div class="sec-lbl" style="margin-bottom:0">lost deals — 2025 &amp; 2026</div>
+      <div class="sales-year-toggle">
+        <button class="sales-yr-btn" id="lost-yr-2025" onclick="setLostYear(2025)">2025</button>
+        <button class="sales-yr-btn" id="lost-yr-2026" onclick="setLostYear(2026)">2026</button>
+      </div>
+    </div>
+    <div class="stats" id="lost-stats"></div>
+    <div class="ov-card" style="opacity:1;transform:none;animation:none;overflow:hidden;margin-bottom:1.25rem">
+      <div class="card-hd" style="flex-direction:column;align-items:stretch;gap:.6rem;padding:1rem 1.5rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem">
+          <h2>Lost <i style="color:var(--red,#e05c5c)">Deals</i></h2>
+          <div class="pill-group" id="lost-year-pills" style="display:none"></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:.6rem;flex-wrap:nowrap;overflow-x:auto;width:100%">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
+            <span class="pill-label">Owner</span>
+            <select class="owner-select" id="lost-owner-select" onchange="renderLostTable()">
+              <option value="">All</option>
+              <option value="Amy">Amy</option>
+              <option value="Fady">Fady</option>
+              <option value="Matt">Matt</option>
+              <option value="Merryn">Merryn</option>
+              <option value="Myron">Myron</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="pill-divider"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
+            <span class="pill-label">Region</span>
+            <div id="lost-region-pills" class="pill-group"></div>
+          </div>
+          <div class="pill-divider"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
+            <span class="pill-label">Sector</span>
+            <div id="lost-sector-pills" class="pill-group" style="min-width:300px"></div>
+          </div>
+          <div class="pill-divider"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
+            <span class="pill-label">Origin</span>
+            <select class="owner-select" id="lost-origin-select" onchange="renderLostTable()">
+              <option value="">All</option>
+              <option value="Chatbot">Chatbot</option>
+              <option value="Conference">Conference</option>
+              <option value="Converted Lead">Converted Lead</option>
+              <option value="Manually Added">Manually Added</option>
+              <option value="Personal Link">Personal Link</option>
+              <option value="Surfe / LinkedIn">Surfe / LinkedIn</option>
+              <option value="Website Booking">Website Booking</option>
+            </select>
+          </div>
+          <div class="pill-divider"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
+            <span class="pill-label">Source</span>
+            <select class="owner-select" id="lost-source-select" onchange="renderLostTable()">
+              <option value="">All</option>
+              <option value="121 Outreach">121 Outreach</option>
+              <option value="Advertising">Advertising</option>
+              <option value="AI Research">AI Research</option>
+              <option value="Chatbot">Chatbot</option>
+              <option value="Conference">Conference</option>
+              <option value="Marketing Email">Marketing Email</option>
+              <option value="Previous Sales Prospect">Previous Sales Prospect</option>
+              <option value="Referral">Referral</option>
+              <option value="Search Engine">Search Engine</option>
+              <option value="Software review site">Software review site</option>
+              <option value="Software review site (PPC)">Software review site (PPC)</option>
+              <option value="Software review site (PPL)">Software review site (PPL)</option>
+              <option value="Sponsorship">Sponsorship</option>
+              <option value="TBC">TBC</option>
+              <option value="Webinar">Webinar</option>
+              <option value="Word of Mouth">Word of Mouth</option>
+            </select>
+          </div>
+          <div class="pill-divider"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
+            <span class="pill-label">Lost Reason</span>
+            <select class="owner-select" id="lost-reason-select" onchange="renderLostTable()" style="min-width:150px">
+              <option value="">All</option>
+              <option>Bad fit/ not the right product for prospect</option>
+              <option>Choosing not to pursue</option>
+              <option>Chose a competitor (please enter which in lost deal comments)</option>
+              <option>Duplicate deal</option>
+              <option>Local barriers</option>
+              <option>Low budget</option>
+              <option>No budget (for those with no budget/thought it was free)</option>
+              <option>Not happy about UX</option>
+              <option>Not happy with features/ functionality</option>
+              <option>Not in market/ shouldn&apos;t have been a deal</option>
+              <option>Not target customer</option>
+              <option>Other (please specify in lost deal comments field)</option>
+              <option>Poor product fit</option>
+              <option>Project paused</option>
+              <option>Too early/ not ready</option>
+              <option>Unresponsive</option>
+              <option>Unresponsive (for those who go quiet on us)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table id="lost-tbl"></table></div>
+    </div>
+  </div>
+
   <footer>PIPEDRIVE DASHBOARD &middot; MAIN PIPELINE &middot; DATA &copy; PIPEDRIVE &middot; CONFIDENTIAL</footer>
 </div>
 <script>
@@ -695,6 +801,131 @@ const STAR_LABEL_ID = 1368;
 function isStarDeal(d){ return d.label===STAR_LABEL_ID || String(d.label)===String(STAR_LABEL_ID) || (d.title&&d.title.startsWith('***')); }
 function isStarLead(l){ return l.title&&l.title.startsWith('***'); }
 let starMode = false;
+
+/* ═══════════════════════════════════════
+   LOST DEALS MODE
+═══════════════════════════════════════ */
+const lostState = { year: 2026, deals: null, loaded: false };
+const lostFilters = { region: null, sector: null };
+
+async function fetchLostDeals(yr){
+  let all=[], start=0;
+  const FIELDS_QS = '&custom_fields[]='+REGION_FIELD+'&custom_fields[]='+SECTOR_FIELD
+    +'&custom_fields[]='+ATTR_FIELD+'&custom_fields[]='+SRC_DETAIL_FIELD
+    +'&custom_fields[]='+LOST_COMMENTS_FIELD
+    +'&custom_fields[]=fe720b116bedc6ef911cd535d7957a09dbec355f'
+    +'&custom_fields[]=8e5548ae0219873e1d86c3ed13b06844793abe01'
+    +'&custom_fields[]=24dd14a8da3bd4a5e75afdf6bd5b58ae22d4ff94'
+    +'&custom_fields[]=dc1ff60a066bf368faf632ed3379bff02051e217'
+    +'&custom_fields[]=9c321e8b32cf5748e74e45b285f4bc96f364243f'
+    +'&custom_fields[]=2fe3213363eb616db230e76c78d20c28d772ae4a'
+    +'&custom_fields[]=75a1a400a093a0f80f6eee330539ddc29da3e276'
+    +'&include_fields=origin,channel_id,lost_reason,lost_time'+FIELDS_QS;
+  while(true){
+    const d=await pd('/deals?status=lost&limit=500&start='+start+FIELDS_QS+'&include_fields=origin,channel_id,lost_reason,lost_time');
+    if(!d.success) break;
+    const filtered=(d.data||[]).filter(x=>x.pipeline_id!==EXCLUDED_PIPELINE && x.lost_time && x.lost_time.startsWith(yr+''));
+    all=all.concat(filtered);
+    if(!d.additional_data?.pagination?.more_items_in_collection) break;
+    start+=500;
+  }
+  return all;
+}
+
+function setLostYear(yr){
+  lostState.year=yr; lostState.deals=null; lostState.loaded=false;
+  lostFilters.region=null; lostFilters.sector=null;
+  ['lost-owner-select','lost-origin-select','lost-source-select','lost-reason-select'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  [2025,2026].forEach(y=>{ const b=document.getElementById('lost-yr-'+y); if(b) b.classList.toggle('active',y===yr); });
+  renderLost();
+}
+
+function renderLostPills(){
+  const rp=document.getElementById('lost-region-pills');
+  const sp=document.getElementById('lost-sector-pills');
+  if(!rp||!sp) return;
+  rp.innerHTML=REGIONS.map(r=>'<button class="f-pill'+(lostFilters.region===r?' active':'')+'" data-lost-region="'+r+'">'+r+'</button>').join('');
+  sp.innerHTML='<div style="display:flex;gap:.4rem;flex-wrap:nowrap">'+['Education','Membership Associations','Charity','Company'].map(function(s){
+    var lbl=s==='Membership Associations'?'Memberships':s;
+    return '<button class="f-pill'+(lostFilters.sector===s?' active':'')+'" data-lost-sector="'+s+'">'+lbl+'</button>';
+  }).join('')+'</div>';
+}
+
+document.addEventListener('click',function(e){
+  const rb=e.target.closest('[data-lost-region]');
+  const sb=e.target.closest('[data-lost-sector]');
+  if(rb){ lostFilters.region=lostFilters.region===rb.dataset.lostRegion?null:rb.dataset.lostRegion; renderLostPills(); renderLostTable(); }
+  else if(sb){ lostFilters.sector=lostFilters.sector===sb.dataset.lostSector?null:sb.dataset.lostSector; renderLostPills(); renderLostTable(); }
+});
+
+async function renderLost(){
+  if(!lostState.loaded){
+    document.getElementById('lost-tbl').innerHTML='<tr><td style="font-family:var(--ff-mono);font-size:.7rem;color:var(--mute);padding:1rem">Loading lost deals&hellip;</td></tr>';
+    try{
+      lostState.deals = await fetchLostDeals(lostState.year);
+      lostState.loaded=true;
+    }catch(e){
+      document.getElementById('lost-tbl').innerHTML='<tr><td style="color:var(--red,#e05c5c);font-family:var(--ff-mono);font-size:.7rem;padding:1rem">Error: '+esc(e.message)+'</td></tr>';
+      return;
+    }
+  }
+  const deals=lostState.deals;
+  const rg=d=>Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--';
+  const sg=d=>Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--';
+
+  // Stat cards
+  const owners=[...new Set(deals.map(d=>d.owner_name?.split(' ')[0]||'Other'))].sort();
+  const reasons=[...new Set(deals.map(d=>d.lost_reason).filter(Boolean))];
+  document.getElementById('lost-stats').innerHTML=[
+    {c:'p', ico:'&#x274C;', n:deals.length, l:'Lost Deals', s:lostState.year},
+    {c:'g', ico:'&#x1F464;', n:owners.length, l:'Salespeople', s:'with lost deals'},
+    {c:'p', ico:'&#x1F4CB;', n:reasons.length, l:'Loss Reasons', s:'distinct reasons'},
+  ].map(x=>'<div class="sc '+x.c+'" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div><div class="sc-sub">'+x.s+'</div></div>').join('');
+
+  renderLostPills();
+  renderLostTable();
+}
+
+function renderLostTable(){
+  const deals=lostState.deals||[];
+  const rg=d=>Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--';
+  const sg=d=>Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--';
+  const fo=document.getElementById('lost-owner-select')?.value||'';
+  const fOrigin=document.getElementById('lost-origin-select')?.value||'';
+  const fSource=document.getElementById('lost-source-select')?.value||'';
+  const fReason=document.getElementById('lost-reason-select')?.value||'';
+
+  let items=[...deals];
+  if(fo) items=items.filter(d=>(d.owner_name||'').startsWith(fo));
+  if(lostFilters.region) items=items.filter(d=>rg(d)===lostFilters.region);
+  if(lostFilters.sector) items=items.filter(d=>sg(d)===lostFilters.sector);
+  if(fOrigin) items=items.filter(d=>classifyDeal(d).startsWith(fOrigin));
+  if(fSource) items=items.filter(d=>getAttr(d[ATTR_FIELD])===fSource);
+  if(fReason) items=items.filter(d=>d.lost_reason===fReason);
+  items.sort((a,b)=>new Date(b.lost_time)-new Date(a.lost_time));
+
+  const tbl=document.getElementById('lost-tbl');
+  if(!tbl) return;
+  if(!items.length){ tbl.innerHTML='<tr><td class="empty" colspan="9">No lost deals match these filters.</td></tr>'; return; }
+  tbl.innerHTML='<thead><tr>'
+    +'<th class="cell-wrap">Title</th><th>Owner</th><th>Region</th><th class="cell-wrap">Sector</th>'
+    +'<th class="cell-wrap">Origin</th><th class="cell-wrap">Source</th>'
+    +'<th class="cell-wrap">Lost Reason</th><th class="cell-wrap">Comments</th><th>Lost</th>'
+    +'</tr></thead><tbody>'
+    +items.map(d=>'<tr>'
+      +'<td class="cell-wrap"><a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank" style="color:var(--pur);text-decoration:none">'+esc(d.title)+'</a></td>'
+      +'<td class="tdm">'+esc(d.owner_name||'--')+'</td>'
+      +'<td class="tdm">'+esc(rg(d))+'</td>'
+      +'<td class="cell-wrap tdm">'+esc(sg(d))+'</td>'
+      +'<td class="cell-wrap tdm">'+esc(classifyDeal(d)).split('|').join('<br>')+'</td>'
+      +'<td class="cell-wrap tdm">'+esc(getAttr(d[ATTR_FIELD]))+(getAttrDetail(d)?'<br><span style="color:var(--mute)">'+esc(getAttrDetail(d))+'</span>':'')+'</td>'
+      +'<td class="cell-wrap tdm">'+esc(d.lost_reason||'--')+'</td>'
+      +'<td class="cell-wrap tdm">'+esc(d[LOST_COMMENTS_FIELD]||'--')+'</td>'
+      +'<td class="tdm">'+fmtD(d.lost_time)+'</td>'
+      +'</tr>').join('')+'</tbody>';
+}
 
 /* ═══════════════════════════════════════
    SALES MODE
@@ -1035,6 +1266,7 @@ const ATTR_MAP = {1707:'121 Outreach',1781:'Advertising',1736:'AI Research',1798
 function getAttr(val){ return ATTR_MAP[Number(val)]||'--'; }
 const SRC_DETAIL_FIELD = 'bfedadd6c4e6c2e5af96384d7b5b2c4065737c69';
 const ARR_FIELD = 'dbccdb389c4165e1826d388769d98d02ebb22144';
+const LOST_COMMENTS_FIELD = '2eb4b967876f19babda242ffa6bd7f5c61a1a7d0';
 const WIPED_DEALS = new Set([
   'Steel Erectors Association of America (SEAA)',
   'Help Exists',
@@ -1990,9 +2222,16 @@ function setMode(m){
   document.getElementById('mode-pipeline').classList.toggle('active', m==='pipeline');
   document.getElementById('main').style.display = m==='opps' ? 'block' : 'none';
   document.getElementById('pipeline-view').style.display = m==='pipeline' ? 'block' : 'none';
+  document.getElementById('lost-view').style.display = m==='lost' ? 'block' : 'none';
+  document.getElementById('mode-lost').classList.toggle('active', m==='lost');
+  if(m==='lost'){
+    [2025,2026].forEach(y=>{ const b=document.getElementById('lost-yr-'+y); if(b) b.classList.toggle('active',y===lostState.year); });
+    renderLost();
+  }
+  if(m!=='lost'){ lostState.deals=null; lostState.loaded=false; }
   document.getElementById('sales-view').style.display = m==='sales' ? 'block' : 'none';
   document.querySelectorAll('.warn-bar, #at-status').forEach(el=>{
-    el.style.display = (m==='pipeline'||m==='sales') ? 'none' : '';
+    el.style.display = (m==='pipeline'||m==='sales'||m==='lost') ? 'none' : '';
   });
   document.getElementById('mode-sales').classList.toggle('active', m==='sales');
   if(m==='sales'){
