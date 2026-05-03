@@ -604,6 +604,43 @@
             <span class="pill-label">Sector</span>
             <div id="sb-sector-pills" class="pill-group" style="min-width:300px"></div>
           </div>
+          <div class="pill-divider"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
+            <span class="pill-label">Origin</span>
+            <select class="owner-select" id="sb-origin-select" onchange="renderSalesBreakdown()">
+              <option value="">All</option>
+              <option value="Chatbot">Chatbot</option>
+              <option value="Conference">Conference</option>
+              <option value="Converted Lead">Converted Lead</option>
+              <option value="Manually Added">Manually Added</option>
+              <option value="Personal Link">Personal Link</option>
+              <option value="Surfe / LinkedIn">Surfe / LinkedIn</option>
+              <option value="Website Booking">Website Booking</option>
+            </select>
+          </div>
+          <div class="pill-divider"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
+            <span class="pill-label">Source</span>
+            <select class="owner-select" id="sb-source-select" onchange="renderSalesBreakdown()">
+              <option value="">All</option>
+              <option value="121 Outreach">121 Outreach</option>
+              <option value="Advertising">Advertising</option>
+              <option value="AI Research">AI Research</option>
+              <option value="Chatbot">Chatbot</option>
+              <option value="Conference">Conference</option>
+              <option value="Marketing Email">Marketing Email</option>
+              <option value="Previous Sales Prospect">Previous Sales Prospect</option>
+              <option value="Referral">Referral</option>
+              <option value="Search Engine">Search Engine</option>
+              <option value="Software review site">Software review site</option>
+              <option value="Software review site (PPC)">Software review site (PPC)</option>
+              <option value="Software review site (PPL)">Software review site (PPL)</option>
+              <option value="Sponsorship">Sponsorship</option>
+              <option value="TBC">TBC</option>
+              <option value="Webinar">Webinar</option>
+              <option value="Word of Mouth">Word of Mouth</option>
+            </select>
+          </div>
         </div>
       </div>
       <div class="tbl-wrap"><table id="sales-breakdown-tbl"></table></div>
@@ -731,9 +768,11 @@ async function renderSales(){
   document.getElementById('sales-table-label').textContent = yr + (salesState.selectedMonth?' — '+MONTHS[salesState.selectedMonth-1]:'');
   sbFilters.region=null; sbFilters.sector=null;
   const sbOwnerSel=document.getElementById('sb-owner-select'); if(sbOwnerSel) sbOwnerSel.value='';
+  const sbOriginSel=document.getElementById('sb-origin-select'); if(sbOriginSel) sbOriginSel.value='';
+  const sbSourceSel=document.getElementById('sb-source-select'); if(sbSourceSel) sbSourceSel.value='';
 
   // Stat cards — region and sector breakdowns with ARR
-  const validCustomers = yearCustomers.filter(c=>!isWiped(c.name));
+  const validCustomers = yearCustomers.filter(c=>!isWiped(c.name) && !isRemoved(c.name));
   const _rg = d => d ? (Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--') : '--';
   const _sg = d => d ? (Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--') : '--';
   const getARR = c => { const d=salesState.dealMap[String(c.dealId)]; return d&&d[ARR_FIELD] ? Number(d[ARR_FIELD]) : 0; };
@@ -744,9 +783,9 @@ async function renderSales(){
       const gi = items.filter(c=>groupFn(c)===g);
       const arr = gi.reduce((s,c)=>s+getARR(c),0);
       return '<tr>'
-        +'<td style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);padding:.1rem .4rem .1rem 0;white-space:nowrap;width:99%">'+esc(g)+'</td>'
-        +'<td style="font-family:var(--ff-mono);font-size:.65rem;color:'+color+';text-align:left;padding:.1rem .5rem .1rem 0;white-space:nowrap">'+gi.length+'</td>'
-        +'<td style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);text-align:left;padding:.1rem 0;white-space:nowrap">'+(arr>0?fmtARR(arr):'')+'</td>'
+        +'<td style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);padding:.1rem .4rem .1rem 0;white-space:nowrap">'+esc(g)+'</td>'
+        +'<td style="font-family:var(--ff-mono);font-size:.65rem;color:'+color+';padding:.1rem .5rem .1rem 0;white-space:nowrap">'+gi.length+'</td>'
+        +'<td style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);padding:.1rem 0;white-space:nowrap">'+(arr>0?fmtARR(arr):'')+'</td>'
         +'</tr>';
     }).join('')+'</table>';
   }
@@ -755,29 +794,36 @@ async function renderSales(){
   const sectorBreakdown = scBreakdown(validCustomers, c=>_sg(salesState.dealMap[String(c.dealId)]), SECTORS, 'var(--grn)');
 
   document.getElementById('sales-stats').innerHTML =
-    '<div class="sc g" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F3C6;</span><div class="sc-num">'+validCustomers.length+'</div><div class="sc-lbl">New Customers</div><div class="sc-sub">'+fmtARR(totalARR)+' total ARR</div></div>'
+    '<div class="sc g" style="animation:none;opacity:1;transform:none;cursor:pointer" onclick="openSalesDive(&quot;__all__&quot;)"><div class="sc-glow"></div><span class="sc-ico">&#x1F3C6;</span><div class="sc-num">'+validCustomers.length+'</div><div class="sc-lbl">New Customers</div><div class="sc-sub">'+fmtARR(totalARR)+' total ARR</div></div>'
     +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F310;</span><div class="sc-lbl" style="margin-bottom:.5rem">By Region</div>'+regionBreakdown+'</div>'
     +'<div class="sc g" style="animation:none;opacity:1;transform:none;background:var(--surf2)"><div class="sc-glow"></div><span class="sc-ico">&#x1F3E2;</span><div class="sc-lbl" style="margin-bottom:.5rem">By Sector</div>'+sectorBreakdown+'</div>';
 
   // Bar chart
-  const monthlyCounts = MONTHS.map((_,i)=>getSalesForMonth(yr,i+1).length);
-  const maxCount = Math.max(...monthlyCounts, 1);
+  const getMonthARR = (yr,mo) => getSalesForMonth(yr,mo).filter(c=>!isWiped(c.name)&&!isRemoved(c.name)).reduce((s,c)=>{
+    const d=salesState.dealMap[String(c.dealId)]; return s+(d&&d[ARR_FIELD]?Number(d[ARR_FIELD]):0);
+  },0);
+  const monthlyARR = MONTHS.map((_,i)=>getMonthARR(yr,i+1));
+  const monthlyCounts = MONTHS.map((_,i)=>getSalesForMonth(yr,i+1).filter(c=>!isWiped(c.name)&&!isRemoved(c.name)).length);
+  const maxARR = Math.max(...monthlyARR, 1);
   const mxH = 190;
   document.getElementById('sales-bars').innerHTML = MONTHS.map((mo,i)=>{
+    const arr = monthlyARR[i];
     const count = monthlyCounts[i];
-    const h = Math.max(count>0?3:0, Math.round(count/maxCount*mxH));
+    const h = Math.max(arr>0?3:0, Math.round(arr/maxARR*mxH));
     const sel = salesState.selectedMonth===(i+1) ? 'sel' : '';
     const moNum = i+1;
     const barGrad = i%2===0 ? 'linear-gradient(to top,var(--grn-d,#0f7a5a),var(--grn))' : 'linear-gradient(to top,#3d1f7a,var(--pur))';
+    const tip = count+' customer'+(count!==1?'s':'')+' · '+fmtARR(arr);
     return '<div class="sales-bg '+sel+'" onclick="selectSalesMonth('+moNum+')">'
-      +'<div class="sales-bw"><div class="sales-b" style="height:'+h+'px;background:'+barGrad+'"><div class="sales-tip">'+count+' customer'+(count!==1?'s':'')+'</div></div></div>'
+      +'<div class="sales-bw"><div class="sales-b" style="height:'+h+'px;background:'+barGrad+'"><div class="sales-tip">'+tip+'</div></div></div>'
       +'<div class="sales-blbl">'+mo+'</div>'
       +'</div>';
   }).join('');
 
   // Summary table by salesperson
   const displayCustomers = salesState.selectedMonth ? getSalesForMonth(yr, salesState.selectedMonth) : yearCustomers;
-  const ownerList = [...new Set(displayCustomers.map(c=>getCustomerOwner(c)))].sort();
+  const displayCustomersClean = displayCustomers.filter(c=>!isRemoved(c.name));
+  const ownerList = [...new Set(displayCustomersClean.map(c=>getCustomerOwner(c)))].sort();
   const rg = d => d ? (Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--') : '--';
   const sg = d => d ? (Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--') : '--';
 
@@ -785,7 +831,7 @@ async function renderSales(){
   document.getElementById('sales-summary-tbl').innerHTML =
     '<thead><tr><th>Salesperson</th><th>Sales</th><th>ARR</th><th>EMEA</th><th>AMER</th><th>APAC</th><th style="border-left:2px solid var(--bord2)">Edu</th><th>Memb</th><th>Char</th><th>Co</th></tr></thead><tbody>'
     +ownerList.map(owner=>{
-      const items = displayCustomers.filter(c=>getCustomerOwner(c)===owner && !isWiped(c.name));
+      const items = displayCustomersClean.filter(c=>getCustomerOwner(c)===owner && !isWiped(c.name) && !isRemoved(c.name));
       return '<tr style="cursor:pointer" onclick="openSalesDive(&quot;'+owner.replace(/"/g,'')+'&quot;)">'
         +'<td style="color:var(--grn);font-family:var(--ff-mono);font-size:.75rem;padding-left:.8rem">'+esc(owner.split(' ')[0])+'</td>'
         +'<td class="tdf">'+items.length+'</td>'
@@ -808,7 +854,8 @@ function selectSalesMonth(mo){
 function openSalesDive(owner){
   const yr = salesState.year;
   const displayCustomers = salesState.selectedMonth ? getSalesForMonth(yr, salesState.selectedMonth) : getSalesForYear(yr);
-  const items = (owner==='__all__' ? displayCustomers : displayCustomers.filter(c=>getCustomerOwner(c)===owner)).filter(c=>!isWiped(c.name));
+  const displayCustomersFiltered = displayCustomers.filter(c=>!isRemoved(c.name));
+  const items = (owner==='__all__' ? displayCustomersFiltered : displayCustomersFiltered.filter(c=>getCustomerOwner(c)===owner)).filter(c=>!isWiped(c.name));
   const rg = d => d ? (Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--') : '--';
   const sg = d => d ? (Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--') : '--';
 
@@ -883,10 +930,14 @@ function renderSalesBreakdown(){
   const rg2=d=>d?(Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--'):'--';
   const sg2=d=>d?(Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--'):'--';
   const fo=document.getElementById('sb-owner-select')?.value||'';
-  let items=base;
+  let items=base.filter(c=>!isWiped(c.name) && !isRemoved(c.name));
   if(fo) items=items.filter(c=>getCustomerOwner(c)===fo);
   if(sbFilters.region) items=items.filter(c=>rg2(salesState.dealMap[String(c.dealId)])===sbFilters.region);
   if(sbFilters.sector) items=items.filter(c=>sg2(salesState.dealMap[String(c.dealId)])===sbFilters.sector);
+  const fOrigin=document.getElementById('sb-origin-select')?.value||'';
+  const fSource=document.getElementById('sb-source-select')?.value||'';
+  if(fOrigin) items=items.filter(c=>{ const d=salesState.dealMap[String(c.dealId)]; return d&&!d._stub&&classifyDeal(d).startsWith(fOrigin); });
+  if(fSource) items=items.filter(c=>{ const d=salesState.dealMap[String(c.dealId)]; return d&&!d._stub&&getAttr(d[ATTR_FIELD])===fSource; });
   const ml=document.getElementById('sales-breakdown-month-label');
   if(ml) ml.textContent=mo?'— '+MONTHS[mo-1]+' '+yr:'';
   const cl=document.getElementById('sales-breakdown-count');
@@ -904,6 +955,11 @@ function renderSalesBreakdown(){
       +'<td class="tdm">'+esc(rg2(d))+'</td>'
       +'<td class="cell-wrap tdm">'+esc(sg2(d))+'</td>'
       +'<td class="tdm">'+fmtARR(d&&d[ARR_FIELD]?Number(d[ARR_FIELD]):0)+'</td>'
+      +(d&&!d._stub
+        ?'<td class="cell-wrap tdm">'+esc(classifyDeal(d)).split('|').join('<br>')+'</td>'
+         +'<td class="cell-wrap tdm">'+esc(getAttr(d[ATTR_FIELD]))+(getAttrDetail(d)?'<br><span style="color:var(--mute)">'+esc(getAttrDetail(d))+'</span>':'')+'</td>'
+         +'<td class="cell-wrap tdm">'+esc(d[SRC_DETAIL_FIELD]||'--')+'</td>'
+        :'<td class="tdm">--</td><td class="tdm">--</td><td class="tdm">--</td>')
       +'<td class="tdm">'+fmtD(c.date)+'</td>'
       +'</tr>';
   }).join('');
@@ -922,9 +978,11 @@ const WIPED_DEALS = new Set([
   'Steel Erectors Association of America (SEAA)',
   'Help Exists',
   'TEAM',
-  'Sunflowers Suicide Support'
+  'Sunflowers Suicide Support',
 ]);
+const REMOVED_DEALS = ['Rosemead Prep',"Skinner's School",'Skinners School','Skinners School','St Christopher the Hall',"St Christopher's the Hall",'St Christopher The Hall'];
 function isWiped(name){ return WIPED_DEALS.has((name||'').trim()); }
+function isRemoved(name){ return REMOVED_DEALS.some(r=>(name||'').trim().toLowerCase()===r.toLowerCase()); }
 function fmtARR(val){ if(!val||val===0) return '--'; return '£'+Math.round(val).toLocaleString('en-GB'); }
 const UTM_SOURCE   = '0d56e9a251c55240f417f2517245ec7a6c698645';
 const ATTR_DETAIL_MAPS = {
