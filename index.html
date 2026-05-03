@@ -577,9 +577,23 @@
     </div>
     <div class="ov-card" style="opacity:1;transform:none;animation:none;overflow:hidden;margin-bottom:1.25rem">
       <div class="card-hd" style="flex-direction:column;align-items:flex-start;gap:.6rem;padding:1rem 1.5rem">
-        <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-          <h2>All <i style="color:var(--grn)">Sales</i> <span id="sales-breakdown-month-label" style="font-size:1rem;color:var(--mute)"></span></h2>
-          <span id="sales-breakdown-count" style="font-family:var(--ff-mono);font-size:.7rem;color:var(--grn)"></span>
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:.5rem">
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <h2>All <i style="color:var(--grn)">Sales</i></h2>
+            <div style="display:flex;align-items:center;gap:.4rem" id="sb-month-nav" style="display:none">
+              <button class="nav-btn" id="sb-prev-btn" onclick="shiftSalesMonth(-1)">&#x2190;</button>
+              <span id="sales-breakdown-month-label" style="font-family:var(--ff-mono);font-size:.65rem;color:var(--grn)"></span>
+              <button class="nav-btn" id="sb-next-btn" onclick="shiftSalesMonth(1)">&#x2192;</button>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <span id="sales-breakdown-count" style="font-family:var(--ff-mono);font-size:.7rem;color:var(--grn)"></span>
+            <div class="sales-year-toggle" style="margin-bottom:0">
+              <button class="sales-yr-btn" id="sb-yr-2024" onclick="setSalesYear(2024)">2024</button>
+              <button class="sales-yr-btn" id="sb-yr-2025" onclick="setSalesYear(2025)">2025</button>
+              <button class="sales-yr-btn" id="sb-yr-2026" onclick="setSalesYear(2026)">2026</button>
+            </div>
+          </div>
         </div>
         <div style="display:flex;align-items:flex-start;gap:.6rem;flex-wrap:nowrap;overflow-x:auto;width:100%">
           <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
@@ -724,6 +738,8 @@ function setSalesYear(yr){
   [2024,2025,2026].forEach(y=>{
     const btn=document.getElementById('sales-yr-'+y);
     if(btn) btn.classList.toggle('active', y===yr);
+    const sbBtn=document.getElementById('sb-yr-'+y);
+    if(sbBtn) sbBtn.classList.toggle('active', y===yr);
   });
   renderSales();
 }
@@ -750,12 +766,26 @@ async function renderSales(){
       salesState.dealMap = {};
       S.deals.forEach(d=>{ salesState.dealMap[String(d.id)]=d; });
       (S.openDeals||[]).forEach(d=>{ if(!salesState.dealMap[String(d.id)]) salesState.dealMap[String(d.id)]=d; });
-      // For any customer deal IDs not in the map, store a stub so links still work
-      salesState.customers.forEach(c=>{
-        if(c.dealId && !salesState.dealMap[String(c.dealId)]){
-          salesState.dealMap[String(c.dealId)] = {id:c.dealId, title:c.name, _stub:true};
-        }
-      });
+      // Fetch missing deal IDs in parallel (old deals not in S.deals or S.openDeals)
+      const missingIds = [...new Set(salesState.customers
+        .filter(c=>c.dealId && !salesState.dealMap[String(c.dealId)])
+        .map(c=>String(c.dealId))
+        .filter(id=>id&&id!=='null'&&id!=='undefined')
+      )];
+      // Fetch all missing in parallel, ignore failures
+      await Promise.allSettled(missingIds.map(async id=>{
+        try{
+          const fields = [REGION_FIELD,SECTOR_FIELD,ARR_FIELD,ATTR_FIELD,SRC_DETAIL_FIELD,
+            'fe720b116bedc6ef911cd535d7957a09dbec355f','8e5548ae0219873e1d86c3ed13b06844793abe01',
+            '24dd14a8da3bd4a5e75afdf6bd5b58ae22d4ff94','dc1ff60a066bf368faf632ed3379bff02051e217',
+            '9c321e8b32cf5748e74e45b285f4bc96f364243f','2fe3213363eb616db230e76c78d20c28d772ae4a',
+            '75a1a400a093a0f80f6eee330539ddc29da3e276'
+          ].map(f=>'&custom_fields[]='+f).join('');
+          const r = await pd('/deals/'+id+'?include_fields=origin,channel_id'+fields);
+          if(r.success && r.data) salesState.dealMap[id] = r.data;
+          else salesState.dealMap[id] = {id, _stub:true};
+        }catch(e){ salesState.dealMap[id]={id,_stub:true}; }
+      }));
       salesState.loaded = true;
     }catch(e){
       document.getElementById('sales-bars').innerHTML = '<div style="color:var(--red);font-family:var(--ff-mono);font-size:.7rem;margin:auto">Error loading customers: '+esc(e.message)+'</div>';
@@ -779,22 +809,22 @@ async function renderSales(){
   const totalARR = validCustomers.reduce((s,c)=>s+getARR(c),0);
 
   function scBreakdown(items, groupFn, groups, color){
-    return '<table style="width:100%;border-collapse:collapse">'+groups.map(g=>{
+    return '<div style="display:flex;flex-direction:column;gap:.15rem">'+groups.map(g=>{
       const gi = items.filter(c=>groupFn(c)===g);
       const arr = gi.reduce((s,c)=>s+getARR(c),0);
-      return '<tr>'
-        +'<td style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);padding:.1rem .4rem .1rem 0;white-space:nowrap">'+esc(g)+'</td>'
-        +'<td style="font-family:var(--ff-mono);font-size:.65rem;color:'+color+';padding:.1rem .5rem .1rem 0;white-space:nowrap">'+gi.length+'</td>'
-        +'<td style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);padding:.1rem 0;white-space:nowrap">'+(arr>0?fmtARR(arr):'')+'</td>'
-        +'</tr>';
-    }).join('')+'</table>';
+      return '<div style="display:flex;align-items:baseline;gap:.5rem">'
+        +'<span style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);min-width:140px">'+esc(g)+'</span>'
+        +'<span style="font-family:var(--ff-mono);font-size:.65rem;color:'+color+'">'+gi.length+'</span>'
+        +(arr>0?'<span style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute)">'+fmtARR(arr)+'</span>':'')
+        +'</div>';
+    }).join('')+'</div>';
   }
 
   const regionBreakdown = scBreakdown(validCustomers, c=>_rg(salesState.dealMap[String(c.dealId)]), REGIONS, 'var(--pur)');
   const sectorBreakdown = scBreakdown(validCustomers, c=>_sg(salesState.dealMap[String(c.dealId)]), SECTORS, 'var(--grn)');
 
   document.getElementById('sales-stats').innerHTML =
-    '<div class="sc g" style="animation:none;opacity:1;transform:none;cursor:pointer" onclick="openSalesDive(&quot;__all__&quot;)"><div class="sc-glow"></div><span class="sc-ico">&#x1F3C6;</span><div class="sc-num">'+validCustomers.length+'</div><div class="sc-lbl">New Customers</div><div class="sc-sub">'+fmtARR(totalARR)+' total ARR</div></div>'
+    '<div class="sc g" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F3C6;</span><div class="sc-num">'+validCustomers.length+'</div><div class="sc-lbl">New Customers</div><div class="sc-sub">'+fmtARR(totalARR)+' total ARR</div></div>'
     +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F310;</span><div class="sc-lbl" style="margin-bottom:.5rem">By Region</div>'+regionBreakdown+'</div>'
     +'<div class="sc g" style="animation:none;opacity:1;transform:none;background:var(--surf2)"><div class="sc-glow"></div><span class="sc-ico">&#x1F3E2;</span><div class="sc-lbl" style="margin-bottom:.5rem">By Sector</div>'+sectorBreakdown+'</div>';
 
@@ -848,6 +878,14 @@ async function renderSales(){
 function selectSalesMonth(mo){
   salesState.selectedMonth = salesState.selectedMonth===mo ? null : mo;
   closeSalesDive();
+  renderSales();
+}
+
+function shiftSalesMonth(dir){
+  if(!salesState.selectedMonth) return;
+  const newMo = salesState.selectedMonth + dir;
+  if(newMo < 1 || newMo > 12) return;
+  salesState.selectedMonth = newMo;
   renderSales();
 }
 
@@ -939,9 +977,16 @@ function renderSalesBreakdown(){
   if(fOrigin) items=items.filter(c=>{ const d=salesState.dealMap[String(c.dealId)]; return d&&!d._stub&&classifyDeal(d).startsWith(fOrigin); });
   if(fSource) items=items.filter(c=>{ const d=salesState.dealMap[String(c.dealId)]; return d&&!d._stub&&getAttr(d[ATTR_FIELD])===fSource; });
   const ml=document.getElementById('sales-breakdown-month-label');
-  if(ml) ml.textContent=mo?'— '+MONTHS[mo-1]+' '+yr:'';
+  if(ml) ml.textContent=mo?MONTHS[mo-1]+' '+yr:'';
+  const nav=document.getElementById('sb-month-nav');
+  if(nav) nav.style.display=mo?'flex':'none';
+  const prevBtn=document.getElementById('sb-prev-btn');
+  const nextBtn=document.getElementById('sb-next-btn');
+  if(prevBtn) prevBtn.disabled=mo<=1;
+  if(nextBtn) nextBtn.disabled=mo>=12;
   const cl=document.getElementById('sales-breakdown-count');
   if(cl) cl.textContent=items.length+' customer'+(items.length!==1?'s':'');
+  [2024,2025,2026].forEach(y=>{ const b=document.getElementById('sb-yr-'+y); if(b) b.classList.toggle('active',y===yr); });
   renderSalesBreakdownPills();
   const tbl=document.getElementById('sales-breakdown-tbl');
   if(!tbl) return;
@@ -974,11 +1019,11 @@ function getAttr(val){ return ATTR_MAP[Number(val)]||'--'; }
 const SRC_DETAIL_FIELD = 'bfedadd6c4e6c2e5af96384d7b5b2c4065737c69';
 const ARR_FIELD = 'dbccdb389c4165e1826d388769d98d02ebb22144';
 const WIPED_DEALS = new Set([
-  'National Dump Trucking Association (NDTA)',
   'Steel Erectors Association of America (SEAA)',
   'Help Exists',
   'TEAM',
   'Sunflowers Suicide Support',
+  'National Association of Therapy Dog Organizations (NATDO)',
 ]);
 const REMOVED_DEALS = ['Rosemead Prep',"Skinner's School",'Skinners School','Skinners School','St Christopher the Hall',"St Christopher's the Hall",'St Christopher The Hall'];
 function isWiped(name){ return WIPED_DEALS.has((name||'').trim()); }
@@ -1932,7 +1977,7 @@ function setMode(m){
   });
   document.getElementById('mode-sales').classList.toggle('active', m==='sales');
   if(m==='sales'){
-    [2024,2025,2026].forEach(y=>{ const b=document.getElementById('sales-yr-'+y); if(b) b.classList.toggle('active',y===salesState.year); });
+    [2024,2025,2026].forEach(y=>{ const b=document.getElementById('sales-yr-'+y); if(b) b.classList.toggle('active',y===salesState.year); const sb=document.getElementById('sb-yr-'+y); if(sb) sb.classList.toggle('active',y===salesState.year); });
     renderSales();
   }
   if(m!=='sales'){ salesState.selectedMonth=null; }
