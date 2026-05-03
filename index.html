@@ -819,8 +819,7 @@ async function fetchLostDeals(yr){
     +'&custom_fields[]=dc1ff60a066bf368faf632ed3379bff02051e217'
     +'&custom_fields[]=9c321e8b32cf5748e74e45b285f4bc96f364243f'
     +'&custom_fields[]=2fe3213363eb616db230e76c78d20c28d772ae4a'
-    +'&custom_fields[]=75a1a400a093a0f80f6eee330539ddc29da3e276'
-    +'&include_fields=origin,channel_id,lost_reason,lost_time'+FIELDS_QS;
+    +'&custom_fields[]=75a1a400a093a0f80f6eee330539ddc29da3e276';
   while(true){
     const d=await pd('/deals?status=lost&limit=500&start='+start+FIELDS_QS+'&include_fields=origin,channel_id,lost_reason,lost_time');
     if(!d.success) break;
