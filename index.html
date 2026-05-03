@@ -707,18 +707,18 @@ async function renderSales(){
     document.getElementById('sales-bars').innerHTML = '<div style="font-family:var(--ff-mono);font-size:.7rem;color:var(--mute);margin:auto">Loading customers&hellip;</div>';
     try{
       salesState.customers = await fetchCustomers();
+      // Ensure openDeals are loaded
+      if(!S.openDeals) S.openDeals = await fetchOpenDeals();
       // Build deal map from S.deals + S.openDeals
       salesState.dealMap = {};
       S.deals.forEach(d=>{ salesState.dealMap[String(d.id)]=d; });
       (S.openDeals||[]).forEach(d=>{ if(!salesState.dealMap[String(d.id)]) salesState.dealMap[String(d.id)]=d; });
-      // Fetch any customer deal IDs not yet in the map
-      const missingIds = [...new Set(salesState.customers.map(c=>String(c.dealId)).filter(id=>id&&id!=='null'&&!salesState.dealMap[id]))];
-      for(const id of missingIds){
-        try{
-          const r = await pd('/deals/'+id+'?custom_fields[]='+REGION_FIELD+'&custom_fields[]='+SECTOR_FIELD+'&custom_fields[]='+ARR_FIELD+'&custom_fields[]='+ATTR_FIELD+'&custom_fields[]='+SRC_DETAIL_FIELD+'&include_fields=origin,channel_id');
-          if(r.success && r.data) salesState.dealMap[id]=r.data;
-        }catch(e){ /* skip */ }
-      }
+      // For any customer deal IDs not in the map, store a stub so links still work
+      salesState.customers.forEach(c=>{
+        if(c.dealId && !salesState.dealMap[String(c.dealId)]){
+          salesState.dealMap[String(c.dealId)] = {id:c.dealId, title:c.name, _stub:true};
+        }
+      });
       salesState.loaded = true;
     }catch(e){
       document.getElementById('sales-bars').innerHTML = '<div style="color:var(--red);font-family:var(--ff-mono);font-size:.7rem;margin:auto">Error loading customers: '+esc(e.message)+'</div>';
@@ -1108,7 +1108,8 @@ async function fetchOpenDeals(){
       +'&custom_fields[]=9c321e8b32cf5748e74e45b285f4bc96f364243f'
       +'&custom_fields[]=2fe3213363eb616db230e76c78d20c28d772ae4a'
       +'&custom_fields[]=75a1a400a093a0f80f6eee330539ddc29da3e276'
-      +'&custom_fields[]='+SRC_DETAIL_FIELD);
+      +'&custom_fields[]='+SRC_DETAIL_FIELD
+      +'&custom_fields[]='+ARR_FIELD);
     if(!d.success) throw new Error(d.error||'Open deals fetch failed');
     all=all.concat((d.data||[]).filter(x=>x.pipeline_id !== EXCLUDED_PIPELINE));
     if(!d.additional_data?.pagination?.more_items_in_collection) break;
@@ -1879,7 +1880,14 @@ function setMode(m){
   if(m!=='sales'){ salesState.selectedMonth=null; }
   if(m==='opps'){ starMode=false; const sbtn=document.getElementById('star-btn'); if(sbtn){sbtn.classList.remove('on');sbtn.textContent='⭐ STAR Mode';} }
 
-  if(m==='pipeline') renderPipeline();
+  if(m==='pipeline'){
+    if(!S.openDeals){
+      renderPipeline(); // renders with null openDeals first (shows stat cards)
+      fetchOpenDeals().then(od=>{ S.openDeals=od; renderPipeline(); });
+    } else {
+      renderPipeline();
+    }
+  }
 }
 
 /* All open items (fetched already) */
@@ -2120,8 +2128,8 @@ async function init(){
 
   try{
     await fetchCurrency();
-    const[deals,leads,archived,openDeals]=await Promise.all([fetchDeals(),fetchLeads(),fetchArchivedFromAirtable(),fetchOpenDeals()]);
-    S.deals=deals; S.leads=leads; S.archivedLeads=archived; S.openDeals=openDeals; S.mo={};
+    const[deals,leads,archived]=await Promise.all([fetchDeals(),fetchLeads(),fetchArchivedFromAirtable()]);
+    S.deals=deals; S.leads=leads; S.archivedLeads=archived; S.openDeals=null; S.mo={};
     buildMonthly();
     renderStats();
     renderChart();
