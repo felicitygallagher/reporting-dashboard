@@ -929,11 +929,13 @@ async function renderLost(){
   });
   pieSvg+='</svg>';
   // Legend
-  const legend = pieData.map((d,i)=>'<div style="display:flex;align-items:center;gap:.4rem;margin:.1rem 0">'
-    +'<span style="width:8px;height:8px;border-radius:50%;background:'+pieColors[i%pieColors.length]+';flex-shrink:0;display:inline-block"></span>'
-    +'<span style="font-family:var(--ff-mono);font-size:.52rem;color:var(--mute)">'+esc(d.lbl)+'</span>'
-    +'<span style="font-family:var(--ff-mono);font-size:.55rem;color:var(--txt2);margin-left:auto">'+d.n+'</span>'
-    +'</div>').join('');
+  const legend = '<table style="border-collapse:collapse;width:100%">'+pieData.map((d,i)=>
+    '<tr>'
+    +'<td style="width:10px;padding:.15rem .4rem .15rem 0"><span style="width:8px;height:8px;border-radius:50%;background:'+pieColors[i%pieColors.length]+';display:inline-block"></span></td>'
+    +'<td style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);padding:.15rem .5rem .15rem 0;white-space:nowrap">'+esc(d.lbl)+'</td>'
+    +'<td style="font-family:var(--ff-mono);font-size:.58rem;color:var(--grn);text-align:right;white-space:nowrap">'+d.n+'</td>'
+    +'</tr>'
+  ).join('')+'</table>';
   const lostStatsEl=document.getElementById('lost-stats'); if(lostStatsEl) lostStatsEl.style.display='block';
   lostStatsEl.innerHTML=
     // Row 1: total / region / sector
@@ -943,9 +945,9 @@ async function renderLost(){
     +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F3E2;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Sector</div>'+sectorBreakdown+'</div>'
     +'</div>'
     // Row 2: legend (2 cols) + pie (1 col)
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;align-items:stretch">'
     +'<div class="sc g" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F4CB;</span><div class="sc-lbl" style="margin-bottom:.5rem">By Reason</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.25rem 1.5rem">'+legend+'</div>'
+    +legend
     +'</div>'
     +'<div class="sc p" style="animation:none;opacity:1;transform:none;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="sc-glow"></div>'+pieSvg+'</div>'
     +'</div>';
