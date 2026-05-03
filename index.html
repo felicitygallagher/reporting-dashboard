@@ -702,7 +702,7 @@
           <h2>Lost <i style="color:var(--red,#e05c5c)">Deals</i></h2>
           <div class="pill-group" id="lost-year-pills" style="display:none"></div>
         </div>
-        <div style="display:flex;align-items:flex-start;gap:.5rem;flex-wrap:nowrap;width:100%">
+        <div style="display:flex;align-items:flex-start;gap:.35rem;flex-wrap:nowrap;width:100%">
           <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
             <span class="pill-label">Owner</span>
             <select class="owner-select" id="lost-owner-select" onchange="renderLostTable()">
@@ -723,7 +723,7 @@
           <div class="pill-divider"></div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
             <span class="pill-label">Sector</span>
-            <div id="lost-sector-pills" class="pill-group" style="min-width:300px"></div>
+            <div id="lost-sector-pills" class="pill-group"></div>
           </div>
           <div class="pill-divider"></div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
@@ -870,13 +870,37 @@ async function renderLost(){
   const sg=d=>Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--';
 
   // Stat cards
-  const owners=[...new Set(deals.map(d=>d.owner_name?.split(' ')[0]||'Other'))].sort();
-  const reasons=[...new Set(deals.map(d=>d.lost_reason).filter(Boolean))];
-  document.getElementById('lost-stats').innerHTML=[
-    {c:'p', ico:'&#x274C;', n:deals.length, l:'Lost Deals', s:lostState.year},
-    {c:'g', ico:'&#x1F464;', n:owners.length, l:'Salespeople', s:'with lost deals'},
-    {c:'p', ico:'&#x1F4CB;', n:reasons.length, l:'Loss Reasons', s:'distinct reasons'},
-  ].map(x=>'<div class="sc '+x.c+'" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">'+x.ico+'</span><div class="sc-num">'+x.n+'</div><div class="sc-lbl">'+x.l+'</div><div class="sc-sub">'+x.s+'</div></div>').join('');
+  const _lrg=d=>Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--';
+  const _lsg=d=>Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--';
+  const regionBreakdown = REGIONS.map(r=>{
+    const n=deals.filter(d=>_lrg(d)===r).length;
+    return '<div style="display:flex;align-items:baseline;gap:.5rem">'
+      +'<span style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);min-width:50px">'+r+'</span>'
+      +'<span style="font-family:var(--ff-mono);font-size:.65rem;color:var(--pur)">'+n+'</span>'
+      +'</div>';
+  }).join('');
+  const sectorBreakdown = SECTORS.map(s=>{
+    const lbl=s==='Membership Associations'?'Memberships':s;
+    const n=deals.filter(d=>_lsg(d)===s).length;
+    return '<div style="display:flex;align-items:baseline;gap:.5rem">'
+      +'<span style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);min-width:90px">'+lbl+'</span>'
+      +'<span style="font-family:var(--ff-mono);font-size:.65rem;color:var(--grn)">'+n+'</span>'
+      +'</div>';
+  }).join('');
+  const LOSS_REASONS_DISPLAY = ['Bad fit/ not the right product for prospect','Chose a competitor','Low budget','No budget','Not happy about UX','Not happy with features/ functionality',"Not in market/ shouldn't have been a deal",'Other','Project paused','Too early/not ready','Unresponsive'];
+  const reasonBreakdown = LOSS_REASONS_DISPLAY.map(r=>{
+    // match against full pipedrive reason using startsWith
+    const n=deals.filter(d=>(d.lost_reason||'').startsWith(r.split(' (')[0])).length;
+    if(!n) return '';
+    return '<div style="display:flex;align-items:baseline;gap:.5rem">'
+      +'<span style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px" title="'+esc(r)+'">'+esc(r)+'</span>'
+      +'<span style="font-family:var(--ff-mono);font-size:.65rem;color:var(--pur)">'+n+'</span>'
+      +'</div>';
+  }).filter(Boolean).join('');
+  document.getElementById('lost-stats').innerHTML=
+    '<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x274C;</span><div class="sc-num">'+deals.length+'</div><div class="sc-lbl">Lost Deals</div><div class="sc-sub">'+lostState.year+'</div></div>'
+    +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F310;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Region &amp; Sector</div>'+regionBreakdown+'<div style="margin-top:.35rem">'+sectorBreakdown+'</div></div>'
+    +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F4CB;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Reason</div>'+reasonBreakdown+'</div>';
 
   renderLostPills();
   renderLostTable();
