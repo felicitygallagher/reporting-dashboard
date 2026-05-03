@@ -702,7 +702,7 @@
           <h2>Lost <i style="color:var(--red,#e05c5c)">Deals</i></h2>
           <div class="pill-group" id="lost-year-pills" style="display:none"></div>
         </div>
-        <div style="display:flex;align-items:flex-start;gap:.6rem;flex-wrap:nowrap;overflow-x:auto;width:100%">
+        <div style="display:flex;align-items:flex-start;gap:.5rem;flex-wrap:nowrap;width:100%">
           <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
             <span class="pill-label">Owner</span>
             <select class="owner-select" id="lost-owner-select" onchange="renderLostTable()">
@@ -765,25 +765,20 @@
           <div class="pill-divider"></div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
             <span class="pill-label">Lost Reason</span>
-            <select class="owner-select" id="lost-reason-select" onchange="renderLostTable()" style="min-width:150px">
+            <select class="owner-select" id="lost-reason-select" onchange="renderLostTable()" style="min-width:130px">
               <option value="">All</option>
-              <option>Bad fit/ not the right product for prospect</option>
-              <option>Choosing not to pursue</option>
-              <option>Chose a competitor (please enter which in lost deal comments)</option>
-              <option>Duplicate deal</option>
-              <option>Local barriers</option>
-              <option>Low budget</option>
-              <option>No budget (for those with no budget/thought it was free)</option>
-              <option>Not happy about UX</option>
-              <option>Not happy with features/ functionality</option>
-              <option>Not in market/ shouldn&apos;t have been a deal</option>
-              <option>Not target customer</option>
-              <option>Other (please specify in lost deal comments field)</option>
-              <option>Poor product fit</option>
-              <option>Project paused</option>
-              <option>Too early/ not ready</option>
-              <option>Unresponsive</option>
-              <option>Unresponsive (for those who go quiet on us)</option>
+              <option value="Bad fit/ not the right product for prospect">Bad fit/ not the right product for prospect</option>
+              <option value="Chose a competitor (please enter which in lost deal comments)">Chose a competitor</option>
+              <option value="Low budget">Low budget</option>
+              <option value="No budget (for those with no budget/thought it was free)">No budget</option>
+              <option value="Not happy about UX">Not happy about UX</option>
+              <option value="Not happy with features/ functionality">Not happy with features/ functionality</option>
+              <option value="Not in market/ shouldn't have been a deal">Not in market/ shouldn't have been a deal</option>
+              <option value="Other (please specify in lost deal comments field)">Other</option>
+              <option value="Project paused">Project paused</option>
+              <option value="Too early/not ready">Too early/not ready</option>
+              <option value="Unresponsive">Unresponsive</option>
+              <option value="Unresponsive (for those who go quiet on us)">Unresponsive (for those who go quiet on us)</option>
             </select>
           </div>
         </div>
@@ -902,7 +897,7 @@ function renderLostTable(){
   if(lostFilters.sector) items=items.filter(d=>sg(d)===lostFilters.sector);
   if(fOrigin) items=items.filter(d=>classifyDeal(d).startsWith(fOrigin));
   if(fSource) items=items.filter(d=>getAttr(d[ATTR_FIELD])===fSource);
-  if(fReason) items=items.filter(d=>d.lost_reason===fReason);
+  if(fReason) items=items.filter(d=>(d.lost_reason||'').startsWith(fReason.split(' (')[0]));
   items.sort((a,b)=>new Date(b.lost_time)-new Date(a.lost_time));
 
   const tbl=document.getElementById('lost-tbl');
