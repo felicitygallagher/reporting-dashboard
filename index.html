@@ -901,21 +901,25 @@ async function renderLost(){
   // Pie chart data
   const pieData = LOSS_REASONS_DISPLAY.map(([lbl,val])=>({
     lbl, n:deals.filter(d=>(d.lost_reason||'').startsWith(val.split(' (')[0])).length
-  })).filter(x=>x.n>0);
-  const pieTotal = pieData.reduce((s,x)=>s+x.n,0);
+  }));
+  const pieDataAll = pieData; // keep all for legend/colour assignment
+  const pieDataActive = pieData.filter(x=>x.n>0); // only draw slices for active
+  const pieTotal = pieDataActive.reduce((s,x)=>s+x.n,0);
   const pieColors = ['#7c3aed','#1fde9e','#f8c247','#e05c5c','#38bdf8','#a78bfa','#34d399','#fb923c','#f472b6','#60a5fa','#4ade80'];
+  // Assign colour by fixed reason index for consistency across years
+  pieDataAll.forEach(d=>{ d.color = pieColors[LOSS_REASONS_DISPLAY.findIndex(([lbl])=>lbl===d.lbl) % pieColors.length]; });
   // Larger viewBox to allow labels outside the pie
   let pieSvg = '<svg viewBox="0 0 260 140" style="width:100%;display:block;margin:0 auto">';
   let angle = -Math.PI/2;
   const cx=130, cy=70, r=45, rOuter=52, rLabel=68;
-  pieData.forEach((d,i)=>{
+  pieDataActive.forEach((d,i)=>{
     const slice = (d.n/pieTotal)*2*Math.PI;
     const midAngle = angle + slice/2;
     const x1=cx+r*Math.cos(angle), y1=cy+r*Math.sin(angle);
     angle+=slice;
     const x2=cx+r*Math.cos(angle), y2=cy+r*Math.sin(angle);
     const large=slice>Math.PI?1:0;
-    pieSvg+='<path d="M'+cx+','+cy+' L'+x1+','+y1+' A'+r+','+r+' 0 '+large+',1 '+x2+','+y2+' Z" fill="'+pieColors[i%pieColors.length]+'" stroke="#1a1528" stroke-width="1.2"><title>'+esc(d.lbl)+': '+d.n+'</title></path>';
+    pieSvg+='<path d="M'+cx+','+cy+' L'+x1+','+y1+' A'+r+','+r+' 0 '+large+',1 '+x2+','+y2+' Z" fill="'+d.color+'" stroke="#1a1528" stroke-width="1.2"><title>'+esc(d.lbl)+': '+d.n+'</title></path>';
     // Leader line + percentage label for slices >= 4%
     if(slice >= 0.25){
       const pct=Math.round(d.n/pieTotal*100);
@@ -924,16 +928,16 @@ async function renderLost(){
       const outerX=cx+rLabel*Math.cos(midAngle), outerY=cy+rLabel*Math.sin(midAngle);
       const anchor=outerX>cx?'start':'end';
       const labelX=outerX+(outerX>cx?3:-3);
-      pieSvg+='<line x1="'+innerX+'" y1="'+innerY+'" x2="'+midX+'" y2="'+midY+'" stroke="'+pieColors[i%pieColors.length]+'" stroke-width="1" opacity="0.7"/>';
-      pieSvg+='<line x1="'+midX+'" y1="'+midY+'" x2="'+outerX+'" y2="'+outerY+'" stroke="'+pieColors[i%pieColors.length]+'" stroke-width="1" opacity="0.7"/>';
+      pieSvg+='<line x1="'+innerX+'" y1="'+innerY+'" x2="'+midX+'" y2="'+midY+'" stroke="'+d.color+'" stroke-width="1" opacity="0.7"/>';
+      pieSvg+='<line x1="'+midX+'" y1="'+midY+'" x2="'+outerX+'" y2="'+outerY+'" stroke="'+d.color+'" stroke-width="1" opacity="0.7"/>';
       pieSvg+='<text x="'+labelX+'" y="'+outerY+'" text-anchor="'+anchor+'" dominant-baseline="middle" fill="#ccc" font-size="7" font-family="monospace">'+pct+'%</text>';
     }
   });
   pieSvg+='</svg>';
   // Legend
-  const legend = '<table style="border-collapse:collapse;width:100%">'+pieData.map((d,i)=>
+  const legend = '<table style="border-collapse:collapse;width:100%">'+pieDataAll.map((d,i)=>
     '<tr>'
-    +'<td style="width:10px;padding:.15rem .4rem .15rem 0"><span style="width:8px;height:8px;border-radius:50%;background:'+pieColors[i%pieColors.length]+';display:inline-block"></span></td>'
+    +'<td style="width:10px;padding:.15rem .4rem .15rem 0"><span style="width:8px;height:8px;border-radius:50%;background:'+d.color+';display:inline-block"></span></td>'
     +'<td style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);padding:.15rem .5rem .15rem 0;white-space:nowrap">'+esc(d.lbl)+'</td>'
     +'<td style="font-family:var(--ff-mono);font-size:.58rem;color:var(--grn);text-align:right;white-space:nowrap">'+d.n+'</td>'
     +'</tr>'
