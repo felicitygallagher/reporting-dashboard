@@ -766,29 +766,29 @@ async function renderSales(){
       salesState.dealMap = {};
       S.deals.forEach(d=>{ salesState.dealMap[String(d.id)]=d; });
       (S.openDeals||[]).forEach(d=>{ if(!salesState.dealMap[String(d.id)]) salesState.dealMap[String(d.id)]=d; });
-      // Fetch missing deal IDs — batch in groups of 50 using filter
-      const missingIds = [...new Set(salesState.customers
-        .filter(c=>c.dealId && !salesState.dealMap[String(c.dealId)])
-        .map(c=>String(c.dealId))
-        .filter(id=>id&&id!=='null'&&id!=='undefined')
-      )];
-      const FIELDS_QS = [REGION_FIELD,SECTOR_FIELD,ARR_FIELD,ATTR_FIELD,SRC_DETAIL_FIELD,
-        'fe720b116bedc6ef911cd535d7957a09dbec355f','8e5548ae0219873e1d86c3ed13b06844793abe01',
-        '24dd14a8da3bd4a5e75afdf6bd5b58ae22d4ff94','dc1ff60a066bf368faf632ed3379bff02051e217',
-        '9c321e8b32cf5748e74e45b285f4bc96f364243f','2fe3213363eb616db230e76c78d20c28d772ae4a',
-        '75a1a400a093a0f80f6eee330539ddc29da3e276'
-      ].map(f=>'&custom_fields[]='+f).join('');
-      // Fetch in batches of 10 (Pipedrive 100/10s rate limit)
-      for(let i=0;i<missingIds.length;i+=5){
-        if(i>0) await new Promise(r=>setTimeout(r,1500)); // respect 429 rate limit
-        const batch=missingIds.slice(i,i+5);
-        await Promise.allSettled(batch.map(async id=>{
-          try{
-            const r=await pd('/deals/'+id+'?status=all&include_fields=origin,channel_id'+FIELDS_QS);
-            if(r.success&&r.data) salesState.dealMap[id]=r.data;
-            else salesState.dealMap[id]={id,_stub:true};
-          }catch(e){ salesState.dealMap[id]={id,_stub:true}; }
-        }));
+      // Fetch all won deals in one paginated call — covers all customer deals regardless of age
+      {
+        const WON_FIELDS = '&custom_fields[]='+REGION_FIELD
+          +'&custom_fields[]='+SECTOR_FIELD
+          +'&custom_fields[]='+ARR_FIELD
+          +'&custom_fields[]='+ATTR_FIELD
+          +'&custom_fields[]='+SRC_DETAIL_FIELD
+          +'&custom_fields[]=fe720b116bedc6ef911cd535d7957a09dbec355f'
+          +'&custom_fields[]=8e5548ae0219873e1d86c3ed13b06844793abe01'
+          +'&custom_fields[]=24dd14a8da3bd4a5e75afdf6bd5b58ae22d4ff94'
+          +'&custom_fields[]=dc1ff60a066bf368faf632ed3379bff02051e217'
+          +'&custom_fields[]=9c321e8b32cf5748e74e45b285f4bc96f364243f'
+          +'&custom_fields[]=2fe3213363eb616db230e76c78d20c28d772ae4a'
+          +'&custom_fields[]=75a1a400a093a0f80f6eee330539ddc29da3e276'
+          +'&include_fields=origin,channel_id';
+        let wonStart=0;
+        while(true){
+          const wd=await pd('/deals?status=won&limit=500&start='+wonStart+WON_FIELDS);
+          if(!wd.success) break;
+          (wd.data||[]).forEach(d=>{ salesState.dealMap[String(d.id)]=d; });
+          if(!wd.additional_data?.pagination?.more_items_in_collection) break;
+          wonStart+=500;
+        }
       }
       salesState.loaded = true;
     }catch(e){
