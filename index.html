@@ -779,8 +779,9 @@ async function renderSales(){
         '75a1a400a093a0f80f6eee330539ddc29da3e276'
       ].map(f=>'&custom_fields[]='+f).join('');
       // Fetch in batches of 10 (Pipedrive 100/10s rate limit)
-      for(let i=0;i<missingIds.length;i+=10){
-        const batch=missingIds.slice(i,i+10);
+      for(let i=0;i<missingIds.length;i+=5){
+        if(i>0) await new Promise(r=>setTimeout(r,1500)); // respect 429 rate limit
+        const batch=missingIds.slice(i,i+5);
         await Promise.allSettled(batch.map(async id=>{
           try{
             const r=await pd('/deals/'+id+'?status=all&include_fields=origin,channel_id'+FIELDS_QS);
@@ -1028,7 +1029,7 @@ const WIPED_DEALS = new Set([
   'Sunflowers Suicide Support',
   'National Association of Therapy Dog Organizations (NATDO)',
 ]);
-const REMOVED_DEALS = ['Rosemead Prep',"Skinner's School",'Skinners School','Skinners School','St Christopher the Hall',"St Christopher's the Hall",'St Christopher The Hall'];
+const REMOVED_DEALS = ['Rosemead Prep',"Skinner's School",'Skinners School',"The Skinners' School",'Skinners','St Christopher the Hall',"St Christopher's the Hall",'St Christopher The Hall'];
 function isWiped(name){ return WIPED_DEALS.has((name||'').trim()); }
 function isRemoved(name){ const n=(name||'').trim().toLowerCase(); return REMOVED_DEALS.some(r=>n===r.toLowerCase()||n.includes(r.toLowerCase())||r.toLowerCase().includes(n)); }
 function fmtARR(val){ if(!val||val===0) return '--'; return '£'+Math.round(val).toLocaleString('en-GB'); }
@@ -1044,6 +1045,7 @@ const ATTR_DETAIL_MAPS = {
 };
 
 function decodeAttrDetail(deal){
+  if(!deal||deal._stub) return null;
   const attrLabel = getAttr(deal[ATTR_FIELD]);
   const fieldKey = ATTR_DETAIL[attrLabel];
   if(!fieldKey) return null;
@@ -1066,6 +1068,7 @@ const ATTR_DETAIL = {
 };
 
 function getAttrDetail(deal){
+  if(!deal||deal._stub) return null;
   return decodeAttrDetail(deal);
 }
 const UTM_MEDIUM   = 'd97cb0e13d4f4bc46fbaf0674ac284cfdf2c1720';
