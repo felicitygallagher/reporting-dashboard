@@ -702,7 +702,7 @@
           <h2>Lost <i style="color:var(--red,#e05c5c)">Deals</i></h2>
           <div style="display:flex;align-items:center;gap:1rem">
             <span id="lost-filtered-count" style="font-family:var(--ff-mono);font-size:.75rem;color:var(--grn);font-weight:700"></span>
-            <div class="pill-group" id="lost-year-pills" style="display:none"></div>
+            <div class="pill-group" id="lost-year-pills"></div>
           </div>
         </div>
         <div style="display:flex;align-items:flex-start;gap:.35rem;flex-wrap:nowrap;width:100%">
@@ -821,7 +821,9 @@ function setLostYear(yr){
   ['lost-owner-select','lost-source-select','lost-reason-select'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
-  [2025,2026].forEach(y=>{ const b=document.getElementById('lost-yr-'+y); if(b) b.classList.toggle('active',y===yr); });
+  [2025,2026].forEach(function(y){ const b=document.getElementById('lost-yr-'+y); if(b) b.classList.toggle('active',y===yr); });
+  const lyp2=document.getElementById('lost-year-pills');
+  if(lyp2) lyp2.innerHTML=[2025,2026].map(function(y){ return '<button class="f-pill'+(yr===y?' active':'')+'" onclick="setLostYear('+y+')">'+y+'</button>'; }).join('');
   renderLost();
 }
 
@@ -952,6 +954,8 @@ async function renderLost(){
     +'<div class="sc p" style="animation:none;opacity:1;transform:none;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="sc-glow"></div>'+pieSvg+'</div>'
     +'</div>';
 
+  const lyp=document.getElementById('lost-year-pills');
+  if(lyp) lyp.innerHTML=[2025,2026].map(function(y){ return '<button class="f-pill'+(lostState.year===y?' active':'')+'" onclick="setLostYear('+y+')">'+y+'</button>'; }).join('');
   renderLostPills();
   renderLostTable();
 }
