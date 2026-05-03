@@ -700,7 +700,10 @@
       <div class="card-hd" style="flex-direction:column;align-items:stretch;gap:.6rem;padding:1rem 1.5rem">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem">
           <h2>Lost <i style="color:var(--red,#e05c5c)">Deals</i></h2>
-          <div class="pill-group" id="lost-year-pills" style="display:none"></div>
+          <div style="display:flex;align-items:center;gap:1rem">
+            <span id="lost-filtered-count" style="font-family:var(--ff-mono);font-size:.75rem;color:var(--grn);font-weight:700"></span>
+            <div class="pill-group" id="lost-year-pills" style="display:none"></div>
+          </div>
         </div>
         <div style="display:flex;align-items:flex-start;gap:.35rem;flex-wrap:nowrap;width:100%">
           <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
@@ -899,15 +902,30 @@ async function renderLost(){
   })).filter(x=>x.n>0);
   const pieTotal = pieData.reduce((s,x)=>s+x.n,0);
   const pieColors = ['#7c3aed','#1fde9e','#f8c247','#e05c5c','#38bdf8','#a78bfa','#34d399','#fb923c','#f472b6','#60a5fa','#4ade80'];
-  let pieSvg = '<svg viewBox="0 0 120 120" style="width:100%;max-width:160px;display:block;margin:0 auto">';
+  // Larger viewBox to allow labels outside the pie
+  let pieSvg = '<svg viewBox="0 0 200 200" style="width:100%;display:block">';
   let angle = -Math.PI/2;
+  const cx=100, cy=100, r=55, rOuter=65, rLabel=82;
   pieData.forEach((d,i)=>{
     const slice = (d.n/pieTotal)*2*Math.PI;
-    const x1=60+55*Math.cos(angle), y1=60+55*Math.sin(angle);
+    const midAngle = angle + slice/2;
+    const x1=cx+r*Math.cos(angle), y1=cy+r*Math.sin(angle);
     angle+=slice;
-    const x2=60+55*Math.cos(angle), y2=60+55*Math.sin(angle);
+    const x2=cx+r*Math.cos(angle), y2=cy+r*Math.sin(angle);
     const large=slice>Math.PI?1:0;
-    pieSvg+='<path d="M60,60 L'+x1+','+y1+' A55,55 0 '+large+',1 '+x2+','+y2+' Z" fill="'+pieColors[i%pieColors.length]+'" stroke="#1a1528" stroke-width="1.5"><title>'+esc(d.lbl)+': '+d.n+'</title></path>';
+    pieSvg+='<path d="M'+cx+','+cy+' L'+x1+','+y1+' A'+r+','+r+' 0 '+large+',1 '+x2+','+y2+' Z" fill="'+pieColors[i%pieColors.length]+'" stroke="#1a1528" stroke-width="1.2"><title>'+esc(d.lbl)+': '+d.n+'</title></path>';
+    // Leader line + percentage label for slices >= 4%
+    if(slice >= 0.25){
+      const pct=Math.round(d.n/pieTotal*100);
+      const innerX=cx+(r+3)*Math.cos(midAngle), innerY=cy+(r+3)*Math.sin(midAngle);
+      const midX=cx+rOuter*Math.cos(midAngle), midY=cy+rOuter*Math.sin(midAngle);
+      const outerX=cx+rLabel*Math.cos(midAngle), outerY=cy+rLabel*Math.sin(midAngle);
+      const anchor=outerX>cx?'start':'end';
+      const labelX=outerX+(outerX>cx?3:-3);
+      pieSvg+='<line x1="'+innerX+'" y1="'+innerY+'" x2="'+midX+'" y2="'+midY+'" stroke="'+pieColors[i%pieColors.length]+'" stroke-width="1" opacity="0.7"/>';
+      pieSvg+='<line x1="'+midX+'" y1="'+midY+'" x2="'+outerX+'" y2="'+outerY+'" stroke="'+pieColors[i%pieColors.length]+'" stroke-width="1" opacity="0.7"/>';
+      pieSvg+='<text x="'+labelX+'" y="'+outerY+'" text-anchor="'+anchor+'" dominant-baseline="middle" fill="#ccc" font-size="7" font-family="monospace">'+pct+'%</text>';
+    }
   });
   pieSvg+='</svg>';
   // Legend
@@ -925,8 +943,8 @@ async function renderLost(){
     +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F3E2;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Sector</div>'+sectorBreakdown+'</div>'
     +'</div>'
     // Row 2: legend (2 cols) + pie (1 col)
-    +'<div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1.5rem">'
-    +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F4CB;</span><div class="sc-lbl" style="margin-bottom:.5rem">By Reason</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">'
+    +'<div class="sc g" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F4CB;</span><div class="sc-lbl" style="margin-bottom:.5rem">By Reason</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.25rem 1.5rem">'+legend+'</div>'
     +'</div>'
     +'<div class="sc p" style="animation:none;opacity:1;transform:none;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="sc-glow"></div>'+pieSvg+'</div>'
@@ -951,6 +969,8 @@ function renderLostTable(){
   if(fSource) items=items.filter(d=>getAttr(d[ATTR_FIELD])===fSource);
   if(fReason) items=items.filter(d=>(d.lost_reason||'').startsWith(fReason.split(' (')[0]));
   items.sort((a,b)=>new Date(b.lost_time)-new Date(a.lost_time));
+  const countEl=document.getElementById('lost-filtered-count');
+  if(countEl) countEl.textContent=items.length+' deal'+(items.length!==1?'s':'');
 
   const tbl=document.getElementById('lost-tbl');
   if(!tbl) return;
@@ -973,7 +993,7 @@ function renderLostTable(){
       +'<td class="cell-wrap tdm">'+esc(sg(d))+'</td>'
       +'<td class="cell-wrap tdm">'+esc(classifyDeal(d)).split('|').join('<br>')+'</td>'
       +'<td class="cell-wrap tdm">'+esc(getAttr(d[ATTR_FIELD]))+(getAttrDetail(d)?'<br><span style="color:var(--mute)">'+esc(getAttrDetail(d))+'</span>':'')+'</td>'
-      +'<td class="cell-wrap tdm">'+esc(d.lost_reason||'--')+'</td>'
+      +'<td class="cell-wrap tdm">'+esc((d.lost_reason||'--').replace('Chose a competitor (please enter which in lost deal comments)','Chose a competitor').replace('Other (please specify in lost deal comments field)','Other'))+'</td>'
       +'<td class="cell-wrap tdm">'+esc(d[LOST_COMMENTS_FIELD]||'--')+'</td>'
       +'<td class="tdm">'+fmtD(d.lost_time)+'</td>'
       +'</tr>').join('')+'</tbody>';
