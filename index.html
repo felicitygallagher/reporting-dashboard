@@ -1001,7 +1001,8 @@ function renderSalesBreakdown(){
   if(prevBtn) prevBtn.disabled=mo<=1;
   if(nextBtn) nextBtn.disabled=mo>=12;
   const cl=document.getElementById('sales-breakdown-count');
-  if(cl) cl.textContent=items.length+' customer'+(items.length!==1?'s':'');
+  const totalARR2=items.filter(c=>!isWiped(c.name)).reduce((s,c2)=>{const d=salesState.dealMap[String(c2.dealId)];return s+(d&&d[ARR_FIELD]?Number(d[ARR_FIELD]):0);},0);
+  if(cl) cl.textContent=items.length+' customer'+(items.length!==1?'s':'')+' · '+fmtARR(totalARR2);
   [2024,2025,2026].forEach(y=>{ const b=document.getElementById('sb-yr-'+y); if(b) b.classList.toggle('active',y===yr); });
   renderSalesBreakdownPills();
   const tbl=document.getElementById('sales-breakdown-tbl');
