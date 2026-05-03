@@ -909,7 +909,7 @@ async function renderLost(){
   // Assign colour by fixed reason index for consistency across years
   pieDataAll.forEach(d=>{ d.color = pieColors[LOSS_REASONS_DISPLAY.findIndex(([lbl])=>lbl===d.lbl) % pieColors.length]; });
   // Larger viewBox to allow labels outside the pie
-  let pieSvg = '<svg viewBox="0 0 260 140" style="width:100%;display:block;margin:0 auto">';
+  let pieSvg = '<svg viewBox="0 0 260 140" style="width:100%;height:100%;display:block">';
   let angle = -Math.PI/2;
   const cx=130, cy=70, r=45, rOuter=52, rLabel=68;
   pieDataActive.forEach((d,i)=>{
