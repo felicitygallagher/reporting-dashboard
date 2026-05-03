@@ -745,12 +745,12 @@ function setSalesYear(yr){
 }
 
 function getSalesForYear(yr){
-  return salesState.customers.filter(c=>c.date && c.date.startsWith(yr+''));
+  return salesState.customers.filter(c=>c.date && c.date.startsWith(yr+'') && !isRemoved(c.name));
 }
 
 function getSalesForMonth(yr, mo){
   const prefix = yr+'-'+String(mo).padStart(2,'0');
-  return salesState.customers.filter(c=>c.date && c.date.startsWith(prefix));
+  return salesState.customers.filter(c=>c.date && c.date.startsWith(prefix) && !isRemoved(c.name));
 }
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -766,26 +766,29 @@ async function renderSales(){
       salesState.dealMap = {};
       S.deals.forEach(d=>{ salesState.dealMap[String(d.id)]=d; });
       (S.openDeals||[]).forEach(d=>{ if(!salesState.dealMap[String(d.id)]) salesState.dealMap[String(d.id)]=d; });
-      // Fetch missing deal IDs in parallel (old deals not in S.deals or S.openDeals)
+      // Fetch missing deal IDs — batch in groups of 50 using filter
       const missingIds = [...new Set(salesState.customers
         .filter(c=>c.dealId && !salesState.dealMap[String(c.dealId)])
         .map(c=>String(c.dealId))
         .filter(id=>id&&id!=='null'&&id!=='undefined')
       )];
-      // Fetch all missing in parallel, ignore failures
-      await Promise.allSettled(missingIds.map(async id=>{
-        try{
-          const fields = [REGION_FIELD,SECTOR_FIELD,ARR_FIELD,ATTR_FIELD,SRC_DETAIL_FIELD,
-            'fe720b116bedc6ef911cd535d7957a09dbec355f','8e5548ae0219873e1d86c3ed13b06844793abe01',
-            '24dd14a8da3bd4a5e75afdf6bd5b58ae22d4ff94','dc1ff60a066bf368faf632ed3379bff02051e217',
-            '9c321e8b32cf5748e74e45b285f4bc96f364243f','2fe3213363eb616db230e76c78d20c28d772ae4a',
-            '75a1a400a093a0f80f6eee330539ddc29da3e276'
-          ].map(f=>'&custom_fields[]='+f).join('');
-          const r = await pd('/deals/'+id+'?include_fields=origin,channel_id'+fields);
-          if(r.success && r.data) salesState.dealMap[id] = r.data;
-          else salesState.dealMap[id] = {id, _stub:true};
-        }catch(e){ salesState.dealMap[id]={id,_stub:true}; }
-      }));
+      const FIELDS_QS = [REGION_FIELD,SECTOR_FIELD,ARR_FIELD,ATTR_FIELD,SRC_DETAIL_FIELD,
+        'fe720b116bedc6ef911cd535d7957a09dbec355f','8e5548ae0219873e1d86c3ed13b06844793abe01',
+        '24dd14a8da3bd4a5e75afdf6bd5b58ae22d4ff94','dc1ff60a066bf368faf632ed3379bff02051e217',
+        '9c321e8b32cf5748e74e45b285f4bc96f364243f','2fe3213363eb616db230e76c78d20c28d772ae4a',
+        '75a1a400a093a0f80f6eee330539ddc29da3e276'
+      ].map(f=>'&custom_fields[]='+f).join('');
+      // Fetch in batches of 10 (Pipedrive 100/10s rate limit)
+      for(let i=0;i<missingIds.length;i+=10){
+        const batch=missingIds.slice(i,i+10);
+        await Promise.allSettled(batch.map(async id=>{
+          try{
+            const r=await pd('/deals/'+id+'?status=all&include_fields=origin,channel_id'+FIELDS_QS);
+            if(r.success&&r.data) salesState.dealMap[id]=r.data;
+            else salesState.dealMap[id]={id,_stub:true};
+          }catch(e){ salesState.dealMap[id]={id,_stub:true}; }
+        }));
+      }
       salesState.loaded = true;
     }catch(e){
       document.getElementById('sales-bars').innerHTML = '<div style="color:var(--red);font-family:var(--ff-mono);font-size:.7rem;margin:auto">Error loading customers: '+esc(e.message)+'</div>';
@@ -851,7 +854,7 @@ async function renderSales(){
   }).join('');
 
   // Summary table by salesperson
-  const displayCustomers = salesState.selectedMonth ? getSalesForMonth(yr, salesState.selectedMonth) : yearCustomers;
+  const displayCustomers = (salesState.selectedMonth ? getSalesForMonth(yr, salesState.selectedMonth) : yearCustomers).filter(c=>!isRemoved(c.name));
   const displayCustomersClean = displayCustomers.filter(c=>!isRemoved(c.name));
   const ownerList = [...new Set(displayCustomersClean.map(c=>getCustomerOwner(c)))].sort();
   const rg = d => d ? (Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--') : '--';
@@ -1027,7 +1030,7 @@ const WIPED_DEALS = new Set([
 ]);
 const REMOVED_DEALS = ['Rosemead Prep',"Skinner's School",'Skinners School','Skinners School','St Christopher the Hall',"St Christopher's the Hall",'St Christopher The Hall'];
 function isWiped(name){ return WIPED_DEALS.has((name||'').trim()); }
-function isRemoved(name){ return REMOVED_DEALS.some(r=>(name||'').trim().toLowerCase()===r.toLowerCase()); }
+function isRemoved(name){ const n=(name||'').trim().toLowerCase(); return REMOVED_DEALS.some(r=>n===r.toLowerCase()||n.includes(r.toLowerCase())||r.toLowerCase().includes(n)); }
 function fmtARR(val){ if(!val||val===0) return '--'; return '£'+Math.round(val).toLocaleString('en-GB'); }
 const UTM_SOURCE   = '0d56e9a251c55240f417f2517245ec7a6c698645';
 const ATTR_DETAIL_MAPS = {
