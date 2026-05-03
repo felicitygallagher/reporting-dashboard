@@ -575,6 +575,40 @@
       <div class="sales-bars" id="sales-bars"></div>
       <p style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);text-align:center;margin-top:.75rem">&#x2191; Click any bar to see that month&rsquo;s customers</p>
     </div>
+    <div class="ov-card" style="opacity:1;transform:none;animation:none;overflow:hidden;margin-bottom:1.25rem">
+      <div class="card-hd" style="flex-direction:column;align-items:flex-start;gap:.6rem;padding:1rem 1.5rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+          <h2>All <i style="color:var(--grn)">Sales</i> <span id="sales-breakdown-month-label" style="font-size:1rem;color:var(--mute)"></span></h2>
+          <span id="sales-breakdown-count" style="font-family:var(--ff-mono);font-size:.7rem;color:var(--grn)"></span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:.6rem;flex-wrap:nowrap;overflow-x:auto;width:100%">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
+            <span class="pill-label">Owner</span>
+            <select class="owner-select" id="sb-owner-select" onchange="renderSalesBreakdown()">
+              <option value="">All</option>
+              <option value="Amy">Amy</option>
+              <option value="Fady">Fady</option>
+              <option value="Matt">Matt</option>
+              <option value="Merryn">Merryn</option>
+              <option value="Myron">Myron</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="pill-divider"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
+            <span class="pill-label">Region</span>
+            <div id="sb-region-pills" class="pill-group"></div>
+          </div>
+          <div class="pill-divider"></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
+            <span class="pill-label">Sector</span>
+            <div id="sb-sector-pills" class="pill-group" style="min-width:300px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table id="sales-breakdown-tbl"></table></div>
+    </div>
+
     <div class="ov-card" style="opacity:1;transform:none;animation:none;overflow:hidden">
       <div class="card-hd"><h2>Sales by <i style="color:var(--grn)">Salesperson</i></h2><span id="sales-table-label" style="font-family:var(--ff-mono);font-size:.6rem;color:var(--mute)"></span></div>
       <div class="tbl-wrap"><table id="sales-summary-tbl"></table></div>
@@ -609,6 +643,11 @@ const SALES_CUSTOMER_DATE_FIELD = 'Date they became a customer (based on first c
 const SALES_DEAL_ID_FIELD = 'Pipedrive deal ID';
 const SALES_NAME_FIELD = 'Customer name';
 const SALES_OWNER_FIELD = 'Main salesperson';
+function getCustomerOwner(cust){
+  const d = salesState.dealMap[String(cust.dealId)];
+  if(d && d.owner_name) return d.owner_name.split(' ')[0];
+  return (cust.owner||'Other').split(' ')[0];
+}
 
 const salesState = {
   year: new Date().getFullYear(),
@@ -681,24 +720,26 @@ async function renderSales(){
   const yearCustomers = getSalesForYear(yr);
   document.getElementById('sales-year-label').textContent = yr;
   document.getElementById('sales-table-label').textContent = yr + (salesState.selectedMonth?' — '+MONTHS[salesState.selectedMonth-1]:'');
+  sbFilters.region=null; sbFilters.sector=null;
+  const sbOwnerSel=document.getElementById('sb-owner-select'); if(sbOwnerSel) sbOwnerSel.value='';
 
   // Stat cards — region and sector breakdowns with ARR
   const validCustomers = yearCustomers.filter(c=>!isWiped(c.name));
   const _rg = d => d ? (Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--') : '--';
   const _sg = d => d ? (Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--') : '--';
-  const getARR = c => { const d=salesState.dealMap[String(c.dealId)]; return (d&&d[ARR_FIELD])||0; };
+  const getARR = c => { const d=salesState.dealMap[String(c.dealId)]; return d&&d[ARR_FIELD] ? Number(d[ARR_FIELD]) : 0; };
   const totalARR = validCustomers.reduce((s,c)=>s+getARR(c),0);
 
   function scBreakdown(items, groupFn, groups, color){
-    return groups.map(g=>{
+    return '<table style="width:100%;border-collapse:collapse">'+groups.map(g=>{
       const gi = items.filter(c=>groupFn(c)===g);
       const arr = gi.reduce((s,c)=>s+getARR(c),0);
-      return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;margin:.18rem 0">'
-        +'<span style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute)">'+esc(g)+'</span>'
-        +'<span style="font-family:var(--ff-mono);font-size:.62rem;color:'+color+'">'+gi.length+'</span>'
-        +(arr>0?'<span style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute)">'+fmtARR(arr)+'</span>':'')
-        +'</div>';
-    }).join('');
+      return '<tr>'
+        +'<td style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);padding:.1rem 0;white-space:nowrap">'+esc(g)+'</td>'
+        +'<td style="font-family:var(--ff-mono);font-size:.65rem;color:'+color+';text-align:right;padding:.1rem .4rem">'+gi.length+'</td>'
+        +'<td style="font-family:var(--ff-mono);font-size:.55rem;color:var(--mute);text-align:right;padding:.1rem 0;white-space:nowrap">'+(arr>0?fmtARR(arr):'')+'</td>'
+        +'</tr>';
+    }).join('')+'</table>';
   }
 
   const regionBreakdown = scBreakdown(validCustomers, c=>_rg(salesState.dealMap[String(c.dealId)]), REGIONS, 'var(--pur)');
@@ -718,25 +759,28 @@ async function renderSales(){
     const h = Math.max(count>0?3:0, Math.round(count/maxCount*mxH));
     const sel = salesState.selectedMonth===(i+1) ? 'sel' : '';
     const moNum = i+1;
+    const barGrad = i%2===0 ? 'linear-gradient(to top,var(--grn-d,#0f7a5a),var(--grn))' : 'linear-gradient(to top,#3d1f7a,var(--pur))';
     return '<div class="sales-bg '+sel+'" onclick="selectSalesMonth('+moNum+')">'
-      +'<div class="sales-bw"><div class="sales-b" style="height:'+h+'px"><div class="sales-tip">'+count+' customer'+(count!==1?'s':'')+'</div></div></div>'
+      +'<div class="sales-bw"><div class="sales-b" style="height:'+h+'px;background:'+barGrad+'"><div class="sales-tip">'+count+' customer'+(count!==1?'s':'')+'</div></div></div>'
       +'<div class="sales-blbl">'+mo+'</div>'
       +'</div>';
   }).join('');
 
   // Summary table by salesperson
   const displayCustomers = salesState.selectedMonth ? getSalesForMonth(yr, salesState.selectedMonth) : yearCustomers;
-  const ownerList = [...new Set(displayCustomers.map(c=>c.owner))].sort();
+  const ownerList = [...new Set(displayCustomers.map(c=>getCustomerOwner(c)))].sort();
   const rg = d => d ? (Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--') : '--';
   const sg = d => d ? (Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--') : '--';
 
+  renderSalesBreakdown();
   document.getElementById('sales-summary-tbl').innerHTML =
-    '<thead><tr><th>Salesperson</th><th>Sales</th><th>EMEA</th><th>AMER</th><th>APAC</th><th style="border-left:2px solid var(--bord2)">Edu</th><th>Memb</th><th>Char</th><th>Co</th></tr></thead><tbody>'
+    '<thead><tr><th>Salesperson</th><th>Sales</th><th>ARR</th><th>EMEA</th><th>AMER</th><th>APAC</th><th style="border-left:2px solid var(--bord2)">Edu</th><th>Memb</th><th>Char</th><th>Co</th></tr></thead><tbody>'
     +ownerList.map(owner=>{
-      const items = displayCustomers.filter(c=>c.owner===owner && !isWiped(c.name));
+      const items = displayCustomers.filter(c=>getCustomerOwner(c)===owner && !isWiped(c.name));
       return '<tr style="cursor:pointer" onclick="openSalesDive(&quot;'+owner.replace(/"/g,'')+'&quot;)">'
         +'<td style="color:var(--grn);font-family:var(--ff-mono);font-size:.75rem;padding-left:.8rem">'+esc(owner.split(' ')[0])+'</td>'
         +'<td class="tdf">'+items.length+'</td>'
+        +'<td class="tdm" style="color:var(--grn)">'+fmtARR(items.reduce((s,c2)=>s+(c2.dealId&&salesState.dealMap[String(c2.dealId)]&&salesState.dealMap[String(c2.dealId)][ARR_FIELD]?Number(salesState.dealMap[String(c2.dealId)][ARR_FIELD]):0),0))+'</td>'
         +REGIONS.map(r=>'<td class="tdm">'+items.filter(c=>{const d=salesState.dealMap[String(c.dealId)];return rg(d)===r;}).length+'</td>').join('')
         +'<td class="tdm" style="border-left:2px solid var(--bord2)">'+items.filter(c=>{const d=salesState.dealMap[String(c.dealId)];return sg(d)==='Education';}).length+'</td>'
         +'<td class="tdm">'+items.filter(c=>{const d=salesState.dealMap[String(c.dealId)];return sg(d)==='Membership Associations';}).length+'</td>'
@@ -755,7 +799,7 @@ function selectSalesMonth(mo){
 function openSalesDive(owner){
   const yr = salesState.year;
   const displayCustomers = salesState.selectedMonth ? getSalesForMonth(yr, salesState.selectedMonth) : getSalesForYear(yr);
-  const items = (owner==='__all__' ? displayCustomers : displayCustomers.filter(c=>c.owner===owner)).filter(c=>!isWiped(c.name));
+  const items = (owner==='__all__' ? displayCustomers : displayCustomers.filter(c=>getCustomerOwner(c)===owner)).filter(c=>!isWiped(c.name));
   const rg = d => d ? (Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--') : '--';
   const sg = d => d ? (Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--') : '--';
 
@@ -773,7 +817,7 @@ function openSalesDive(owner){
     const region = rg(d);
     const sector = sg(d);
     const arr = d ? fmtARR(d[ARR_FIELD]) : '--';
-    const ownerName = d ? (d.owner_name||c.owner) : c.owner;
+    const ownerName = getCustomerOwner(c);
     const rowStyle = wiped ? 'opacity:.4;' : '';
     const wipedNote = wiped ? ' <span style="font-size:.6rem;color:var(--mute)">(excluded)</span>' : '';
     return '<tr style="'+rowStyle+'">'
@@ -796,6 +840,59 @@ function openSalesDive(owner){
 
 function closeSalesDive(){
   document.getElementById('sales-expanded').style.display='none';
+}
+
+const sbFilters = {region:null, sector:null};
+
+function renderSalesBreakdownPills(){
+  const rp=document.getElementById('sb-region-pills');
+  const sp=document.getElementById('sb-sector-pills');
+  if(!rp||!sp) return;
+  rp.innerHTML=REGIONS.map(r=>'<button class="f-pill'+(sbFilters.region===r?' active':'')+'" data-sb-region="'+r+'">'+r+'</button>').join('');
+  sp.innerHTML='<div style="display:flex;gap:.4rem;flex-wrap:nowrap">'+['Education','Membership Associations','Charity','Company'].map(function(s){
+    var lbl=s==='Membership Associations'?'Memberships':s;
+    return '<button class="f-pill'+(sbFilters.sector===s?' active':'')+'" data-sb-sector="'+s+'">'+lbl+'</button>';
+  }).join('')+'</div>';
+}
+
+document.addEventListener('click',function(e){
+  const rb=e.target.closest('[data-sb-region]');
+  const sb2=e.target.closest('[data-sb-sector]');
+  if(rb){ sbFilters.region=sbFilters.region===rb.dataset.sbRegion?null:rb.dataset.sbRegion; renderSalesBreakdownPills(); renderSalesBreakdown(); }
+  else if(sb2){ sbFilters.sector=sbFilters.sector===sb2.dataset.sbSector?null:sb2.dataset.sbSector; renderSalesBreakdownPills(); renderSalesBreakdown(); }
+});
+
+function renderSalesBreakdown(){
+  const yr=salesState.year, mo=salesState.selectedMonth;
+  const base=mo?salesState.customers.filter(c=>c.date&&c.date.startsWith(yr+'-'+String(mo).padStart(2,'0'))):salesState.customers.filter(c=>c.date&&c.date.startsWith(yr+''));
+  const rg2=d=>d?(Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--'):'--';
+  const sg2=d=>d?(Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--'):'--';
+  const fo=document.getElementById('sb-owner-select')?.value||'';
+  let items=base;
+  if(fo) items=items.filter(c=>getCustomerOwner(c)===fo);
+  if(sbFilters.region) items=items.filter(c=>rg2(salesState.dealMap[String(c.dealId)])===sbFilters.region);
+  if(sbFilters.sector) items=items.filter(c=>sg2(salesState.dealMap[String(c.dealId)])===sbFilters.sector);
+  const ml=document.getElementById('sales-breakdown-month-label');
+  if(ml) ml.textContent=mo?'— '+MONTHS[mo-1]+' '+yr:'';
+  const cl=document.getElementById('sales-breakdown-count');
+  if(cl) cl.textContent=items.length+' customer'+(items.length!==1?'s':'');
+  renderSalesBreakdownPills();
+  const tbl=document.getElementById('sales-breakdown-tbl');
+  if(!tbl) return;
+  if(!items.length){tbl.innerHTML='<tr><td class="empty" colspan="6">No sales match these filters.</td></tr>';return;}
+  const rows=items.sort((a,b)=>a.date.localeCompare(b.date)).map(c=>{
+    const d=salesState.dealMap[String(c.dealId)];
+    const wiped=isWiped(c.name);
+    return '<tr style="'+(wiped?'opacity:.4;':'')+'">'
+      +'<td class="cell-wrap">'+(d?'<a href="https://toucantech.pipedrive.com/deal/'+d.id+'" target="_blank" style="color:var(--grn);text-decoration:none">'+esc(c.name)+'</a>':esc(c.name))+(wiped?' <span style="font-size:.6rem;color:var(--mute)">(excl.)</span>':'')+'</td>'
+      +'<td class="tdm">'+esc(getCustomerOwner(c))+'</td>'
+      +'<td class="tdm">'+esc(rg2(d))+'</td>'
+      +'<td class="cell-wrap tdm">'+esc(sg2(d))+'</td>'
+      +'<td class="tdm">'+fmtARR(d&&d[ARR_FIELD]?Number(d[ARR_FIELD]):0)+'</td>'
+      +'<td class="tdm">'+fmtD(c.date)+'</td>'
+      +'</tr>';
+  }).join('');
+  tbl.innerHTML='<thead><tr><th class="cell-wrap">Customer</th><th>Owner</th><th>Region</th><th class="cell-wrap">Sector</th><th>ARR</th><th>Date</th></tr></thead><tbody>'+rows+'</tbody>';
 }
 const STAGE_MAP = {54:'Qualified',55:'Demo Booked',58:'Demo Done',56:'S Proposal',59:'F Proposal',57:'Negotiation',60:'Awaiting Contract'};
 const STAGE_ORDER = [54,55,58,56,59,57,60]; // display order
