@@ -661,7 +661,17 @@
     </div>
 
     <div class="ov-card" style="opacity:1;transform:none;animation:none;overflow:hidden">
-      <div class="card-hd"><h2>Sales by <i style="color:var(--grn)">Salesperson</i></h2><span id="sales-table-label" style="font-family:var(--ff-mono);font-size:.6rem;color:var(--mute)"></span></div>
+      <div class="card-hd" style="justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <h2>Sales by <i style="color:var(--grn)">Salesperson</i></h2>
+          <span id="sales-table-label" style="font-family:var(--ff-mono);font-size:.6rem;color:var(--mute)"></span>
+        </div>
+        <div class="sales-year-toggle" style="margin-bottom:0">
+          <button class="sales-yr-btn" id="sp-yr-2024" onclick="setSalesYear(2024)">2024</button>
+          <button class="sales-yr-btn" id="sp-yr-2025" onclick="setSalesYear(2025)">2025</button>
+          <button class="sales-yr-btn" id="sp-yr-2026" onclick="setSalesYear(2026)">2026</button>
+        </div>
+      </div>
       <div class="tbl-wrap"><table id="sales-summary-tbl"></table></div>
     </div>
     <div id="sales-expanded" style="display:none">
@@ -740,6 +750,8 @@ function setSalesYear(yr){
     if(btn) btn.classList.toggle('active', y===yr);
     const sbBtn=document.getElementById('sb-yr-'+y);
     if(sbBtn) sbBtn.classList.toggle('active', y===yr);
+    const spBtn=document.getElementById('sp-yr-'+y);
+    if(spBtn) spBtn.classList.toggle('active', y===yr);
   });
   renderSales();
 }
@@ -1983,7 +1995,7 @@ function setMode(m){
   });
   document.getElementById('mode-sales').classList.toggle('active', m==='sales');
   if(m==='sales'){
-    [2024,2025,2026].forEach(y=>{ const b=document.getElementById('sales-yr-'+y); if(b) b.classList.toggle('active',y===salesState.year); const sb=document.getElementById('sb-yr-'+y); if(sb) sb.classList.toggle('active',y===salesState.year); });
+    [2024,2025,2026].forEach(y=>{ const b=document.getElementById('sales-yr-'+y); if(b) b.classList.toggle('active',y===salesState.year); const sb=document.getElementById('sb-yr-'+y); if(sb) sb.classList.toggle('active',y===salesState.year); const sp=document.getElementById('sp-yr-'+y); if(sp) sp.classList.toggle('active',y===salesState.year); });
     renderSales();
   }
   if(m!=='sales'){ salesState.selectedMonth=null; }
