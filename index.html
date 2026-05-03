@@ -728,7 +728,7 @@
           <div class="pill-divider"></div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
             <span class="pill-label">Source</span>
-            <select class="owner-select" id="lost-source-select" onchange="renderLostTable()">
+            <select class="owner-select" id="lost-source-select" onchange="renderLostTable()" style="font-size:.58rem">
               <option value="">All</option>
               <option value="121 Outreach">121 Outreach</option>
               <option value="Advertising">Advertising</option>
@@ -751,7 +751,7 @@
           <div class="pill-divider"></div>
           <div style="display:flex;flex-direction:column;align-items:center;gap:.25rem;flex-shrink:0">
             <span class="pill-label">Lost Reason</span>
-            <select class="owner-select" id="lost-reason-select" onchange="renderLostTable()" style="min-width:130px">
+            <select class="owner-select" id="lost-reason-select" onchange="renderLostTable()" style="min-width:110px;font-size:.58rem">
               <option value="">All</option>
               <option value="Bad fit/ not the right product for prospect">Bad fit/ not the right product for prospect</option>
               <option value="Chose a competitor (please enter which in lost deal comments)">Chose a competitor</option>
@@ -869,7 +869,7 @@ async function renderLost(){
       const lbl=s==='Membership Associations'?'Memberships':s;
       const n=deals.filter(d=>_lsg(d)===s).length;
       return '<tr><td style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);padding:.1rem .5rem .1rem 0;white-space:nowrap">'+lbl+'</td>'
-        +'<td style="font-family:var(--ff-mono);font-size:.65rem;color:var(--grn);text-align:right">'+n+'</td></tr>';
+        +'<td style="font-family:var(--ff-mono);font-size:.65rem;color:var(--pur);text-align:right">'+n+'</td></tr>';
     }).join('')+'</table>';
   const LOSS_REASONS_DISPLAY = [
       ['Bad fit/ not the right product for prospect','Bad fit/ not the right product for prospect'],
@@ -892,17 +892,7 @@ async function renderLost(){
         +'<td style="font-family:var(--ff-mono);font-size:.65rem;color:var(--pur);text-align:right">'+n+'</td></tr>';
     }).filter(Boolean).join('')+'</table>';
   // Split reasons into two groups of 6 and 5
-  const reason1 = LOSS_REASONS_DISPLAY.slice(0,6);
-  const reason2 = LOSS_REASONS_DISPLAY.slice(6);
-  const makeReasonTable = (pairs) => '<table style="border-collapse:collapse;width:100%">'
-    +pairs.map(([lbl,val])=>{
-      const n=deals.filter(d=>(d.lost_reason||'').startsWith(val.split(' (')[0])).length;
-      if(!n) return '';
-      return '<tr><td style="font-family:var(--ff-mono);font-size:.58rem;color:var(--mute);padding:.1rem .5rem .1rem 0;white-space:nowrap">'+esc(lbl)+'</td>'
-        +'<td style="font-family:var(--ff-mono);font-size:.65rem;color:var(--pur);text-align:right">'+n+'</td></tr>';
-    }).filter(Boolean).join('')+'</table>';
-  const reasonBreakdown1 = makeReasonTable(reason1);
-  const reasonBreakdown2 = makeReasonTable(reason2);
+  // reason breakdowns replaced by legend
   // Pie chart data
   const pieData = LOSS_REASONS_DISPLAY.map(([lbl,val])=>({
     lbl, n:deals.filter(d=>(d.lost_reason||'').startsWith(val.split(' (')[0])).length
@@ -932,13 +922,14 @@ async function renderLost(){
     '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem">'
     +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x274C;</span><div class="sc-num">'+deals.length+'</div><div class="sc-lbl">Lost Deals</div><div class="sc-sub">'+lostState.year+'</div></div>'
     +'<div class="sc g" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F310;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Region</div>'+regionBreakdown+'</div>'
-    +'<div class="sc g" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F3E2;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Sector</div>'+sectorBreakdown+'</div>'
+    +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F3E2;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Sector</div>'+sectorBreakdown+'</div>'
     +'</div>'
-    // Row 2: reason x2 / pie
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem">'
-    +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F4CB;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Reason (1)</div>'+reasonBreakdown1+'</div>'
-    +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F4CB;</span><div class="sc-lbl" style="margin-bottom:.4rem">By Reason (2)</div>'+reasonBreakdown2+'</div>'
-    +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F967;</span><div class="sc-lbl" style="margin-bottom:.5rem">Loss Reasons</div>'+pieSvg+'<div style="margin-top:.5rem">'+legend+'</div></div>'
+    // Row 2: legend (2 cols) + pie (1 col)
+    +'<div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1.5rem">'
+    +'<div class="sc p" style="animation:none;opacity:1;transform:none"><div class="sc-glow"></div><span class="sc-ico">&#x1F4CB;</span><div class="sc-lbl" style="margin-bottom:.5rem">By Reason</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:.25rem 1.5rem">'+legend+'</div>'
+    +'</div>'
+    +'<div class="sc p" style="animation:none;opacity:1;transform:none;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="sc-glow"></div>'+pieSvg+'</div>'
     +'</div>';
 
   renderLostPills();
@@ -965,14 +956,14 @@ function renderLostTable(){
   if(!tbl) return;
   if(!items.length){ tbl.innerHTML='<tr><td class="empty" colspan="9">No lost deals match these filters.</td></tr>'; return; }
   tbl.innerHTML='<table style="table-layout:fixed;width:100%"><thead><tr>'
-    +'<th class="cell-wrap" style="width:20%">Title</th>'
-    +'<th style="width:6%">Owner</th>'
+    +'<th class="cell-wrap" style="width:18%">Title</th>'
+    +'<th style="width:5%">Owner</th>'
     +'<th style="width:5%">Region</th>'
-    +'<th class="cell-wrap" style="width:9%">Sector</th>'
+    +'<th class="cell-wrap" style="width:8%">Sector</th>'
     +'<th class="cell-wrap" style="width:9%">Origin</th>'
     +'<th class="cell-wrap" style="width:9%">Source</th>'
-    +'<th class="cell-wrap" style="width:13%">Lost Reason</th>'
-    +'<th class="cell-wrap" style="width:21%">Comments</th>'
+    +'<th class="cell-wrap" style="width:14%">Lost Reason</th>'
+    +'<th class="cell-wrap" style="width:24%">Comments</th>'
     +'<th style="width:8%">Lost</th>'
     +'</tr></thead><tbody>'
     +items.map(d=>'<tr>'
