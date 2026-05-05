@@ -1182,7 +1182,8 @@ async function renderSales(){
   // Summary table by salesperson
   const displayCustomers = (salesState.selectedMonth ? getSalesForMonth(yr, salesState.selectedMonth) : yearCustomers).filter(c=>!isRemoved(c.name));
   const displayCustomersClean = displayCustomers.filter(c=>!isRemoved(c.name));
-  const ownerList = [...new Set(displayCustomersClean.map(c=>getCustomerOwner(c)))].sort();
+  // Always show all salespeople, even if 0 sales
+  const ownerList = SALESPEOPLE;
   const rg = d => d ? (Object.keys(REGION_ID).find(r=>REGION_ID[r]===Number(d[REGION_FIELD]))||'--') : '--';
   const sg = d => d ? (Object.keys(SECTOR_ID).find(s=>SECTOR_ID[s]===Number(d[SECTOR_FIELD]))||'--') : '--';
 
@@ -1194,7 +1195,7 @@ async function renderSales(){
       return '<tr style="cursor:pointer" onclick="openSalesDive(&quot;'+owner.replace(/"/g,'')+'&quot;)">'
         +'<td style="color:var(--grn);font-family:var(--ff-mono);font-size:.75rem;padding-left:.8rem">'+esc(owner.split(' ')[0])+'</td>'
         +'<td class="tdf">'+items.length+'</td>'
-        +'<td class="tdm" style="color:var(--grn)">'+fmtARR(items.reduce((s,c2)=>s+(c2.dealId&&salesState.dealMap[String(c2.dealId)]&&salesState.dealMap[String(c2.dealId)][ARR_FIELD]?Number(salesState.dealMap[String(c2.dealId)][ARR_FIELD]):0),0))+'</td>'
+        +'<td class="tdm" style="color:var(--grn)">'+(items.length?fmtARR(items.reduce((s,c2)=>s+(c2.dealId&&salesState.dealMap[String(c2.dealId)]&&salesState.dealMap[String(c2.dealId)][ARR_FIELD]?Number(salesState.dealMap[String(c2.dealId)][ARR_FIELD]):0),0)):'--')+'</td>'
         +REGIONS.map(r=>'<td class="tdm">'+items.filter(c=>{const d=salesState.dealMap[String(c.dealId)];return rg(d)===r;}).length+'</td>').join('')
         +'<td class="tdm" style="border-left:2px solid var(--bord2)">'+items.filter(c=>{const d=salesState.dealMap[String(c.dealId)];return sg(d)==='Education';}).length+'</td>'
         +'<td class="tdm">'+items.filter(c=>{const d=salesState.dealMap[String(c.dealId)];return sg(d)==='Membership Associations';}).length+'</td>'
